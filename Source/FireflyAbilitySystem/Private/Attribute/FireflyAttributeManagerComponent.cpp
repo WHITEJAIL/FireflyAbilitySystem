@@ -1,9 +1,10 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "FireflyAttributeManagerComponent.h"
+#include "Attribute/FireflyAttributeManagerComponent.h"
 
-#include "FireflyAttribute.h"
+#include "FireflyAbilitySystemTypes.h"
+#include "Attribute/FireflyAttribute.h"
 
 // Sets default values for this component's properties
 UFireflyAttributeManagerComponent::UFireflyAttributeManagerComponent(const FObjectInitializer& ObjectInitializer)
@@ -23,29 +24,14 @@ void UFireflyAttributeManagerComponent::BeginPlay()
 void UFireflyAttributeManagerComponent::OnRegister()
 {
 	Super::OnRegister();
-
-	/** 将所有的用户自定义属性存储到属性集数组中 */
-	/*for (TFieldIterator<FProperty> It(GetClass(), EFieldIteratorFlags::IncludeSuper); It; ++It)
-	{
-		FProperty* Property = *It;
-		FObjectProperty* ObjectProperty = CastField<FObjectProperty>(Property);
-		if (ObjectProperty && ObjectProperty->GetName() != TEXT("AttributeContainer"))
-		{
-			UFireflyAttribute* Attribute = ObjectProperty->ContainerPtrToValuePtr<UFireflyAttribute>(this);
-			if (Attribute)
-			{
-				AttributeContainer.Emplace(Attribute);
-			}
-		}
-	}*/
 }
 
-UFireflyAttribute* UFireflyAttributeManagerComponent::GetAttributeByType(FGameplayTag AttributeType) const
+UFireflyAttribute* UFireflyAttributeManagerComponent::GetAttributeByType(EFireflyAttributeType AttributeType) const
 {
 	UFireflyAttribute* OutAttribute = nullptr;
 	for (auto Attribute : AttributeContainer)
 	{
-		if (Attribute->GetAttributeName().MatchesTag(AttributeType))
+		if (Attribute->AttributeType == AttributeType)
 		{
 			OutAttribute = Attribute;
 			break;
@@ -55,36 +41,26 @@ UFireflyAttribute* UFireflyAttributeManagerComponent::GetAttributeByType(FGamepl
 	return OutAttribute;
 }
 
+FString UFireflyAttributeManagerComponent::GetAttributeTypeName(EFireflyAttributeType AttributeType) const
+{
+	const UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("EFireflyAttributeType"), true);
+	if (!EnumPtr) return FString("Invalid");
+
+	return EnumPtr != nullptr ? EnumPtr->GetDisplayNameTextByValue(AttributeType).ToString() : FString("Invalid");
+}
+
 // Called every frame
 void UFireflyAttributeManagerComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
-void UFireflyAttributeManagerComponent::AddNewAttribute(FGameplayTag AttributeType, float InitValue)
-{
-	if (!AttributeType.IsValid())
-	{
-		return;
-	}
-
-	UFireflyAttribute* NewAttribute = NewObject<UFireflyAttribute>(this, AttributeType.GetTagName());
-	if (!IsValid(NewAttribute))
-	{
-		return;
-	}
-
-	NewAttribute->AttributeName = AttributeType;
-	NewAttribute->Initialize(InitValue);
-	AttributeContainer.Emplace(NewAttribute);
-}
-
-float UFireflyAttributeManagerComponent::GetAttributeValue(FGameplayTag AttributeType) const
+float UFireflyAttributeManagerComponent::GetAttributeValue(EFireflyAttributeType AttributeType) const
 {
 	float OutValue = 0.f;
 	for (auto Attribute : AttributeContainer)
 	{
-		if (Attribute->GetAttributeName().MatchesTag(AttributeType))
+		if (Attribute->AttributeType == AttributeType)
 		{
 			OutValue = Attribute->GetCurrentValue();
 			break;
@@ -94,14 +70,14 @@ float UFireflyAttributeManagerComponent::GetAttributeValue(FGameplayTag Attribut
 	return OutValue;
 }
 
-float UFireflyAttributeManagerComponent::GetAttributeBaseValue(FGameplayTag AttributeType) const
+float UFireflyAttributeManagerComponent::GetAttributeBaseValue(EFireflyAttributeType AttributeType) const
 {
 	float OutBaseValue = 0.f;
 	for (auto Attribute : AttributeContainer)
 	{
-		if (Attribute->GetAttributeName().MatchesTag(AttributeType))
+		if (Attribute->AttributeType == AttributeType)
 		{
-			OutBaseValue = Attribute->GetBaseValue();
+			OutBaseValue = Attribute->GetBaseValueToUse();
 			break;
 		}
 	}
@@ -109,7 +85,35 @@ float UFireflyAttributeManagerComponent::GetAttributeBaseValue(FGameplayTag Attr
 	return OutBaseValue;
 }
 
-void UFireflyAttributeManagerComponent::ApplyPlusModifierToAttribute(FGameplayTag AttributeType, float ModValue)
+void UFireflyAttributeManagerComponent::ConstructAttributeByClass(TSubclassOf<UFireflyAttribute> AttributeToConstruct, EFireflyAttributeType AttributeType)
+{
+	FString NewAttributeName = *GetAttributeTypeName(AttributeType) + FString("_") + (TEXT("%s"), GetOwner()->GetName());
+	UFireflyAttribute* NewAttribute = NewObject<UFireflyAttribute>(this, AttributeToConstruct, *NewAttributeName);
+	NewAttribute->AttributeType = AttributeType;
+	AttributeContainer.Emplace(NewAttribute);
+}
+
+void UFireflyAttributeManagerComponent::ConstructAttributeByType(EFireflyAttributeType AttributeType)
+{
+	FString NewAttributeName = *GetAttributeTypeName(AttributeType) + FString("_") + (TEXT("%s"), GetOwner()->GetName());
+	UFireflyAttribute* NewAttribute = NewObject<UFireflyAttribute>(this, *NewAttributeName);
+	NewAttribute->AttributeType = AttributeType;
+	AttributeContainer.Emplace(NewAttribute);
+}
+
+void UFireflyAttributeManagerComponent::InitializeAttribute(EFireflyAttributeType AttributeType, float NewInitValue)
+{
+	UFireflyAttribute* AttributeToInit = GetAttributeByType(AttributeType);
+	if (!IsValid(AttributeToInit))
+	{
+		return;
+	}
+
+	AttributeToInit->BaseValue = NewInitValue;
+	AttributeToInit->CurrentValue = NewInitValue;
+}
+
+void UFireflyAttributeManagerComponent::ApplyPlusModifier(EFireflyAttributeType AttributeType, float ModValue)
 {
 	UFireflyAttribute* AttributeToMod = GetAttributeByType(AttributeType);
 	if (!IsValid(AttributeToMod))
@@ -121,7 +125,7 @@ void UFireflyAttributeManagerComponent::ApplyPlusModifierToAttribute(FGameplayTa
 	AttributeToMod->UpdateCurrentValue();
 }
 
-void UFireflyAttributeManagerComponent::RemovePlusModifierFromAttribute(FGameplayTag AttributeType, float ModifierToRemove)
+void UFireflyAttributeManagerComponent::RemovePlusModifier(EFireflyAttributeType AttributeType, float ModifierToRemove)
 {
 	UFireflyAttribute* AttributeToMod = GetAttributeByType(AttributeType);
 	if (!IsValid(AttributeToMod))
@@ -138,7 +142,7 @@ void UFireflyAttributeManagerComponent::RemovePlusModifierFromAttribute(FGamepla
 	AttributeToMod->UpdateCurrentValue();
 }
 
-void UFireflyAttributeManagerComponent::ApplyMinusModifierToAttribute(FGameplayTag AttributeType, float ModValue)
+void UFireflyAttributeManagerComponent::ApplyMinusModifier(EFireflyAttributeType AttributeType, float ModValue)
 {
 	UFireflyAttribute* AttributeToMod = GetAttributeByType(AttributeType);
 	if (!IsValid(AttributeToMod))
@@ -150,7 +154,7 @@ void UFireflyAttributeManagerComponent::ApplyMinusModifierToAttribute(FGameplayT
 	AttributeToMod->UpdateCurrentValue();
 }
 
-void UFireflyAttributeManagerComponent::RemoveMinusModifierFromAttribute(FGameplayTag AttributeType,
+void UFireflyAttributeManagerComponent::RemoveMinusModifier(EFireflyAttributeType AttributeType,
 	float ModifierToRemove)
 {
 	UFireflyAttribute* AttributeToMod = GetAttributeByType(AttributeType);
@@ -168,7 +172,7 @@ void UFireflyAttributeManagerComponent::RemoveMinusModifierFromAttribute(FGamepl
 	AttributeToMod->UpdateCurrentValue();
 }
 
-void UFireflyAttributeManagerComponent::ApplyMultiplyModifierToAttribute(FGameplayTag AttributeType, float ModValue)
+void UFireflyAttributeManagerComponent::ApplyMultiplyModifier(EFireflyAttributeType AttributeType, float ModValue)
 {
 	UFireflyAttribute* AttributeToMod = GetAttributeByType(AttributeType);
 	if (!IsValid(AttributeToMod))
@@ -180,7 +184,7 @@ void UFireflyAttributeManagerComponent::ApplyMultiplyModifierToAttribute(FGamepl
 	AttributeToMod->UpdateCurrentValue();
 }
 
-void UFireflyAttributeManagerComponent::RemoveMultiplyModifierFromAttribute(FGameplayTag AttributeType,
+void UFireflyAttributeManagerComponent::RemoveMultiplyModifier(EFireflyAttributeType AttributeType,
 	float ModifierToRemove)
 {
 	UFireflyAttribute* AttributeToMod = GetAttributeByType(AttributeType);
@@ -198,7 +202,7 @@ void UFireflyAttributeManagerComponent::RemoveMultiplyModifierFromAttribute(FGam
 	AttributeToMod->UpdateCurrentValue();
 }
 
-void UFireflyAttributeManagerComponent::ApplyDivideModifierToAttribute(FGameplayTag AttributeType, float ModValue)
+void UFireflyAttributeManagerComponent::ApplyDivideModifier(EFireflyAttributeType AttributeType, float ModValue)
 {
 	UFireflyAttribute* AttributeToMod = GetAttributeByType(AttributeType);
 	if (!IsValid(AttributeToMod))
@@ -210,7 +214,7 @@ void UFireflyAttributeManagerComponent::ApplyDivideModifierToAttribute(FGameplay
 	AttributeToMod->UpdateCurrentValue();
 }
 
-void UFireflyAttributeManagerComponent::RemoveDivideModifierFromAttribute(FGameplayTag AttributeType,
+void UFireflyAttributeManagerComponent::RemoveDivideModifier(EFireflyAttributeType AttributeType,
 	float ModifierToRemove)
 {
 	UFireflyAttribute* AttributeToMod = GetAttributeByType(AttributeType);
@@ -228,7 +232,7 @@ void UFireflyAttributeManagerComponent::RemoveDivideModifierFromAttribute(FGamep
 	AttributeToMod->UpdateCurrentValue();
 }
 
-void UFireflyAttributeManagerComponent::ApplyInnerOverrideModifierToAttribute(FGameplayTag AttributeType,
+void UFireflyAttributeManagerComponent::ApplyInnerOverrideModifier(EFireflyAttributeType AttributeType,
 	float ModValue)
 {
 	UFireflyAttribute* AttributeToMod = GetAttributeByType(AttributeType);
@@ -241,7 +245,7 @@ void UFireflyAttributeManagerComponent::ApplyInnerOverrideModifierToAttribute(FG
 	AttributeToMod->UpdateCurrentValue();
 }
 
-void UFireflyAttributeManagerComponent::RemoveInnerOverrideModifierFromAttribute(FGameplayTag AttributeType,
+void UFireflyAttributeManagerComponent::RemoveInnerOverrideModifier(EFireflyAttributeType AttributeType,
 	float ModifierToRemove)
 {
 	UFireflyAttribute* AttributeToMod = GetAttributeByType(AttributeType);
@@ -259,7 +263,7 @@ void UFireflyAttributeManagerComponent::RemoveInnerOverrideModifierFromAttribute
 	AttributeToMod->UpdateCurrentValue();
 }
 
-void UFireflyAttributeManagerComponent::ApplyOuterOverrideModifierToAttribute(FGameplayTag AttributeType,
+void UFireflyAttributeManagerComponent::ApplyOuterOverrideModifier(EFireflyAttributeType AttributeType,
 	float ModValue)
 {
 	UFireflyAttribute* AttributeToMod = GetAttributeByType(AttributeType);
@@ -272,7 +276,7 @@ void UFireflyAttributeManagerComponent::ApplyOuterOverrideModifierToAttribute(FG
 	AttributeToMod->UpdateCurrentValue();
 }
 
-void UFireflyAttributeManagerComponent::RemoveOuterOverrideModifierFromAttribute(FGameplayTag AttributeType,
+void UFireflyAttributeManagerComponent::RemoveOuterOverrideModifier(EFireflyAttributeType AttributeType,
 	float ModifierToRemove)
 {
 	UFireflyAttribute* AttributeToMod = GetAttributeByType(AttributeType);
