@@ -19,6 +19,11 @@
 			"Name": "FireflyAbilitySystem",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "FireflyAbilitySystemEditor",
+			"Type": "Editor",
+			"LoadingPhase": "PreDefault"
 		}
 	]
 }

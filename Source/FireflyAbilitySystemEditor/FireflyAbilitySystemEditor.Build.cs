@@ -2,9 +2,9 @@
 
 using UnrealBuildTool;
 
-public class FireflyAbilitySystem : ModuleRules
+public class FireflyAbilitySystemEditor : ModuleRules
 {
-	public FireflyAbilitySystem(ReadOnlyTargetRules Target) : base(Target)
+	public FireflyAbilitySystemEditor(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		
@@ -26,8 +26,7 @@ public class FireflyAbilitySystem : ModuleRules
 			new string[]
 			{
 				"Core",
-                "GameplayTags",
-				// ... add other public dependencies that you statically link with here ...
+                // ... add other public dependencies that you statically link with here ...
 			}
 			);
 			
@@ -39,6 +38,9 @@ public class FireflyAbilitySystem : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
+                "FireflyAbilitySystem",
+                "UnrealEd",
+                "EditorStyle",
                 "DeveloperSettings",
 				// ... add private dependencies that you statically link with here ...	
 			}
