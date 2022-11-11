@@ -16,21 +16,33 @@ UCLASS( ClassGroup=(FireflyAbility), meta=(BlueprintSpawnableComponent) )
 class FIREFLYABILITYSYSTEM_API UFireflyAttributeManagerComponent : public UActorComponent
 {
 	GENERATED_UCLASS_BODY()
-	
+
+#pragma region Override
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-	virtual void OnRegister() override;
+public:
+	// Called every frame
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+#pragma endregion
+
+
+#pragma region Basic
+
+protected:
 	UFireflyAttribute* GetAttributeByType(EFireflyAttributeType AttributeType) const;
 
 	FString GetAttributeTypeName(EFireflyAttributeType AttributeType) const;
 
-public:	
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+protected:
+	/** 属性容器 */
+	UPROPERTY()
+	TArray<UFireflyAttribute*> AttributeContainer;
 
+public:
 	/** 通过属性标签获取一个属性的当前值 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute")
 	float GetAttributeValue(EFireflyAttributeType AttributeType) const;
@@ -50,6 +62,11 @@ public:
 	/** 初始化属性值 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
 	void InitializeAttribute(EFireflyAttributeType AttributeType, float NewInitValue);
+
+#pragma endregion
+
+
+#pragma region Modifier
 
 	/** 添加加法修改器 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
@@ -99,8 +116,5 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
 	void RemoveOuterOverrideModifier(EFireflyAttributeType AttributeType, float ModifierToRemove);
 
-protected:
-	/** 属性容器 */
-	UPROPERTY()
-	TArray<UFireflyAttribute*> AttributeContainer;
+#pragma endregion
 };

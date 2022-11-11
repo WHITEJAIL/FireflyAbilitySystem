@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Engine/DataTable.h"
 #include "FireflyAbilitySystemTypes.generated.h"
 
 /** 个人技能系统的属性枚举，在项目设置中定义DisplayName */

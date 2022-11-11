@@ -21,9 +21,10 @@ void UFireflyAttributeManagerComponent::BeginPlay()
 	Super::BeginPlay();
 }
 
-void UFireflyAttributeManagerComponent::OnRegister()
+// Called every frame
+void UFireflyAttributeManagerComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
-	Super::OnRegister();
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
 UFireflyAttribute* UFireflyAttributeManagerComponent::GetAttributeByType(EFireflyAttributeType AttributeType) const
@@ -47,12 +48,6 @@ FString UFireflyAttributeManagerComponent::GetAttributeTypeName(EFireflyAttribut
 	if (!EnumPtr) return FString("Invalid");
 
 	return EnumPtr != nullptr ? EnumPtr->GetDisplayNameTextByValue(AttributeType).ToString() : FString("Invalid");
-}
-
-// Called every frame
-void UFireflyAttributeManagerComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
 float UFireflyAttributeManagerComponent::GetAttributeValue(EFireflyAttributeType AttributeType) const
