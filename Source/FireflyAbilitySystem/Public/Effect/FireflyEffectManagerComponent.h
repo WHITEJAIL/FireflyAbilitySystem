@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -6,7 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "FireflyEffectManagerComponent.generated.h"
 
-
+/** 效果管理器组件 */
 UCLASS( ClassGroup=(FireflyAbility), meta=(BlueprintSpawnableComponent) )
 class FIREFLYABILITYSYSTEM_API UFireflyEffectManagerComponent : public UActorComponent
 {

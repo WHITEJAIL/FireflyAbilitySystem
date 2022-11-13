@@ -1,27 +1,65 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Ability/FireflyAbility.h"
+
+#include "Ability/FireflyAbilityManagerComponent.h"
 
 UFireflyAbility::UFireflyAbility(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 }
 
-void UFireflyAbility::StartAbility()
+UWorld* UFireflyAbility::GetWorld() const
 {
-	OnAbilityStarted.Broadcast();
-	ReceiveStartAbility();
+	if (AActor* OwnerActor = GetOwnerActor())
+	{
+		return OwnerActor->GetWorld();
+	}
+
+	return nullptr;
+}
+
+AActor* UFireflyAbility::GetOwnerActor() const
+{
+	if (!IsValid(GetOwnerManager()))
+	{
+		return nullptr;
+	}
+
+	return GetOwnerManager()->GetOwner();
+}
+
+UFireflyAbilityManagerComponent* UFireflyAbility::GetOwnerManager() const
+{
+	if (!IsValid(GetOuter()))
+	{
+		return nullptr;
+	}
+
+	return Cast<UFireflyAbilityManagerComponent>(GetOuter());
+}
+
+void UFireflyAbility::ActivateAbility()
+{
+	IsActivating = true;
+
+	OnAbilityActivated.Broadcast();
+	ReceiveActivateAbility();
 }
 
 void UFireflyAbility::EndAbility()
 {
+	IsActivating = false;
+
 	OnAbilityEnded.Broadcast();
 	ReceiveEndAbility(false);
 }
 
 void UFireflyAbility::CancelAbility()
 {
+	IsActivating = false;
+
 	OnAbilityEnded.Broadcast();
 	OnAbilityCanceled.Broadcast();
 	ReceiveEndAbility(true);
@@ -72,4 +110,13 @@ bool UFireflyAbility::CommitAbilityCooldown()
 bool UFireflyAbility::CommitAbility()
 {
 	return CommitAbilityCost() && CommitAbilityCooldown();
+}
+
+void UFireflyAbility::ExecuteTagRequirementOnActivated()
+{	
+}
+
+bool UFireflyAbility::CanActivateAbility_Implementation() const
+{
+	return true;
 }

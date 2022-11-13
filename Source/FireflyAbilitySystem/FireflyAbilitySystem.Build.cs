@@ -27,7 +27,7 @@ public class FireflyAbilitySystem : ModuleRules
 			{
 				"Core",
                 "GameplayTags",
-				// ... add other public dependencies that you statically link with here ...
+                // ... add other public dependencies that you statically link with here ...
 			}
 			);
 			
@@ -40,6 +40,7 @@ public class FireflyAbilitySystem : ModuleRules
 				"Slate",
 				"SlateCore",
                 "DeveloperSettings",
+                "EnhancedInput",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

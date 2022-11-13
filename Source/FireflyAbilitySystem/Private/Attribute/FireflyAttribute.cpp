@@ -12,6 +12,16 @@ UFireflyAttribute::UFireflyAttribute(const FObjectInitializer& ObjectInitializer
 	AttributeType = EFireflyAttributeType::AttributeType_Default;
 }
 
+UWorld* UFireflyAttribute::GetWorld() const
+{
+	if (AActor* OwnerActor = GetOwnerActor())
+	{
+		return OwnerActor->GetWorld();
+	}
+
+	return nullptr;
+}
+
 float UFireflyAttribute::GetCurrentValue() const
 {
 	return CurrentValue;
@@ -20,6 +30,62 @@ float UFireflyAttribute::GetCurrentValue() const
 float UFireflyAttribute::GetBaseValueToUse() const
 {
 	return InnerOverrideMods.IsValidIndex(0) ? InnerOverrideMods[0] : BaseValue;
+}
+
+AActor* UFireflyAttribute::GetOwnerActor() const
+{
+	if (!IsValid(GetOwnerManager()))
+	{
+		return nullptr;
+	}
+
+	return GetOwnerManager()->GetOwner();
+}
+
+UFireflyAttributeManagerComponent* UFireflyAttribute::GetOwnerManager() const
+{
+	if (!IsValid(GetOuter()))
+	{
+		return nullptr;
+	}
+
+	return Cast<UFireflyAttributeManagerComponent>(GetOuter());
+}
+
+void UFireflyAttribute::Initialize(float InitValue)
+{
+	float OldValue = 0.f;
+
+	OldValue = BaseValue;
+	BaseValue = InitValue;
+	OnAttributeValueChanged.Broadcast(AttributeType, OldValue, CurrentValue);
+
+	OldValue = CurrentValue;
+	CurrentValue = InitValue;
+	OnAttributeBaseValueChanged.Broadcast(AttributeType, OldValue, CurrentValue);
+}
+
+void UFireflyAttribute::UpdateCurrentValue_Implementation()
+{
+	float ResultValue = 0.f;
+	const float OldValue = CurrentValue;
+
+	if (GetNewestOuterOverrideModifier(ResultValue))
+	{
+		CurrentValue = ResultValue;
+		OnAttributeValueChanged.Broadcast(AttributeType, OldValue, CurrentValue);
+		return;
+	}
+
+	float TotalPlusMod = GetTotalPlusModifier();
+	float TotalMinusMod = GetTotalMinusModifier();
+	float TotalMultiplyMod = GetTotalMultiplyModifier();
+	float TotalDivideMod = GetTotalDivideModifier();
+
+	float BaseValueToUse = GetBaseValueToUse();
+
+	CurrentValue = (BaseValueToUse + TotalPlusMod - TotalMinusMod) * (1.f + TotalMultiplyMod) / TotalDivideMod;
+	OnAttributeValueChanged.Broadcast(AttributeType, OldValue, CurrentValue);
 }
 
 float UFireflyAttribute::GetTotalPlusModifier() const
@@ -76,49 +142,4 @@ bool UFireflyAttribute::GetNewestOuterOverrideModifier(float& NewestValue) const
 	}
 
 	return false;
-}
-
-AActor* UFireflyAttribute::GetOwnerActor() const
-{
-	if (!IsValid(GetOwnerManager()))
-	{
-		return nullptr;
-	}
-
-	return GetOwnerManager()->GetOwner();
-}
-
-UFireflyAttributeManagerComponent* UFireflyAttribute::GetOwnerManager() const
-{
-	if (!IsValid(GetOuter()))
-	{
-		return nullptr;
-	}
-
-	return Cast<UFireflyAttributeManagerComponent>(GetOuter());	
-}
-
-void UFireflyAttribute::Initialize(float InitValue)
-{
-	BaseValue = InitValue;
-	CurrentValue = InitValue;
-}
-
-void UFireflyAttribute::UpdateCurrentValue_Implementation()
-{
-	float ResultValue = 0.f;
-	if (GetNewestOuterOverrideModifier(ResultValue))
-	{
-		CurrentValue = ResultValue;
-		return;
-	}
-
-	float TotalPlusMod = GetTotalPlusModifier();
-	float TotalMinusMod = GetTotalMinusModifier();
-	float TotalMultiplyMod = GetTotalMultiplyModifier();
-	float TotalDivideMod = GetTotalDivideModifier();
-
-	float BaseValueToUse = GetBaseValueToUse();
-
-	CurrentValue = (BaseValueToUse + TotalPlusMod - TotalMinusMod) * (1.f + TotalMultiplyMod) / TotalDivideMod;
 }
