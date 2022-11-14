@@ -4,6 +4,7 @@
 #include "Ability/FireflyAbilityManagerComponent.h"
 
 #include "Ability/FireflyAbility.h"
+#include "EnhancedInputComponent.h"
 
 // Sets default values for this component's properties
 UFireflyAbilityManagerComponent::UFireflyAbilityManagerComponent(const FObjectInitializer& ObjectInitializer)
@@ -35,6 +36,21 @@ void UFireflyAbilityManagerComponent::TickComponent(float DeltaTime, ELevelTick 
 	// ...
 }
 
+UFireflyAbility* UFireflyAbilityManagerComponent::GetAbilityByClass(TSubclassOf<UFireflyAbility> AbilityType) const
+{
+	UFireflyAbility* OutAbility = nullptr;
+	for (auto Ability : GrantedAbilities)
+	{
+		if (Ability->GetClass() == AbilityType)
+		{
+			OutAbility = Ability;
+			break;
+		}
+	}
+
+	return OutAbility;
+}
+
 void UFireflyAbilityManagerComponent::GrantAbility(TSubclassOf<UFireflyAbility> AbilityToGrant)
 {
 	if (!IsValid(AbilityToGrant))
@@ -42,16 +58,7 @@ void UFireflyAbilityManagerComponent::GrantAbility(TSubclassOf<UFireflyAbility> 
 		return;
 	}
 
-	bool bAlreadyGranted = false;
-	for (auto OtherAbility : GrantedAbilities)
-	{
-		if (OtherAbility->GetClass() == AbilityToGrant)
-		{
-			bAlreadyGranted = true;
-			break;
-		}
-	}
-	if (bAlreadyGranted)
+	if (IsValid(GetAbilityByClass(AbilityToGrant)))
 	{
 		return;
 	}
@@ -69,16 +76,8 @@ void UFireflyAbilityManagerComponent::RemoveAbility(TSubclassOf<UFireflyAbility>
 		return;
 	}
 
-	UFireflyAbility* Ability = nullptr;
-	for (auto OtherAbility : GrantedAbilities)
-	{
-		if (OtherAbility->GetClass() == AbilityToRemove)
-		{
-			Ability = OtherAbility;
-			break;
-		}
-	}
-	if (!Ability)
+	UFireflyAbility* Ability = GetAbilityByClass(AbilityToRemove);
+	if (!IsValid(Ability))
 	{
 		return;
 	}
@@ -98,16 +97,8 @@ void UFireflyAbilityManagerComponent::RemoveAbilityOnEnded(TSubclassOf<UFireflyA
 		return;
 	}
 
-	UFireflyAbility* Ability = nullptr;
-	for (auto OtherAbility : GrantedAbilities)
-	{
-		if (OtherAbility->GetClass() == AbilityToRemove)
-		{
-			Ability = OtherAbility;
-			break;
-		}
-	}
-	if (!Ability)
+	UFireflyAbility* Ability = GetAbilityByClass(AbilityToRemove);
+	if (!IsValid(Ability))
 	{
 		return;
 	}
@@ -130,14 +121,10 @@ bool UFireflyAbilityManagerComponent::TryActivateAbilityByClass(TSubclassOf<UFir
 		return false;
 	}
 
-	UFireflyAbility* Ability = nullptr;
-	for (auto OtherAbility : GrantedAbilities)
+	UFireflyAbility* Ability = GetAbilityByClass(AbilityToActivate);
+	if (!IsValid(Ability))
 	{
-		if (OtherAbility->GetClass() == AbilityToActivate)
-		{
-			Ability = OtherAbility;
-			break;
-		}
+		return false;
 	}
 	if (!Ability)
 	{
@@ -147,5 +134,79 @@ bool UFireflyAbilityManagerComponent::TryActivateAbilityByClass(TSubclassOf<UFir
 	Ability->ActivateAbility();
 
 	ActivatedAbility = Ability;
-	return false;
+	return true;
+}
+
+UEnhancedInputComponent* UFireflyAbilityManagerComponent::GetEnhancedInputComponentFromOwner() const
+{
+	if (!IsValid(GetOwner()))
+	{
+		return nullptr;
+	}
+
+	APawn* PawnOwner = Cast<APawn>(GetOwner());
+	if (!IsValid(PawnOwner))
+	{
+		return nullptr;
+	}
+
+	if (!IsValid(PawnOwner->InputComponent))
+	{
+		return nullptr;
+	}
+
+	return Cast<UEnhancedInputComponent>(PawnOwner->InputComponent);
+}
+
+void UFireflyAbilityManagerComponent::AbilityBindToInput(TSubclassOf<UFireflyAbility> AbilityToBind,
+                                                         UInputAction* InputToBind)
+{
+	if (!IsValid(InputToBind) || !IsValid(AbilityToBind))
+	{
+		return;
+	}
+
+	UEnhancedInputComponent* EnhancedInput = GetEnhancedInputComponentFromOwner();
+	if (!IsValid(EnhancedInput))
+	{
+		return;
+	}
+
+	UFireflyAbility* Ability = GetAbilityByClass(AbilityToBind);
+	if (!IsValid(Ability))
+	{
+		return;
+	}
+
+	/*EnhancedInput->BindAction(InputToBind, ETriggerEvent::Started, this,
+		&UFireflyAbilityManagerComponent::OnAbilityInputStarted).GetHandle();
+	EnhancedInput->BindAction(InputToBind, ETriggerEvent::Ongoing, this,
+		&UFireflyAbilityManagerComponent::OnAbilityInputOngoing).GetHandle();
+	EnhancedInput->BindAction(InputToBind, ETriggerEvent::Canceled, this, 
+		&UFireflyAbilityManagerComponent::OnAbilityInputCanceled).GetHandle();
+	EnhancedInput->BindAction(InputToBind, ETriggerEvent::Triggered, this,
+		&UFireflyAbilityManagerComponent::OnAbilityInputTriggered).GetHandle();
+	EnhancedInput->BindAction(InputToBind, ETriggerEvent::Completed, this,
+		&UFireflyAbilityManagerComponent::OnAbilityInputCompleted).GetHandle();*/
+}
+
+void UFireflyAbilityManagerComponent::AbilityUnbindWithInput(TSubclassOf<UFireflyAbility> AbilityToUnbind,
+	UInputAction* InputToUnbind)
+{
+	if (!IsValid(InputToUnbind) || !IsValid(AbilityToUnbind))
+	{
+		return;
+	}
+
+	UEnhancedInputComponent* EnhancedInput = GetEnhancedInputComponentFromOwner();
+	if (!IsValid(EnhancedInput))
+	{
+		return;
+	}
+
+	UFireflyAbility* Ability = GetAbilityByClass(AbilityToUnbind);
+	if (!IsValid(Ability))
+	{
+		return;
+	}
 }

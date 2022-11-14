@@ -54,11 +54,11 @@ protected:
 #pragma region Execution
 
 protected:
-	/** 激活执行技能 */
+	/** 激活技能 */
 	UFUNCTION()
 	virtual void ActivateAbility();
 
-	/** 蓝图端的技能激活时执行的逻辑 */
+	/** 蓝图端的技能激活时的逻辑 */
 	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability", Meta = (DisplayName = "Actiavate Ability"))
 	void ReceiveActivateAbility();
 
@@ -75,7 +75,7 @@ protected:
 	void ReceiveEndAbility(bool bWasCanceled);	
 
 protected:
-	/** 技能开始时触发的代理 */
+	/** 技能激活时触发的代理 */
 	UPROPERTY(BlueprintAssignable, Category = "FireflyAbilitySystem|Ability")
 	FAbilityExecutionDelegate OnAbilityActivated;
 
@@ -140,7 +140,7 @@ protected:
 #pragma region Requirement
 
 protected:
-	/** 是否可激活执行技能 */
+	/** 是否可激活技能 */
 	UFUNCTION(BlueprintNativeEvent, Category = "FireflyAbilitySystem|Ability")
 	bool CanActivateAbility() const;
 
