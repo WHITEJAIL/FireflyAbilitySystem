@@ -40,6 +40,10 @@ UFireflyAbilityManagerComponent* UFireflyAbility::GetOwnerManager() const
 	return Cast<UFireflyAbilityManagerComponent>(GetOuter());
 }
 
+void UFireflyAbility::OnAbilityGranted_Implementation()
+{
+}
+
 void UFireflyAbility::ActivateAbility()
 {
 	IsActivating = true;

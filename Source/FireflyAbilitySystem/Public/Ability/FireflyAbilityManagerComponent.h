@@ -28,12 +28,24 @@ public:
 #pragma endregion
 
 
-#pragma region Management
+#pragma region Granting
 
 public:
 	/** 获取该技能管理器被赋予的所有技能 */
 	UFUNCTION()
 	FORCEINLINE TArray<UFireflyAbility*> GetGrantedAbilities() const { return GrantedAbilities; }
+
+	/** 为技能管理器赋予一个技能 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
+	virtual void GrantAbility(TSubclassOf<UFireflyAbility> AbilityToGrant);
+
+	/** 从技能管理器中移除一个技能 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
+	virtual void RemoveAbility(TSubclassOf<UFireflyAbility> AbilityToRemove);
+
+	/** 从技能管理器中移除一个技能 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
+	virtual void RemoveAbilityOnEnded(TSubclassOf<UFireflyAbility> AbilityToRemove);
 
 protected:
 	/** 技能管理器被赋予的技能 */
@@ -43,7 +55,18 @@ protected:
 #pragma endregion
 
 
+#pragma region Execution
+
+public:
+	/** 尝试激活并执行技能逻辑 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
+	virtual bool TryActivateAbilityByClass(TSubclassOf<UFireflyAbility> AbilityToActivate, UFireflyAbility*& ActivatedAbility);
+
+#pragma endregion
+
+
 #pragma region Requirement
+
 public:
 	/** 获取该技能管理器被赋予的所有技能 */
 	UFUNCTION()

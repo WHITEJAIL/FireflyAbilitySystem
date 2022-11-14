@@ -24,14 +24,29 @@ public:
 
 protected:
 	/** 获取技能所属的管理器的拥有者 */
-	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute", Meta = (BlueprintProtected = "true"))
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
 	FORCEINLINE AActor* GetOwnerActor() const;
 
 	/** 获取技能所属的管理器组件 */
-	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute", Meta = (BlueprintProtected = "true"))
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
 	FORCEINLINE UFireflyAbilityManagerComponent* GetOwnerManager() const;
 
 	friend class UFireflyAbilityManagerComponent;
+
+#pragma endregion
+
+
+#pragma region Granting
+
+protected:
+	/**当技能被赋予时执行的函数，可以理解为技能的构造函数*/
+	UFUNCTION(BlueprintNativeEvent, Category = "FireflyAbilitySystem|Ability")
+	void OnAbilityGranted();
+
+protected:
+	/** 标识该技能是否应该在某次执行结束后从技能管理器上移除 */
+	UPROPERTY()
+	bool bRemoveOnEndedExecution = false;
 
 #pragma endregion
 
