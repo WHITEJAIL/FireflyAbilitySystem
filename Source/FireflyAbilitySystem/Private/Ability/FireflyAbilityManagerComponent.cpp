@@ -113,30 +113,34 @@ void UFireflyAbilityManagerComponent::RemoveAbilityOnEnded(TSubclassOf<UFireflyA
 	}
 }
 
-bool UFireflyAbilityManagerComponent::TryActivateAbilityByClass(TSubclassOf<UFireflyAbility> AbilityToActivate, UFireflyAbility*& ActivatedAbility)
+UFireflyAbility* UFireflyAbilityManagerComponent::TryActivateAbilityByClass(TSubclassOf<UFireflyAbility> AbilityToActivate)
 {
 	if (!IsValid(AbilityToActivate))
 	{
-		return false;
+		return nullptr;
 	}
 
 	UFireflyAbility* Ability = GetAbilityByClass(AbilityToActivate);
 	if (!IsValid(Ability))
 	{
-		return false;
+		return nullptr;
 	}
 	if (!Ability)
 	{
-		return false;
+		return nullptr;
 	}
 
 	if (!Ability->CanActivateAbility())
 	{
-		return false;
+		return nullptr;
 	}
 
 	Ability->ActivateAbility();
+	ActivatingAbilities.Emplace(Ability);
+	return Ability;
+}
 
-	ActivatedAbility = Ability;
-	return true;
+void UFireflyAbilityManagerComponent::OnAbilityEndActivation(UFireflyAbility* AbilityJustEnded)
+{
+	ActivatingAbilities.RemoveSingleSwap(AbilityJustEnded);
 }

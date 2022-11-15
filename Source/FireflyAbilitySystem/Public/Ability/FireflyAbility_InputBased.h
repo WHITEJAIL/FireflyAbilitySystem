@@ -23,8 +23,8 @@ public:
 	virtual bool CanActivateAbility() const override;
 
 protected:
-	/** 该技能的激活需要的正在执行的技能 */
-	UPROPERTY(EditDefaultsOnly, Category = "FireflyAbilitySystem|Ability")
+	/** 该技能的激活需要的正在执行的技能，数组中有一个技能正在激活，都可以让该技能激活 */
+	UPROPERTY(EditDefaultsOnly, Category = "ActivationRequirement|AbilityRequired")
 	TArray<TSubclassOf<UFireflyAbility>> RequiredActivatingAbilities;
 
 #pragma endregion
@@ -102,6 +102,10 @@ protected:
 	/** 输入事件句柄：完成 */
 	UPROPERTY()
 	uint32 HandleCompleted = -1;
+
+	/** 是否在输入事件Triggered时激活技能，如为false，则默认在输入事件Started时激活技能 */
+	UPROPERTY(EditDefaultsOnly, Category = "Input Activation")
+	bool bActivateOnTriggered = false;
 
 #pragma endregion
 	

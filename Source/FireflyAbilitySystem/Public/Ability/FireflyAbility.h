@@ -150,34 +150,38 @@ protected:
 
 	bool bHasBlueprintCanActivate;
 
-	/** 当技能执行时，检测和该技能Tag存在需求关系的其他技能的可执行情况 */
+	/** 当技能激活时，执行该技能的Tag需求关系管理 */
 	UFUNCTION()
 	void ExecuteTagRequirementOnActivated();
 
+	/** 当技能激活时，执行该技能的Tag需求关系管理 */
+	UFUNCTION()
+	void ExecuteTagRequirementOnEnded();
+
 protected:
 	/** 为该做特殊技能资产标记的Tags */
-	UPROPERTY(EditDefaultsOnly, Category = "Activation Requirement")
+	UPROPERTY(EditDefaultsOnly, Category = "ActivationRequirement|TagRequired")
 	FGameplayTagContainer TagsForAbilityAsset;
 
 	/** 该技能的激活执行会取消带有这些资产标记Tags的技能的执行 */
-	UPROPERTY(EditDefaultsOnly, Category = "Activation Requirement")
+	UPROPERTY(EditDefaultsOnly, Category = "ActivationRequirement|TagRequired")
 	FGameplayTagContainer TagsOfAbilitiesWillBeCanceledOnActivated;
 
 	/** 该技能的激活执行会阻断带有这些资产标记Tags的技能的执行 */
-	UPROPERTY(EditDefaultsOnly, Category = "Activation Requirement")
+	UPROPERTY(EditDefaultsOnly, Category = "ActivationRequirement|TagRequired")
 	FGameplayTagContainer TagsOfAbilitiesWillNotBeActivatedOnActivated;
 
-	/** 该技能激活执行会为技能管理器添加如下Tags */
-	UPROPERTY(EditDefaultsOnly, Category = "Activation Requirement")
-	FGameplayTagContainer TagsApplyToManagerOnActivated;
+	/** 该技能激活执行会为Owner添加如下Tags */
+	UPROPERTY(EditDefaultsOnly, Category = "ActivationRequirement|TagRequired")
+	FGameplayTagContainer TagsApplyToOwnerOnActivated;
 
 	/** 该技能激活执行需要技能管理器含有如下Tags */
-	UPROPERTY(EditDefaultsOnly, Category = "Activation Requirement")
-	FGameplayTagContainer TagsRequireManagerHasForActivation;
+	UPROPERTY(EditDefaultsOnly, Category = "ActivationRequirement|TagRequired")
+	FGameplayTagContainer TagsRequireOwnerHasForActivation;
 
 	/** 该技能激活执行期望技能管理器不含如下Tags */
-	UPROPERTY(EditDefaultsOnly, Category = "Activation Requirement")
-	FGameplayTagContainer TagsBlockActivationOnManagerHas;
+	UPROPERTY(EditDefaultsOnly, Category = "ActivationRequirement|TagRequired")
+	FGameplayTagContainer TagsBlockActivationOnOwnerHas;
 
 #pragma endregion
 	

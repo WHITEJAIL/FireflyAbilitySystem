@@ -33,7 +33,7 @@ struct FFireflyAbilitiesBoundToInput
 };
 
 /** 玩家技能管理器组件，主要包含输入绑定 */
-UCLASS( ClassGroup = (FireflyAbility), meta = (BlueprintSpawnableComponent) )
+UCLASS( ClassGroup = (FireflyAbilitySystem), meta = (BlueprintSpawnableComponent) )
 class FIREFLYABILITYSYSTEM_API UFireflyPlayerAbilityManagerComponent : public UFireflyAbilityManagerComponent
 {
 	GENERATED_UCLASS_BODY()

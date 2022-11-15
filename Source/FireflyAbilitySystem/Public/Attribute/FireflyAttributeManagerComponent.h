@@ -12,7 +12,7 @@ enum EFireflyAttributeType;
 class UFireflyAttribute;
 
 /** 属性管理器组件 */
-UCLASS( ClassGroup=(FireflyAbility), meta=(BlueprintSpawnableComponent) )
+UCLASS( ClassGroup = (FireflyAbilitySystem), meta = (BlueprintSpawnableComponent) )
 class FIREFLYABILITYSYSTEM_API UFireflyAttributeManagerComponent : public UActorComponent
 {
 	GENERATED_UCLASS_BODY()

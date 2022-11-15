@@ -4,6 +4,7 @@
 #include "Ability/FireflyAbility_InputBased.h"
 
 #include "EnhancedInputComponent.h"
+#include "Ability/FireflyAbilityManagerComponent.h"
 
 UFireflyAbility_InputBased::UFireflyAbility_InputBased(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -12,7 +13,22 @@ UFireflyAbility_InputBased::UFireflyAbility_InputBased(const FObjectInitializer&
 
 bool UFireflyAbility_InputBased::CanActivateAbility() const
 {
-	return Super::CanActivateAbility();
+	if (RequiredActivatingAbilities.Num() == 0)
+	{
+		return Super::CanActivateAbility();
+	}
+
+	bool bHasRequiredActivatingAbility = false;
+	for (auto OtherAbility : GetOwnerManager()->GetActivatingAbilities())
+	{
+		if (RequiredActivatingAbilities.Contains(OtherAbility->GetClass()))
+		{
+			bHasRequiredActivatingAbility = true;
+			break;
+		}
+	}
+
+	return bHasRequiredActivatingAbility && Super::CanActivateAbility();
 }
 
 void UFireflyAbility_InputBased::BindToInput(UEnhancedInputComponent* EnhancedInput, UInputAction* InputToBind)
@@ -42,11 +58,12 @@ void UFireflyAbility_InputBased::UnbindWithInput(UEnhancedInputComponent* Enhanc
 
 void UFireflyAbility_InputBased::OnAbilityInputStarted()
 {
-	if (!bIsActivating)
+	if (bActivateOnTriggered)
 	{
-		ActivateAbility();
+		return;
 	}
 
+	GetOwnerManager()->TryActivateAbilityByClass(GetClass());
 	ReceiveOnAbilityInputStarted();
 }
 
@@ -72,12 +89,20 @@ void UFireflyAbility_InputBased::OnAbilityInputCanceled()
 
 void UFireflyAbility_InputBased::OnAbilityInputTriggered()
 {
+	if (bActivateOnTriggered)
+	{
+		GetOwnerManager()->TryActivateAbilityByClass(GetClass());
+		ReceiveOnAbilityInputTriggered();
+
+		return;
+	}
+
 	if (!bIsActivating)
 	{
 		return;
 	}
 
-	ReceiveOnAbilityInputTriggered();
+	ReceiveOnAbilityInputCanceled();
 }
 
 void UFireflyAbility_InputBased::OnAbilityInputCompleted()

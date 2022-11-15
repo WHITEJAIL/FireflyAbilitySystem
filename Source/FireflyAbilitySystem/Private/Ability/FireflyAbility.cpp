@@ -3,6 +3,7 @@
 
 #include "Ability/FireflyAbility.h"
 
+#include "FireflyTagManagerComponent.h"
 #include "Ability/FireflyAbilityManagerComponent.h"
 
 UFireflyAbility::UFireflyAbility(const FObjectInitializer& ObjectInitializer)
@@ -57,6 +58,11 @@ void UFireflyAbility::OnAbilityGranted_Implementation()
 
 void UFireflyAbility::ActivateAbility()
 {
+	if (bIsActivating)
+	{
+		return;
+	}
+
 	bIsActivating = true;
 
 	OnAbilityActivated.Broadcast();
@@ -65,16 +71,24 @@ void UFireflyAbility::ActivateAbility()
 
 void UFireflyAbility::EndAbility()
 {
+	if (!bIsActivating)
+	{
+		return;		
+	}
+	
 	bIsActivating = false;
-
 	OnAbilityEnded.Broadcast();
 	ReceiveEndAbility(false);
 }
 
 void UFireflyAbility::CancelAbility()
 {
-	bIsActivating = false;
+	if (!bIsActivating)
+	{
+		return;
+	}
 
+	bIsActivating = false;
 	OnAbilityEnded.Broadcast();
 	OnAbilityCanceled.Broadcast();
 	ReceiveEndAbility(true);
@@ -128,10 +142,76 @@ bool UFireflyAbility::CommitAbility()
 }
 
 void UFireflyAbility::ExecuteTagRequirementOnActivated()
-{	
+{
+	if (!IsValid(GetOwnerActor()))
+	{
+		return;
+	}
+
+	if (!IsValid(GetOwnerActor()->GetComponentByClass(UFireflyTagManagerComponent::StaticClass())))
+	{
+		return;
+	}
+
+	UFireflyTagManagerComponent* TagManager = Cast<UFireflyTagManagerComponent>(GetOwnerActor()->GetComponentByClass(
+		UFireflyTagManagerComponent::StaticClass()));
+
+	TArray<FGameplayTag> TagsToAdd;
+	TagsApplyToOwnerOnActivated.GetGameplayTagArray(TagsToAdd);
+	for (auto Tag : TagsToAdd)
+	{
+		TagManager->AddTagToManager(Tag, 1);
+	}
+}
+
+void UFireflyAbility::ExecuteTagRequirementOnEnded()
+{
+	if (!IsValid(GetOwnerActor()))
+	{
+		return;
+	}
+
+	if (!IsValid(GetOwnerActor()->GetComponentByClass(UFireflyTagManagerComponent::StaticClass())))
+	{
+		return;
+	}
+
+	UFireflyTagManagerComponent* TagManager = Cast<UFireflyTagManagerComponent>(GetOwnerActor()->GetComponentByClass(
+		UFireflyTagManagerComponent::StaticClass()));
+
+	TArray<FGameplayTag> TagsToRemove;
+	TagsApplyToOwnerOnActivated.GetGameplayTagArray(TagsToRemove);
+	for (auto Tag : TagsToRemove)
+	{
+		TagManager->RemoveTagFromManager(Tag, 1);
+	}
 }
 
 bool UFireflyAbility::CanActivateAbility() const
 {
-	return bHasBlueprintCanActivate ? ReceiveCanActivateAbility() : true;
+	if (!IsValid(GetOwnerActor()))
+	{
+		return false;
+	}
+
+	if (!IsValid(GetOwnerActor()->GetComponentByClass(UFireflyTagManagerComponent::StaticClass())))
+	{
+		return false;
+	}
+
+	UFireflyTagManagerComponent* TagManager = Cast<UFireflyTagManagerComponent>(GetOwnerActor()->GetComponentByClass(
+		UFireflyTagManagerComponent::StaticClass()));
+
+	FGameplayTagContainer OwnerTags = TagManager->GetContainedTags();
+
+	bool bOwnerHasRequiredTags = OwnerTags.HasAll(TagsRequireOwnerHasForActivation);
+	bool bOwnerHasBlockTags = OwnerTags.HasAnyExact(TagsBlockActivationOnOwnerHas);
+
+	bool bBlueprintCanActivate = true;
+	if (bHasBlueprintCanActivate)
+	{
+		bBlueprintCanActivate = ReceiveCanActivateAbility();
+	}
+
+	return bBlueprintCanActivate && bOwnerHasRequiredTags && !bOwnerHasBlockTags && !bIsActivating;
 }

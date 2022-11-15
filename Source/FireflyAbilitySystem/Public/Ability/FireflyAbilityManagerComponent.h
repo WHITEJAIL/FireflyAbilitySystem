@@ -10,7 +10,7 @@
 class UFireflyAbility;
 
 /** 技能管理器组件 */
-UCLASS( ClassGroup=(FireflyAbility), meta=(BlueprintSpawnableComponent) )
+UCLASS( ClassGroup = (FireflyAbilitySystem), meta = (BlueprintSpawnableComponent) )
 class FIREFLYABILITYSYSTEM_API UFireflyAbilityManagerComponent : public UActorComponent
 {
 	GENERATED_UCLASS_BODY()
@@ -64,7 +64,20 @@ protected:
 public:
 	/** 尝试激活并执行技能逻辑 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
-	virtual bool TryActivateAbilityByClass(TSubclassOf<UFireflyAbility> AbilityToActivate, UFireflyAbility*& ActivatedAbility);
+	virtual UFireflyAbility* TryActivateAbilityByClass(TSubclassOf<UFireflyAbility> AbilityToActivate);
+
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability")
+	FORCEINLINE TArray<UFireflyAbility*> GetActivatingAbilities() const { return ActivatingAbilities; }
+
+protected:
+	/** 某个技能结束执行时执行的函数 */
+	UFUNCTION()
+	virtual void OnAbilityEndActivation(UFireflyAbility* AbilityJustEnded);
+
+protected:
+	/** 所有激活中的正在运行的技能 */
+	UPROPERTY()
+	TArray<UFireflyAbility*> ActivatingAbilities;
 
 #pragma endregion
 
