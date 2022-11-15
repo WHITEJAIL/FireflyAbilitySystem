@@ -39,7 +39,7 @@ protected:
 #pragma region Granting
 
 protected:
-	/**当技能被赋予时执行的函数，可以理解为技能的构造函数*/
+	/**当技能被赋予时执行的函数，可以理解为技能的运行时构造函数*/
 	UFUNCTION(BlueprintNativeEvent, Category = "FireflyAbilitySystem|Ability")
 	void OnAbilityGranted();
 
@@ -89,7 +89,7 @@ protected:
 
 	/** 该技能是否处于激活状态 */
 	UPROPERTY()
-	bool IsActivating = false;
+	bool bIsActivating = false;
 
 #pragma endregion
 
@@ -141,8 +141,14 @@ protected:
 
 protected:
 	/** 是否可激活技能 */
-	UFUNCTION(BlueprintNativeEvent, Category = "FireflyAbilitySystem|Ability")
-	bool CanActivateAbility() const;
+	UFUNCTION()
+	virtual bool CanActivateAbility() const;
+
+	/** 蓝图端的是否可激活技能 */
+	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true", DisplayName = "Can Activate Ability"))
+	bool ReceiveCanActivateAbility() const;
+
+	bool bHasBlueprintCanActivate;
 
 	/** 当技能执行时，检测和该技能Tag存在需求关系的其他技能的可执行情况 */
 	UFUNCTION()

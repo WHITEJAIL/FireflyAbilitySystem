@@ -7,7 +7,6 @@
 #include "Components/ActorComponent.h"
 #include "FireflyAbilityManagerComponent.generated.h"
 
-class UInputAction;
 class UFireflyAbility;
 
 /** 技能管理器组件 */
@@ -81,40 +80,6 @@ protected:
 	/** 技能管理器携带的所有标签Tags */
 	UPROPERTY()
 	FGameplayTagContainer CarryingGameplayTags;
-
-#pragma endregion
-
-
-#pragma region InputBinding
-
-protected:
-	/** 从组件拥有者身上获取增强输入组件 */
-	UFUNCTION()
-	FORCEINLINE UEnhancedInputComponent* GetEnhancedInputComponentFromOwner() const;
-
-	/*UFUNCTION()
-	void OnAbilityInputStarted(UInputAction* InputAction);
-
-	UFUNCTION()
-	void OnAbilityInputOngoing(UInputAction* InputAction);
-
-	UFUNCTION()
-	void OnAbilityInputCanceled(UInputAction* InputAction);
-
-	UFUNCTION()
-	void OnAbilityInputTriggered(UInputAction* InputAction);
-
-	UFUNCTION()
-	void OnAbilityInputCompleted(UInputAction* InputAction);*/
-
-public:
-	/** 将技能与输入绑定，技能需要存在于技能管理器中，输入也应当有效 */
-	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
-	void AbilityBindToInput(TSubclassOf<UFireflyAbility> AbilityToBind, UInputAction* InputToBind);
-
-	/** 将技能与输入绑定，技能需要存在于技能管理器中，输入也应当有效 */
-	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
-	void AbilityUnbindWithInput(TSubclassOf<UFireflyAbility> AbilityToUnbind, UInputAction* InputToUnbind);
 
 #pragma endregion
 

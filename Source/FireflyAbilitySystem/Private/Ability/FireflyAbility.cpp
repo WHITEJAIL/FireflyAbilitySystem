@@ -8,6 +8,17 @@
 UFireflyAbility::UFireflyAbility(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+	auto ImplementedInBlueprint = [](const UFunction* Func) -> bool
+	{
+		return Func && ensure(Func->GetOuter())
+			&& Func->GetOuter()->IsA(UBlueprintGeneratedClass::StaticClass());
+	};
+
+	{
+		static FName FuncName = FName(TEXT("ReceiveCanActivateAbility"));
+		UFunction* CanActivateFunction = GetClass()->FindFunctionByName(FuncName);
+		bHasBlueprintCanActivate = ImplementedInBlueprint(CanActivateFunction);
+	}
 }
 
 UWorld* UFireflyAbility::GetWorld() const
@@ -46,7 +57,7 @@ void UFireflyAbility::OnAbilityGranted_Implementation()
 
 void UFireflyAbility::ActivateAbility()
 {
-	IsActivating = true;
+	bIsActivating = true;
 
 	OnAbilityActivated.Broadcast();
 	ReceiveActivateAbility();
@@ -54,7 +65,7 @@ void UFireflyAbility::ActivateAbility()
 
 void UFireflyAbility::EndAbility()
 {
-	IsActivating = false;
+	bIsActivating = false;
 
 	OnAbilityEnded.Broadcast();
 	ReceiveEndAbility(false);
@@ -62,7 +73,7 @@ void UFireflyAbility::EndAbility()
 
 void UFireflyAbility::CancelAbility()
 {
-	IsActivating = false;
+	bIsActivating = false;
 
 	OnAbilityEnded.Broadcast();
 	OnAbilityCanceled.Broadcast();
@@ -120,7 +131,7 @@ void UFireflyAbility::ExecuteTagRequirementOnActivated()
 {	
 }
 
-bool UFireflyAbility::CanActivateAbility_Implementation() const
+bool UFireflyAbility::CanActivateAbility() const
 {
-	return true;
+	return bHasBlueprintCanActivate ? ReceiveCanActivateAbility() : true;
 }
