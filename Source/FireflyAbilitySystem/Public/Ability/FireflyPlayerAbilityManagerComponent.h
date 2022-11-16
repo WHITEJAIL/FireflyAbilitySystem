@@ -10,24 +10,47 @@
 class UInputAction;
 class UEnhancedInputComponent;
 
+/** 输入和技能绑定的数据 */
 USTRUCT()
 struct FFireflyAbilitiesBoundToInput
 {
 	GENERATED_USTRUCT_BODY()
 
+	/** 输入绑定的所有技能 */
 	UPROPERTY()
 	TArray<TSubclassOf<UFireflyAbility_InputBased>> Abilities;
+
+	/** 输入事件句柄：开始 */
+	UPROPERTY()
+	uint32 HandleStarted = -1;
+
+	/** 输入事件句柄：执行中 */
+	UPROPERTY()
+	uint32 HandleOngoing = -1;
+
+	/** 输入事件句柄：取消 */
+	UPROPERTY()
+	uint32 HandleCanceled = -1;
+
+	/** 输入事件句柄：触发 */
+	UPROPERTY()
+	uint32 HandleTriggered = -1;
+
+	/** 输入事件句柄：完成 */
+	UPROPERTY()
+	uint32 HandleCompleted = -1;
 
 	FFireflyAbilitiesBoundToInput() : Abilities(TArray<TSubclassOf<UFireflyAbility_InputBased>>{})
 	{}
 
-	FFireflyAbilitiesBoundToInput(TArray<TSubclassOf<UFireflyAbility_InputBased>> InAbilities)
-		: Abilities(InAbilities)
-	{}
-
 	FORCEINLINE bool operator==(const FFireflyAbilitiesBoundToInput& Other)
 	{
-		return Abilities == Other.Abilities;
+		return Abilities == Other.Abilities
+			&& HandleStarted == Other.HandleStarted
+			&& HandleOngoing == Other.HandleOngoing
+			&& HandleCanceled == Other.HandleCanceled
+			&& HandleTriggered == Other.HandleTriggered
+			&& HandleCompleted == Other.HandleCompleted;
 	}
 	
 };
@@ -44,6 +67,26 @@ protected:
 	/** 从组件拥有者身上获取增强输入组件 */
 	UFUNCTION()
 	FORCEINLINE UEnhancedInputComponent* GetEnhancedInputComponentFromOwner() const;
+
+	/** 组件管理的输入事件触发：开始 */
+	UFUNCTION()
+	virtual void OnAbilityInputActionStarted(UInputAction* Input);
+
+	/** 组件管理的输入事件触发：等待触发 */
+	UFUNCTION()
+	virtual void OnAbilityInputActionOngoing(UInputAction* Input);
+
+	/** 组件管理的输入事件触发：取消 */
+	UFUNCTION()
+	virtual void OnAbilityInputActionCanceled(UInputAction* Input);
+
+	/** 组件管理的输入事件触发：触发 */
+	UFUNCTION()
+	virtual void OnAbilityInputActionTriggered(UInputAction* Input);
+
+	/** 组件管理的输入事件触发：完成 */
+	UFUNCTION()
+	virtual void OnAbilityInputActionCompleted(UInputAction* Input);
 
 public:
 	/** 将技能与输入绑定，技能需要存在于技能管理器中，输入也应当有效 */

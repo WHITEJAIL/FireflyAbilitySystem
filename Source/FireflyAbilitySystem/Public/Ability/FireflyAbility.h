@@ -159,6 +159,14 @@ protected:
 	void ExecuteTagRequirementOnEnded();
 
 protected:
+	/** 该技能的激活需要的正在执行的技能，数组中有一个技能正在激活，都可以让该技能激活 */
+	UPROPERTY(EditDefaultsOnly, Category = "ActivationRequirement|AbilityRequired")
+	TArray<TSubclassOf<UFireflyAbility>> RequiredActivatingAbilities;
+
+	/** 该技能的激活是否会取消其前置需求技能的执行 */
+	UPROPERTY(EditDefaultsOnly, Category = "ActivationRequirement|AbilityRequired")
+	bool bCancelRequiredActivatingAbilitiesOnActivated;
+
 	/** 为该做特殊技能资产标记的Tags */
 	UPROPERTY(EditDefaultsOnly, Category = "ActivationRequirement|TagRequired")
 	FGameplayTagContainer TagsForAbilityAsset;

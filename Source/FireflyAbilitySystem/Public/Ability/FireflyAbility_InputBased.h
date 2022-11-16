@@ -16,30 +16,9 @@ class FIREFLYABILITYSYSTEM_API UFireflyAbility_InputBased : public UFireflyAbili
 {
 	GENERATED_UCLASS_BODY()
 
-#pragma region Execution
-
-public:
-	/** 是否可激活技能 */
-	virtual bool CanActivateAbility() const override;
-
-protected:
-	/** 该技能的激活需要的正在执行的技能，数组中有一个技能正在激活，都可以让该技能激活 */
-	UPROPERTY(EditDefaultsOnly, Category = "ActivationRequirement|AbilityRequired")
-	TArray<TSubclassOf<UFireflyAbility>> RequiredActivatingAbilities;
-
-#pragma endregion
-
 #pragma region InputBinding
 
 protected:
-	/** 技能绑定输入 */
-	UFUNCTION()
-	void BindToInput(UEnhancedInputComponent* EnhancedInput, UInputAction* InputToBind);
-
-	/** 技能与输入解绑 */
-	UFUNCTION()
-	void UnbindWithInput(UEnhancedInputComponent* EnhancedInput, UInputAction* InputToUnbind);
-
 	/** 输入事件：开始 */
 	UFUNCTION()
 	virtual void OnAbilityInputStarted();
@@ -82,26 +61,6 @@ protected:
 
 protected:
 	friend class UFireflyPlayerAbilityManagerComponent;
-
-	/** 输入事件句柄：开始 */
-	UPROPERTY()
-	uint32 HandleStarted = -1;
-
-	/** 输入事件句柄：执行中 */
-	UPROPERTY()
-	uint32 HandleOngoing = -1;
-
-	/** 输入事件句柄：取消 */
-	UPROPERTY()
-	uint32 HandleCanceled = -1;
-
-	/** 输入事件句柄：触发 */
-	UPROPERTY()
-	uint32 HandleTriggered = -1;
-
-	/** 输入事件句柄：完成 */
-	UPROPERTY()
-	uint32 HandleCompleted = -1;
 
 	/** 是否在输入事件Triggered时激活技能，如为false，则默认在输入事件Started时激活技能 */
 	UPROPERTY(EditDefaultsOnly, Category = "Input Activation")

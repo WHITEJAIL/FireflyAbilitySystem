@@ -63,6 +63,17 @@ void UFireflyAbility::ActivateAbility()
 		return;
 	}
 
+	if (bCancelRequiredActivatingAbilitiesOnActivated)
+	{
+		for (auto Ability : GetOwnerManager()->GetActivatingAbilities())
+		{
+			if (RequiredActivatingAbilities.Contains(Ability->GetClass()))
+			{
+				Ability->CancelAbility();
+			}
+		}
+	}	
+
 	bIsActivating = true;
 
 	OnAbilityActivated.Broadcast();
@@ -78,6 +89,7 @@ void UFireflyAbility::EndAbility()
 	
 	bIsActivating = false;
 	OnAbilityEnded.Broadcast();
+	GetOwnerManager()->OnAbilityEndActivation(this);
 	ReceiveEndAbility(false);
 }
 
@@ -91,6 +103,7 @@ void UFireflyAbility::CancelAbility()
 	bIsActivating = false;
 	OnAbilityEnded.Broadcast();
 	OnAbilityCanceled.Broadcast();
+	GetOwnerManager()->OnAbilityEndActivation(this);
 	ReceiveEndAbility(true);
 }
 
@@ -213,5 +226,19 @@ bool UFireflyAbility::CanActivateAbility() const
 		bBlueprintCanActivate = ReceiveCanActivateAbility();
 	}
 
-	return bBlueprintCanActivate && bOwnerHasRequiredTags && !bOwnerHasBlockTags && !bIsActivating;
+	bool bHasRequiredActivatingAbility = true;
+	if (RequiredActivatingAbilities.Num())
+	{
+		bHasRequiredActivatingAbility = false;
+		for (auto OtherAbility : GetOwnerManager()->GetActivatingAbilities())
+		{
+			if (RequiredActivatingAbilities.Contains(OtherAbility->GetClass()))
+			{
+				bHasRequiredActivatingAbility = true;
+				break;
+			}
+		}
+	}	
+
+	return bBlueprintCanActivate && bOwnerHasRequiredTags && !bOwnerHasBlockTags && !bIsActivating && bHasRequiredActivatingAbility;
 }

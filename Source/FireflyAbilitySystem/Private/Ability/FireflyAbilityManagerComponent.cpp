@@ -3,6 +3,7 @@
 
 #include "Ability/FireflyAbilityManagerComponent.h"
 
+#include "FireflyTagManagerComponent.h"
 #include "Ability/FireflyAbility.h"
 
 // Sets default values for this component's properties

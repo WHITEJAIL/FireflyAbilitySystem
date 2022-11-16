@@ -68,8 +68,7 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability")
 	FORCEINLINE TArray<UFireflyAbility*> GetActivatingAbilities() const { return ActivatingAbilities; }
-
-protected:
+	
 	/** 某个技能结束执行时执行的函数 */
 	UFUNCTION()
 	virtual void OnAbilityEndActivation(UFireflyAbility* AbilityJustEnded);
