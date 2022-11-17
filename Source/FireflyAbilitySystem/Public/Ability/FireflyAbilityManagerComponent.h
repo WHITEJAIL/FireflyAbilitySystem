@@ -66,15 +66,20 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
 	virtual UFireflyAbility* TryActivateAbilityByClass(TSubclassOf<UFireflyAbility> AbilityToActivate);
 
+	/** 获取所有正在激活的技能 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability")
 	FORCEINLINE TArray<UFireflyAbility*> GetActivatingAbilities() const { return ActivatingAbilities; }
+
+	/** 取消所有带有特定资产Tag的技能的激活状态 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
+	void CancelAbilitiesWithTags(FGameplayTagContainer CancelTags);
 	
 	/** 某个技能结束执行时执行的函数 */
 	UFUNCTION()
 	virtual void OnAbilityEndActivation(UFireflyAbility* AbilityJustEnded);
 
 protected:
-	/** 所有激活中的正在运行的技能 */
+	/** 所有激活中的运行中的技能 */
 	UPROPERTY()
 	TArray<UFireflyAbility*> ActivatingAbilities;
 
@@ -84,14 +89,13 @@ protected:
 #pragma region Requirement
 
 public:
-	/** 获取该技能管理器被赋予的所有技能 */
 	UFUNCTION()
-	FORCEINLINE FGameplayTagContainer GetCarryingGameplayTags() const { return CarryingGameplayTags; }
+	void UpdateBlockAndCancelAbilityTags(FGameplayTagContainer BlockTags, FGameplayTagContainer CancelTags, bool bIsActivated);
 
 protected:
-	/** 技能管理器携带的所有标签Tags */
+	/** 携带这些资产Tag的技能会被阻拦激活 */
 	UPROPERTY()
-	FGameplayTagContainer CarryingGameplayTags;
+	TMap<FGameplayTag, int32> BlockAbilityTags;
 
 #pragma endregion
 

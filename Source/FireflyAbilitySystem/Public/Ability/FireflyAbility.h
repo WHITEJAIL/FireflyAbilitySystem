@@ -150,22 +150,18 @@ protected:
 
 	bool bHasBlueprintCanActivate;
 
-	/** 当技能激活时，执行该技能的Tag需求关系管理 */
+	/** 当技能激活或结束时，执行对Owner的Tag更新管理 */
 	UFUNCTION()
-	void ExecuteTagRequirementOnActivated();
-
-	/** 当技能激活时，执行该技能的Tag需求关系管理 */
-	UFUNCTION()
-	void ExecuteTagRequirementOnEnded();
+	void ExecuteTagUpdateToOwner(bool bIsActivated);
 
 protected:
 	/** 该技能的激活需要的正在执行的技能，数组中有一个技能正在激活，都可以让该技能激活 */
 	UPROPERTY(EditDefaultsOnly, Category = "ActivationRequirement|AbilityRequired")
 	TArray<TSubclassOf<UFireflyAbility>> RequiredActivatingAbilities;
 
-	/** 该技能的激活是否会取消其前置需求技能的执行 */
+	/** 该技能的激活是否会取消其前置依赖技能的执行 */
 	UPROPERTY(EditDefaultsOnly, Category = "ActivationRequirement|AbilityRequired")
-	bool bCancelRequiredActivatingAbilitiesOnActivated;
+	bool bCancelRequiredAbilities;
 
 	/** 为该做特殊技能资产标记的Tags */
 	UPROPERTY(EditDefaultsOnly, Category = "ActivationRequirement|TagRequired")
@@ -173,11 +169,11 @@ protected:
 
 	/** 该技能的激活执行会取消带有这些资产标记Tags的技能的执行 */
 	UPROPERTY(EditDefaultsOnly, Category = "ActivationRequirement|TagRequired")
-	FGameplayTagContainer TagsOfAbilitiesWillBeCanceledOnActivated;
+	FGameplayTagContainer TagsOfAbilitiesWillBeCanceled;
 
 	/** 该技能的激活执行会阻断带有这些资产标记Tags的技能的执行 */
 	UPROPERTY(EditDefaultsOnly, Category = "ActivationRequirement|TagRequired")
-	FGameplayTagContainer TagsOfAbilitiesWillNotBeActivatedOnActivated;
+	FGameplayTagContainer TagsOfAbilitiesWillBeBlocked;
 
 	/** 该技能激活执行会为Owner添加如下Tags */
 	UPROPERTY(EditDefaultsOnly, Category = "ActivationRequirement|TagRequired")

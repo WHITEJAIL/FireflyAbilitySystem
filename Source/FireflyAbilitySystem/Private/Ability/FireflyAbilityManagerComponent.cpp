@@ -136,12 +136,68 @@ UFireflyAbility* UFireflyAbilityManagerComponent::TryActivateAbilityByClass(TSub
 		return nullptr;
 	}
 
+	TArray<FGameplayTag> BlockTagArray;
+	BlockAbilityTags.GetKeys(BlockTagArray);
+	FGameplayTagContainer BlockTags = FGameplayTagContainer::CreateFromArray(BlockTagArray);
+	if (Ability->TagsForAbilityAsset.HasAnyExact(BlockTags))
+	{
+		return nullptr;
+	}
+
 	Ability->ActivateAbility();
 	ActivatingAbilities.Emplace(Ability);
 	return Ability;
 }
 
+void UFireflyAbilityManagerComponent::CancelAbilitiesWithTags(FGameplayTagContainer CancelTags)
+{
+	for (auto Ability : GetActivatingAbilities())
+	{
+		if (Ability->TagsForAbilityAsset.HasAnyExact(CancelTags))
+		{
+			Ability->CancelAbility();
+		}
+	}
+}
+
 void UFireflyAbilityManagerComponent::OnAbilityEndActivation(UFireflyAbility* AbilityJustEnded)
 {
 	ActivatingAbilities.RemoveSingleSwap(AbilityJustEnded);
+}
+
+void UFireflyAbilityManagerComponent::UpdateBlockAndCancelAbilityTags(FGameplayTagContainer BlockTags,
+	FGameplayTagContainer CancelTags, bool bIsActivated)
+{
+	if (bIsActivated)
+	{
+		CancelAbilitiesWithTags(CancelTags);
+
+		TArray<FGameplayTag> Tags;
+		CancelTags.GetGameplayTagArray(Tags);
+		for (auto TagToAdd : Tags)
+		{
+			int32& Count = BlockAbilityTags.FindOrAdd(TagToAdd);
+			++Count;
+		}		
+	}
+	else
+	{
+		TArray<FGameplayTag> Tags;
+		CancelTags.GetGameplayTagArray(Tags);
+		for (auto TagToRemove : Tags)
+		{
+			if (!BlockAbilityTags.Contains(TagToRemove))
+			{
+				continue;
+			}
+
+			int32* CountToMinus = BlockAbilityTags.Find(TagToRemove);
+			*CountToMinus = FMath::Clamp<int32>(*CountToMinus - 1, 0, *CountToMinus);
+
+			if (*CountToMinus == 0)
+			{
+				BlockAbilityTags.Remove(TagToRemove);
+			}
+		}		
+	}
 }

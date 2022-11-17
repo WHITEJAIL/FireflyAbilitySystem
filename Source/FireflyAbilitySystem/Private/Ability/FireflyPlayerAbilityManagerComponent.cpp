@@ -48,7 +48,7 @@ void UFireflyPlayerAbilityManagerComponent::OnAbilityInputActionStarted(UInputAc
 		}
 
 		UFireflyAbility_InputBased* Ability = Cast<UFireflyAbility_InputBased>(GetAbilityByClass(AbilityClass));
-		if (Ability->bActivateOnTriggered || !Ability->CanActivateAbility())
+		if (!Ability->CanActivateAbility())
 		{
 			continue;
 		}
