@@ -74,7 +74,7 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability", Meta = (DisplayName = "End Ability"))
 	void ReceiveEndAbility(bool bWasCanceled);	
 
-protected:
+public:
 	/** 技能激活时触发的代理 */
 	UPROPERTY(BlueprintAssignable, Category = "FireflyAbilitySystem|Ability")
 	FAbilityExecutionDelegate OnAbilityActivated;
@@ -87,6 +87,7 @@ protected:
 	UPROPERTY(BlueprintAssignable, Category = "FireflyAbilitySystem|Ability")
 	FAbilityExecutionDelegate OnAbilityCanceled;
 
+protected:
 	/** 该技能是否处于激活状态 */
 	UPROPERTY()
 	bool bIsActivating = false;
@@ -125,7 +126,7 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
 	bool CommitAbility();
 
-protected:
+public:
 	/** 当技能的消耗执行成功时触发的代理 */
 	UPROPERTY(BlueprintAssignable)
 	FAbilityExecutionDelegate OnAbilityCostCommitted;
