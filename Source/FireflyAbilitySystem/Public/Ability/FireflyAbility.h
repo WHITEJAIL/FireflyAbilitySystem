@@ -126,6 +126,22 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
 	bool CommitAbility();
 
+	/** 设置技能的冷却时间 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
+	void SetCooldownTime(float NewCooldownTime);
+
+	/** 获取技能的冷却时间 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
+	FORCEINLINE float GetCooldownTime() const { return CooldownTime; }
+
+	/** 设置技能的冷却标签 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
+	void SetCooldownTags(FGameplayTagContainer NewCooldownTags);
+
+	/** 获取技能的冷却时间 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
+	FORCEINLINE FGameplayTagContainer GetCooldownTags() const { return CooldownTags; }
+
 public:
 	/** 当技能的消耗执行成功时触发的代理 */
 	UPROPERTY(BlueprintAssignable)
@@ -134,6 +150,15 @@ public:
 	/** 当技能的冷却执行成功时触发的代理 */
 	UPROPERTY(BlueprintAssignable)
 	FAbilityExecutionDelegate OnAbilityCooldownCommitted;
+
+protected:
+	/** 技能的冷却时间设置 */
+	UPROPERTY(EditDefaultsOnly, Category = Cooldown)
+	float CooldownTime = 0.f;
+
+	/** 技能的冷却时间使用的对应Tags */
+	UPROPERTY(EditDefaultsOnly, Category = Cooldown)
+	FGameplayTagContainer CooldownTags;
 
 #pragma endregion
 
@@ -153,7 +178,7 @@ protected:
 
 	/** 当技能激活或结束时，执行对Owner的Tag更新管理 */
 	UFUNCTION()
-	void ExecuteTagUpdateToOwner(bool bIsActivated);
+	void ExecuteTagRequirementToOwner(bool bIsActivated);
 
 protected:
 	/** 该技能的激活需要的正在执行的技能，数组中有一个技能正在激活，都可以让该技能激活 */

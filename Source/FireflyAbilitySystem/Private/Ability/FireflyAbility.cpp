@@ -75,8 +75,7 @@ void UFireflyAbility::ActivateAbility()
 	}
 
 	bIsActivating = true;
-	ExecuteTagUpdateToOwner(true);
-	GetOwnerManager()->UpdateBlockAndCancelAbilityTags(TagsOfAbilitiesWillBeBlocked, TagsOfAbilitiesWillBeCanceled, true);
+	ExecuteTagRequirementToOwner(true);	
 	OnAbilityActivated.Broadcast();
 	ReceiveActivateAbility();
 }
@@ -89,8 +88,7 @@ void UFireflyAbility::EndAbility()
 	}
 	
 	bIsActivating = false;
-	ExecuteTagUpdateToOwner(false);
-	GetOwnerManager()->UpdateBlockAndCancelAbilityTags(TagsOfAbilitiesWillBeBlocked, TagsOfAbilitiesWillBeCanceled, false);
+	ExecuteTagRequirementToOwner(false);
 	OnAbilityEnded.Broadcast();
 	GetOwnerManager()->OnAbilityEndActivation(this);
 	ReceiveEndAbility(false);
@@ -104,8 +102,7 @@ void UFireflyAbility::CancelAbility()
 	}
 
 	bIsActivating = false;
-	ExecuteTagUpdateToOwner(false);
-	GetOwnerManager()->UpdateBlockAndCancelAbilityTags(TagsOfAbilitiesWillBeBlocked, TagsOfAbilitiesWillBeCanceled, false);
+	ExecuteTagRequirementToOwner(false);
 	OnAbilityEnded.Broadcast();
 	OnAbilityCanceled.Broadcast();
 	GetOwnerManager()->OnAbilityEndActivation(this);
@@ -159,8 +156,20 @@ bool UFireflyAbility::CommitAbility()
 	return CommitAbilityCost() && CommitAbilityCooldown();
 }
 
-void UFireflyAbility::ExecuteTagUpdateToOwner(bool bIsActivated)
+void UFireflyAbility::SetCooldownTime(float NewCooldownTime)
 {
+	CooldownTime = NewCooldownTime;
+}
+
+void UFireflyAbility::SetCooldownTags(FGameplayTagContainer NewCooldownTags)
+{
+	CooldownTags = NewCooldownTags;
+}
+
+void UFireflyAbility::ExecuteTagRequirementToOwner(bool bIsActivated)
+{
+	GetOwnerManager()->UpdateBlockAndCancelAbilityTags(TagsOfAbilitiesWillBeBlocked, TagsOfAbilitiesWillBeCanceled, bIsActivated);
+
 	if (!IsValid(GetOwnerActor()))
 	{
 		return;
