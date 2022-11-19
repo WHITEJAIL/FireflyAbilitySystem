@@ -53,7 +53,7 @@ void UFireflyAbility_InputBased::OnAbilityInputTriggered()
 			return;
 		}
 
-		ReceiveOnAbilityInputCanceled();
+		ReceiveOnAbilityInputTriggered();
 	}	
 }
 
