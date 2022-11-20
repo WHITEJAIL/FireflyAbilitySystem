@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FireflyAbilitySystemTypes.h"
 #include "UObject/NoExportTypes.h"
 #include "FireflyEffect.generated.h"
 
@@ -12,10 +13,12 @@ class UFireflyEffectManagerComponent;
 UENUM()
 enum class EFireflyEffectDurationPolicy : uint8
 {
-	/** 该效果会在执行生效后立即结束 */
+	/** 该效果会在执行生效后立即结束 
 	Instant,
+
 	/** 该效果会永久执行生效，除非被手动中止 */
 	Infinite,
+
 	/** 该效果会按照设定的持续时间执行生效 */
 	HasDuration
 };
@@ -26,8 +29,10 @@ enum class EFireflyEffectStackingPolicy : uint8
 {
 	/** 该效果不会堆叠 */
 	None,
+
 	/** 该效果会堆叠，且堆叠量无限制 */
 	StackNoLimit,
+
 	/** 该效果会堆叠，但堆叠量有限制 */
 	StackHasLimit
 };
@@ -44,6 +49,51 @@ enum class EFireflyEffectDurationPolicyOnStackingExpired : uint8
 
 	/** 游戏效果的持续时间被刷新。这本质上使效果在持续时间上无限。这可用于通过OnStackCountChange回调手动处理堆栈递减 */
 	RefreshDuration
+};
+
+/** 效果的属性修改操作符 */
+UENUM()
+enum class EFireflyAttributeModOperator : uint8
+{
+	/** 无操作 */
+	None,
+
+	/** 加法操作 */
+	Plus,
+
+	/** 减法操作 */
+	Minus,
+
+	/** 乘法操作 */
+	Multiply,
+
+	/** 除法操作 */
+	Divide,
+
+	/** 内部覆盖操作 */
+	InnerOverride,
+
+	/** 全局覆盖操作 */
+	OuterOverride
+};
+
+/** 效果的属性修改信息 */
+USTRUCT(BlueprintType)
+struct FFireflyAttributeModifierData
+{
+	GENERATED_BODY()
+
+	/** 修改的属性类型 */
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
+	TEnumAsByte<EFireflyAttributeType> Attribute = EFireflyAttributeType::AttributeType_Default;
+
+	/** 修改的操作符 */
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
+	EFireflyAttributeModOperator ModOperator = EFireflyAttributeModOperator::None;
+
+	/**  */
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
+	TArray<float> ModValues = TArray<float>{};
 };
 
 /** 效果 */
@@ -126,6 +176,10 @@ protected:
 
 
 #pragma region Modifiers
+
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = Modifier)
+	TArray<FFireflyAttributeModifierData> Modifiers;
 
 #pragma endregion
 	
