@@ -34,3 +34,18 @@ UFireflyEffectManagerComponent* UFireflyEffect::GetOwnerManager() const
 
 	return Cast<UFireflyEffectManagerComponent>(GetOuter());
 }
+
+void UFireflyEffect::ApplyEffect()
+{
+	ReceiveApplyEffect();
+}
+
+void UFireflyEffect::ExecuteEffect()
+{
+	ReceiveExecuteEffect();
+}
+
+void UFireflyEffect::RemoveEffect()
+{
+	ReceiveRemoveEffect();
+}

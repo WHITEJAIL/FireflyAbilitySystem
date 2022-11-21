@@ -8,6 +8,7 @@
 
 // CurrentValue = NewestOuterOverrideMod || (((BaseValue || NewestInnerOverrideMod) + PlusMods - MinusMods) * (1 + MultiplyMods)) / (TotalDivideMod == 0.f ? 1.f : TotalDivideMod))
 
+enum class EFireflyAttributeModOperator : uint8;
 enum EFireflyAttributeType;
 class UFireflyAttribute;
 
@@ -32,7 +33,8 @@ public:
 
 #pragma region Basic
 
-protected:
+public:
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute")
 	UFireflyAttribute* GetAttributeByType(EFireflyAttributeType AttributeType) const;
 
 	FString GetAttributeTypeName(EFireflyAttributeType AttributeType) const;
@@ -68,53 +70,18 @@ public:
 
 #pragma region Modifier
 
-	/** 添加加法修改器 */
+public:
+	/** 应用一个修改器到某个属性的当前值中 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
-	void ApplyPlusModifier(EFireflyAttributeType AttributeType, float ModValue);
+	void ApplyModifierToAttribute(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue);
 
-	/** 移除加法修改器 */
+	/** 应用一个修改器永久修改某个属性的基础值 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
-	void RemovePlusModifier(EFireflyAttributeType AttributeType, float ModifierToRemove);
+	void ApplyModifierToAttributeBase(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue);
 
-	/** 添加减法修改器 */
+	/** 移除某个作用于某个属性的当前值的修改器 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
-	void ApplyMinusModifier(EFireflyAttributeType AttributeType, float ModValue);
-
-	/** 移除减法修改器 */
-	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
-	void RemoveMinusModifier(EFireflyAttributeType AttributeType, float ModifierToRemove);
-
-	/** 添加乘法修改器 */
-	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
-	void ApplyMultiplyModifier(EFireflyAttributeType AttributeType, float ModValue);
-
-	/** 移除乘法修改器 */
-	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
-	void RemoveMultiplyModifier(EFireflyAttributeType AttributeType, float ModifierToRemove);
-
-	/** 添加除法修改器 */
-	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
-	void ApplyDivideModifier(EFireflyAttributeType AttributeType, float ModValue);
-
-	/** 移除除法修改器 */
-	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
-	void RemoveDivideModifier(EFireflyAttributeType AttributeType, float ModifierToRemove);
-
-	/** 添加内部覆盖修改器 */
-	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
-	void ApplyInnerOverrideModifier(EFireflyAttributeType AttributeType, float ModValue);
-
-	/** 移除内部覆盖修改器 */
-	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
-	void RemoveInnerOverrideModifier(EFireflyAttributeType AttributeType, float ModifierToRemove);
-
-	/** 添加外部覆盖修改器 */
-	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
-	void ApplyOuterOverrideModifier(EFireflyAttributeType AttributeType, float ModValue);
-
-	/** 移除外部覆盖修改器 */
-	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
-	void RemoveOuterOverrideModifier(EFireflyAttributeType AttributeType, float ModifierToRemove);
-
+	void RemoveModifierFromAttribute(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, UObject* ModSource);
+		
 #pragma endregion
 };

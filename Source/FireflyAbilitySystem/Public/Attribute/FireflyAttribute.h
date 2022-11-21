@@ -8,10 +8,36 @@
 
 // CurrentValue = NewestOuterOverrideMod || (((BaseValue || NewestInnerOverrideMod) + PlusMods - MinusMods) * (1 + MultiplyMods)) / (TotalDivideMod == 0.f ? 1.f : TotalDivideMod))
 
+enum class EFireflyAttributeModOperator : uint8;
 enum EFireflyAttributeType;
 class UFireflyAttributeManagerComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FAttributeValueChangeDelegate, TEnumAsByte<EFireflyAttributeType>, AttributeType, const float, OldValue, const float, Newvalue);
+
+USTRUCT()
+struct FFireflyAttributeModifier
+{
+	GENERATED_USTRUCT_BODY()
+
+public:
+	UPROPERTY()
+	UObject* ModSource = nullptr;
+
+	UPROPERTY()
+	float ModValue = 0.f;;
+
+	FFireflyAttributeModifier() {}
+
+	FFireflyAttributeModifier(UObject* InSource) : ModSource(InSource) {}
+
+	FFireflyAttributeModifier(UObject* InSource, float InValue) : ModSource(InSource), ModValue(InValue) {}
+
+	FORCEINLINE bool operator==(const FFireflyAttributeModifier& Other) const
+	{
+		return ModSource == Other.ModSource;
+	}
+	
+};
 
 /** 属性 */
 UCLASS(Blueprintable)
@@ -30,10 +56,11 @@ public:
 #pragma region Basic
 
 protected:
+	/** 获取属性的当前值 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute", Meta = (BlueprintProtected = "true"))
 	FORCEINLINE float GetCurrentValue() const;
 
-	/** 获取属性的内部覆盖修改器的最新值 */
+	/** 获取属性的基础值或内部覆盖修改器的最新值 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute", Meta = (BlueprintProtected = "true"))
 	FORCEINLINE float GetBaseValueToUse() const;	
 
@@ -82,6 +109,10 @@ protected:
 	UFUNCTION(BlueprintNativeEvent, Category = "FireflyAbilitySystem|Attribute")
 	void UpdateCurrentValue();
 
+	/** 更新属性的当前值 */
+	UFUNCTION(BlueprintNativeEvent, Category = "FireflyAbilitySystem|Attribute")
+	void UpdateBaseValueToUse(EFireflyAttributeModOperator ModOperator, float ModValue);
+
 	/** 获取属性的加法修改器的合值 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute", Meta = (BlueprintProtected = "true"))
 	FORCEINLINE float GetTotalPlusModifier() const;
@@ -104,27 +135,27 @@ protected:
 	
 	/** 属性的所有加法修改器 */
 	UPROPERTY()
-	TArray<float> PlusMods = TArray<float>{};
+	TArray<FFireflyAttributeModifier> PlusMods = TArray<FFireflyAttributeModifier>{};
 
 	/** 属性的所有减法修改器 */
 	UPROPERTY()
-	TArray<float> MinusMods = TArray<float>{};
+	TArray<FFireflyAttributeModifier> MinusMods = TArray<FFireflyAttributeModifier>{};
 
 	/** 属性的所有乘法修改器 */
 	UPROPERTY()
-	TArray<float> MultiplyMods = TArray<float>{};
+	TArray<FFireflyAttributeModifier> MultiplyMods = TArray<FFireflyAttributeModifier>{};
 
 	/** 属性的所有除法修改器 */
 	UPROPERTY()
-	TArray<float> DivideMods = TArray<float>{};
+	TArray<FFireflyAttributeModifier> DivideMods = TArray<FFireflyAttributeModifier>{};
 
 	/** 属性的所有内部覆盖修改器 */
 	UPROPERTY()
-	TArray<float> InnerOverrideMods = TArray<float>{};
+	TArray<FFireflyAttributeModifier> InnerOverrideMods = TArray<FFireflyAttributeModifier>{};
 
 	/** 属性的所有外部覆盖修改器 */
 	UPROPERTY()
-	TArray<float> OuterOverrideMods = TArray<float>{};
+	TArray<FFireflyAttributeModifier> OuterOverrideMods = TArray<FFireflyAttributeModifier>{};
 
 #pragma endregion
 };
