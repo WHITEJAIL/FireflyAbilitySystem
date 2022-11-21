@@ -45,6 +45,16 @@ void UFireflyEffect::ExecuteEffect()
 	ReceiveExecuteEffect();
 }
 
+void UFireflyEffect::AddEffectStack(int32 StackCountToAdd)
+{
+	ReceiveAddEffectStack(StackCountToAdd);
+}
+
+void UFireflyEffect::ReduceEffectStack(int32 StackCountToReduce)
+{
+	ReceiveReduceEffectStack(StackCountToReduce);
+}
+
 void UFireflyEffect::RemoveEffect()
 {
 	ReceiveRemoveEffect();

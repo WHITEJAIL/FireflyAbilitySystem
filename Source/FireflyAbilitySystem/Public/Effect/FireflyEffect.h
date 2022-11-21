@@ -120,7 +120,23 @@ protected:
 
 	/** 蓝图端实现的该效果被执行的逻辑 */
 	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Effect", Meta = (DisplayName = "ExecuteEffect"))
-	void ReceiveExecuteEffect();	
+	void ReceiveExecuteEffect();
+
+	/** 增加该效果的堆叠数 */
+	UFUNCTION()
+	void AddEffectStack(int32 StackCountToAdd);
+
+	/** 增加该效果的堆叠数 */
+	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Effect", Meta = (DisplayName = "AddEffectStack"))
+	void ReceiveAddEffectStack(int32 StackCountToAdd);
+
+	/** 增加该效果的堆叠数 */
+	UFUNCTION()
+	void ReduceEffectStack(int32 StackCountToReduce);
+
+	/** 增加该效果的堆叠数 */
+	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Effect", Meta = (DisplayName = "ReduceEffectStack"))
+	void ReceiveReduceEffectStack(int32 StackCountToReduce);
 
 	/** 移除该效果 */
 	UFUNCTION()
