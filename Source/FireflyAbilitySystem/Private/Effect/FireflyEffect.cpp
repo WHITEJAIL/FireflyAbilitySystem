@@ -35,14 +35,16 @@ UFireflyEffectManagerComponent* UFireflyEffect::GetOwnerManager() const
 	return Cast<UFireflyEffectManagerComponent>(GetOuter());
 }
 
-void UFireflyEffect::ApplyEffect()
+void UFireflyEffect::SetTimeRemainingOfDuration(float NewDuration)
 {
-	ReceiveApplyEffect();
+	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+	TimerManager.ClearTimer(DurationTimer);
+	//TimerManager.SetTimer(DurationTimer, this, &UFireflyEffect::RemoveEffect, NewDuration);
 }
 
-void UFireflyEffect::ExecuteEffect()
+float UFireflyEffect::GetTimeRemainingOfDuration() const
 {
-	ReceiveExecuteEffect();
+	return GetWorld()->GetTimerManager().GetTimerRemaining(DurationTimer);
 }
 
 void UFireflyEffect::AddEffectStack(int32 StackCountToAdd)
@@ -53,9 +55,4 @@ void UFireflyEffect::AddEffectStack(int32 StackCountToAdd)
 void UFireflyEffect::ReduceEffectStack(int32 StackCountToReduce)
 {
 	ReceiveReduceEffectStack(StackCountToReduce);
-}
-
-void UFireflyEffect::RemoveEffect()
-{
-	ReceiveRemoveEffect();
 }

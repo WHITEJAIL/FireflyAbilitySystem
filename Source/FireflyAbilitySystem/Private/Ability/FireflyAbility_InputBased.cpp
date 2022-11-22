@@ -13,7 +13,11 @@ UFireflyAbility_InputBased::UFireflyAbility_InputBased(const FObjectInitializer&
 
 void UFireflyAbility_InputBased::OnAbilityInputStarted()
 {
-	GetOwnerManager()->TryActivateAbilityByClass(GetClass());
+	if (!IsValid(GetOwnerManager()->TryActivateAbilityByClass(GetClass())))
+	{
+		return;
+	}
+
 	ReceiveOnAbilityInputStarted();
 }
 
@@ -41,20 +45,22 @@ void UFireflyAbility_InputBased::OnAbilityInputTriggered()
 {
 	if (bActivateOnTriggered)
 	{
-		GetOwnerManager()->TryActivateAbilityByClass(GetClass());
-		ReceiveOnAbilityInputTriggered();
-
-		return;
-	}
-	else
-	{
-		if (!bIsActivating)
+		if (!IsValid(GetOwnerManager()->TryActivateAbilityByClass(GetClass())))
 		{
 			return;
 		}
 
 		ReceiveOnAbilityInputTriggered();
-	}	
+
+		return;
+	}
+	
+	if (!bIsActivating)
+	{
+		return;
+	}
+
+	ReceiveOnAbilityInputTriggered();		
 }
 
 void UFireflyAbility_InputBased::OnAbilityInputCompleted()

@@ -37,6 +37,15 @@ protected:
 
 #pragma region Duration
 
+public:
+	/** 设置正在执行的效果的剩余持续时间 */
+	UFUNCTION()
+	void SetTimeRemainingOfDuration(float NewDuration);
+
+	/** 获取正在执行的效果的剩余持续时间 */
+	UFUNCTION()
+	float GetTimeRemainingOfDuration() const;
+
 protected:
 	/** 效果的持续性策略 */
 	UPROPERTY(EditDefaultsOnly, Category = Duration)
@@ -46,10 +55,16 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = Duration, Meta = (EditCondition = "DurationPolicy == EFireflyEffectDurationPolicy::HasDuration"))
 	float Duration;
 
+	/** 效果的持续时间计时器句柄 */
+	UPROPERTY()
+	FTimerHandle DurationTimer;
+
 #pragma endregion
 
 
 #pragma region Periodicity
+
+protected:
 
 protected:
 	/** 效果在生效时是否按周期执行逻辑 */
@@ -60,10 +75,31 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = Periodicity, Meta = (EditCondition = "bIsEffectExecutionPeriodic == true"))
 	float PeriodicInterval;
 
+	/** 效果的周期时间计时器句柄 */
+	UPROPERTY()
+	FTimerHandle PeriodicityTimer;
+
 #pragma endregion
 
 
 #pragma region Stacking
+
+protected:
+	/** 增加该效果的堆叠数 */
+	UFUNCTION()
+	void AddEffectStack(int32 StackCountToAdd);
+
+	/** 增加该效果的堆叠数 */
+	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Effect", Meta = (DisplayName = "AddEffectStack"))
+	void ReceiveAddEffectStack(int32 StackCountToAdd);
+
+	/** 增加该效果的堆叠数 */
+	UFUNCTION()
+	void ReduceEffectStack(int32 StackCountToReduce);
+
+	/** 增加该效果的堆叠数 */
+	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Effect", Meta = (DisplayName = "ReduceEffectStack"))
+	void ReceiveReduceEffectStack(int32 StackCountToReduce);
 
 protected:
 	/** 该效果选择的堆叠策略 */
@@ -86,6 +122,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = Stacking)
 	EFireflyEffectDurationPolicyOnStackingExpired StackExpirationPolicy;
 
+	/** 效果的堆叠数 */
+	UPROPERTY()
+	int32 StackCount;
+
 #pragma endregion
 
 
@@ -104,47 +144,6 @@ protected:
 
 
 #pragma region Execution
-
-protected:
-	/** 应用该效果 */
-	UFUNCTION()
-	void ApplyEffect();
-
-	/** 蓝图端实现的该效果被应用的逻辑 */
-	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Effect", Meta = (DisplayName = "ApplyEffect"))
-	void ReceiveApplyEffect();
-
-	/** 执行该效果 */
-	UFUNCTION()
-	void ExecuteEffect();
-
-	/** 蓝图端实现的该效果被执行的逻辑 */
-	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Effect", Meta = (DisplayName = "ExecuteEffect"))
-	void ReceiveExecuteEffect();
-
-	/** 增加该效果的堆叠数 */
-	UFUNCTION()
-	void AddEffectStack(int32 StackCountToAdd);
-
-	/** 增加该效果的堆叠数 */
-	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Effect", Meta = (DisplayName = "AddEffectStack"))
-	void ReceiveAddEffectStack(int32 StackCountToAdd);
-
-	/** 增加该效果的堆叠数 */
-	UFUNCTION()
-	void ReduceEffectStack(int32 StackCountToReduce);
-
-	/** 增加该效果的堆叠数 */
-	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Effect", Meta = (DisplayName = "ReduceEffectStack"))
-	void ReceiveReduceEffectStack(int32 StackCountToReduce);
-
-	/** 移除该效果 */
-	UFUNCTION()
-	void RemoveEffect();
-
-	/** 蓝图端实现的该效果被移除的逻辑 */
-	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Effect", Meta = (DisplayName = "RemoveEffect"))
-	void ReceiveRemoveEffect();
 
 protected:
 	/** 效果执行的发起者 */
