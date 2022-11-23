@@ -5,6 +5,11 @@
 
 #include "Effect/FireflyEffectManagerComponent.h"
 
+UFireflyEffect::UFireflyEffect(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+}
+
 UWorld* UFireflyEffect::GetWorld() const
 {
 	if (AActor* OwnerActor = GetOwnerActor())

@@ -10,10 +10,10 @@
 class UFireflyEffectManagerComponent;
 
 /** 效果 */
-UCLASS(Blueprintable)
+UCLASS( Blueprintable )
 class FIREFLYABILITYSYSTEM_API UFireflyEffect : public UObject
 {
-	GENERATED_BODY()
+	GENERATED_UCLASS_BODY()
 
 #pragma region Basic
 
@@ -150,7 +150,7 @@ protected:
 
 	/** 蓝图端实现的效果被应用时执行的逻辑 */
 	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Effect", Meta = (DisplayName = "Apply Effect"))
-	void ReceiveApplyEffect();
+	void ReceiveApplyEffect();	
 
 protected:
 	/** 效果执行的发起者 */
