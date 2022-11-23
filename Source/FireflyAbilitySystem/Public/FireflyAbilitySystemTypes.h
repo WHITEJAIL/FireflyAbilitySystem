@@ -7,6 +7,8 @@
 #include "Engine/DataTable.h"
 #include "FireflyAbilitySystemTypes.generated.h"
 
+class UFireflyEffect;
+
 #pragma region Attribute
 
 /** 个人技能系统的属性枚举，在项目设置中定义DisplayName */
@@ -154,7 +156,7 @@ enum class EFireflyEffectDurationPolicyOnStackingExpired : uint8
 
 /** 效果携带的属性修改器 */
 USTRUCT(BlueprintType)
-struct FFireflyEffectModifier
+struct FFireflyEffectModifierData
 {
 	GENERATED_BODY()
 
@@ -170,11 +172,16 @@ struct FFireflyEffectModifier
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
 	float ModValue = 0.f;
 
-	FFireflyEffectModifier() {}
+	FFireflyEffectModifierData() {}
 
-	FORCEINLINE bool operator==(const FFireflyEffectModifier& Other) const
+	FORCEINLINE bool operator==(const FFireflyEffectModifierData& Other) const
 	{
 		return Attribute == Other.Attribute && ModOperator == Other.ModOperator && ModValue == Other.ModValue;
+	}
+
+	FORCEINLINE bool TypeEqual(const FFireflyEffectModifierData& Other) const
+	{
+		return Attribute == Other.Attribute && ModOperator == Other.ModOperator;
 	}
 };
 
@@ -199,6 +206,81 @@ public:
 	{
 		return PropertyTag.MatchesTagExact(Other.PropertyTag) && PropertyValue == Other.PropertyValue;
 	}
+};
+
+/** 基于某个效果的类型动态构建效果的桥接数据 */
+USTRUCT(BlueprintType)
+struct FFireflyEffectDynamicHandle
+{
+	GENERATED_BODY()
+
+public:
+	/** 构建效果基于的类 */
+	UPROPERTY(BlueprintReadWrite)
+	TSubclassOf<UFireflyEffect> EffectType = nullptr;
+
+	/** 构建效果要分配的属性修改器，需要原始的属性类中定义了下述的属性修改器 */
+	UPROPERTY(BlueprintReadWrite)
+	TArray<FFireflyEffectModifierData> AssignableEffectModifiers = TArray<FFireflyEffectModifierData>{};
+
+	/** 构建效果要添加的特殊属性 */
+	UPROPERTY(BlueprintReadWrite)
+	TArray<FFireflySpecificProperty> SpecificPropertiesToAdd = TArray<FFireflySpecificProperty>{};
+
+	FFireflyEffectDynamicHandle() {}
+};
+
+/** 效果的动态构建器 */
+USTRUCT(BlueprintType)
+struct FFireflyEffectDynamicConstructor
+{
+	GENERATED_BODY()
+
+public:
+	/** 效果的持续性策略 */
+	UPROPERTY(BlueprintReadWrite, Category = Duration)
+	EFireflyEffectDurationPolicy DurationPolicy;
+
+	/** 效果的持续时间，仅在持续策略为“HasDuration”时起作用 */
+	UPROPERTY(BlueprintReadWrite, Category = Duration, Meta = (EditCondition = "DurationPolicy == EFireflyEffectDurationPolicy::HasDuration"))
+	float Duration;
+
+	/** 效果在生效时是否按周期执行逻辑 */
+	UPROPERTY(BlueprintReadWrite, Category = Periodicity)
+	bool bIsEffectExecutionPeriodic;
+
+	/** 效果的周期间隔时间，尽在周期性策略为“true”时起作用 */
+	UPROPERTY(BlueprintReadWrite, Category = Periodicity, Meta = (EditCondition = "bIsEffectExecutionPeriodic == true"))
+	float PeriodicInterval;
+
+	/** 该效果选择的堆叠策略 */
+	UPROPERTY(BlueprintReadWrite, Category = Stacking)
+	EFireflyEffectStackingPolicy StackingPolicy;
+
+	/** 效果的持续时间，仅在持续策略为“HasDuration”时起作用 */
+	UPROPERTY(BlueprintReadWrite, Category = Stacking, Meta = (EditCondition = "StackingPolicy == EFireflyEffectStackingPolicy::StackHasLimit"))
+	int32 StackLimitation;
+
+	/** 效果有新的实例被执行或堆叠数量增加时，是否刷新持续时间 */
+	UPROPERTY(BlueprintReadWrite, Category = Stacking)
+	bool bShouldRefreshDurationOnStacking;
+
+	/** 效果有新的实例被执行或堆叠数量增加时，是否重置周期性 */
+	UPROPERTY(BlueprintReadWrite, Category = Stacking)
+	bool bShouldResetPeriodicityOnStacking;
+
+	/** 效果的堆叠到期时，对持续时间的影响 */
+	UPROPERTY(BlueprintReadWrite, Category = Stacking)
+	EFireflyEffectDurationPolicyOnStackingExpired StackExpirationPolicy;
+
+	/** 该效果携带的属性修改器 */
+	UPROPERTY(BlueprintReadWrite, Category = Modifier)
+	TArray<FFireflyEffectModifierData> Modifiers;
+
+	/** 该效果携带的特殊属性 */
+	UPROPERTY(BlueprintReadWrite, Category = Modifier)
+	TArray<FFireflySpecificProperty> SpecificProperties;
+	
 };
 
 #pragma endregion

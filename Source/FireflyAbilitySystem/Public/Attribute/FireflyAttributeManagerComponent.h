@@ -73,15 +73,15 @@ public:
 public:
 	/** 应用一个修改器到某个属性的当前值中 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
-	void ApplyModifierToAttribute(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue);
-
-	/** 应用一个修改器永久修改某个属性的基础值 */
-	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
-	void ApplyModifierToAttributeBase(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue);
+	void ApplyModifierToAttribute(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, int32 StackToApply);
 
 	/** 移除某个作用于某个属性的当前值的修改器 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
-	void RemoveModifierFromAttribute(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, UObject* ModSource);
+	void RemoveModifierFromAttribute(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, int32 StackToRemove);
+
+	/** 应用一个修改器永久修改某个属性的基础值 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
+	void ApplyModifierToAttributeInstant(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue);	
 		
 #pragma endregion
 };

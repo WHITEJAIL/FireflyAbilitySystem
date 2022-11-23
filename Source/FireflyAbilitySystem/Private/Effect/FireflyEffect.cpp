@@ -56,3 +56,16 @@ void UFireflyEffect::ReduceEffectStack(int32 StackCountToReduce)
 {
 	ReceiveReduceEffectStack(StackCountToReduce);
 }
+
+void UFireflyEffect::ApplyEffect(AActor* InInstigator, AActor* InTarget, int32 StackToApply)
+{
+	if (IsValid(InInstigator))
+	{
+		Instigator = InInstigator;
+	}
+
+	if (IsValid(InTarget))
+	{
+		Target = InTarget;
+	}	
+}

@@ -67,12 +67,11 @@ void UFireflyAttribute::Initialize(float InitValue)
 
 void UFireflyAttribute::UpdateCurrentValue_Implementation()
 {
-	float ResultValue = 0.f;
 	const float OldValue = CurrentValue;
 
-	if (GetNewestOuterOverrideModifier(ResultValue))
+	if (OuterOverrideMods.IsValidIndex(0))
 	{
-		CurrentValue = ResultValue;
+		CurrentValue = OuterOverrideMods[0].ModValue;
 		OnAttributeValueChanged.Broadcast(AttributeType, OldValue, CurrentValue);
 		return;
 	}
@@ -88,10 +87,8 @@ void UFireflyAttribute::UpdateCurrentValue_Implementation()
 	OnAttributeValueChanged.Broadcast(AttributeType, OldValue, CurrentValue);
 }
 
-void UFireflyAttribute::UpdateBaseValueToUse_Implementation(EFireflyAttributeModOperator ModOperator, float ModValue)
+void UFireflyAttribute::UpdateBaseValue_Implementation(EFireflyAttributeModOperator ModOperator, float ModValue)
 {
-	float* BaseValueTuUse = InnerOverrideMods.IsValidIndex(0) ? &InnerOverrideMods[0].ModValue : &BaseValue;
-
 	switch (ModOperator)
 	{
 	case EFireflyAttributeModOperator::None:
@@ -100,28 +97,28 @@ void UFireflyAttribute::UpdateBaseValueToUse_Implementation(EFireflyAttributeMod
 	}
 	case EFireflyAttributeModOperator::Plus:
 	{
-		*BaseValueTuUse += ModValue;
+		BaseValue += ModValue;
 		break;
 	}
 	case EFireflyAttributeModOperator::Minus:
 	{
-		*BaseValueTuUse -= ModValue;
+		BaseValue -= ModValue;
 		break;
 	}
 	case EFireflyAttributeModOperator::Multiply:
 	{
-		*BaseValueTuUse *= ModValue;
+		BaseValue *= ModValue;
 		break;
 	}
 	case EFireflyAttributeModOperator::Divide:
 	{
-		*BaseValueTuUse /= (ModValue == 0.f ? 1.f : ModValue);
+		BaseValue /= (ModValue == 0.f ? 1.f : ModValue);
 		break;
 	}
 	case EFireflyAttributeModOperator::InnerOverride:
 	case EFireflyAttributeModOperator::OuterOverride:
 	{
-		*BaseValueTuUse = ModValue;
+		BaseValue = ModValue;
 		break;
 	}
 	}
@@ -132,7 +129,7 @@ float UFireflyAttribute::GetTotalPlusModifier() const
 	float TotalPlusMod = 0.f;
 	for (const auto PlusMod : PlusMods)
 	{
-		TotalPlusMod += PlusMod.ModValue;
+		TotalPlusMod += PlusMod.ModValue * PlusMod.StackCount;
 	}
 
 	return TotalPlusMod;
@@ -143,7 +140,7 @@ float UFireflyAttribute::GetTotalMinusModifier() const
 	float TotalMinusMod = 0.f;
 	for (const auto MinusMod : MinusMods)
 	{
-		TotalMinusMod += MinusMod.ModValue;
+		TotalMinusMod += MinusMod.ModValue * MinusMod.StackCount;
 	}
 
 	return TotalMinusMod;
@@ -154,7 +151,7 @@ float UFireflyAttribute::GetTotalMultiplyModifier() const
 	float TotalMultiplyMod = 0.f;
 	for (const auto MultiplyMod : MultiplyMods)
 	{
-		TotalMultiplyMod += MultiplyMod.ModValue;
+		TotalMultiplyMod += MultiplyMod.ModValue * MultiplyMod.StackCount;
 	}
 
 	return TotalMultiplyMod;
@@ -165,7 +162,7 @@ float UFireflyAttribute::GetTotalDivideModifier() const
 	float TotalDivideMod = 0.f;
 	for (const auto DivideMod : DivideMods)
 	{
-		TotalDivideMod += DivideMod.ModValue;
+		TotalDivideMod += DivideMod.ModValue * DivideMod.StackCount;
 	}
 	TotalDivideMod = TotalDivideMod == 0.f ? 1.f : TotalDivideMod;
 

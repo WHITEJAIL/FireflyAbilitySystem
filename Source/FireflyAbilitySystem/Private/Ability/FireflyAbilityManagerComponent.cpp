@@ -17,7 +17,6 @@ UFireflyAbilityManagerComponent::UFireflyAbilityManagerComponent(const FObjectIn
 	// ...
 }
 
-
 // Called when the game starts
 void UFireflyAbilityManagerComponent::BeginPlay()
 {
@@ -27,7 +26,6 @@ void UFireflyAbilityManagerComponent::BeginPlay()
 	
 }
 
-
 // Called every frame
 void UFireflyAbilityManagerComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
@@ -36,7 +34,7 @@ void UFireflyAbilityManagerComponent::TickComponent(float DeltaTime, ELevelTick 
 	// ...
 }
 
-UFireflyAbility* UFireflyAbilityManagerComponent::GetAbilityByClass(TSubclassOf<UFireflyAbility> AbilityType) const
+UFireflyAbility* UFireflyAbilityManagerComponent::GetGrantedAbilityByClass(TSubclassOf<UFireflyAbility> AbilityType) const
 {
 	UFireflyAbility* OutAbility = nullptr;
 	for (auto Ability : GrantedAbilities)
@@ -58,7 +56,7 @@ void UFireflyAbilityManagerComponent::GrantAbility(TSubclassOf<UFireflyAbility> 
 		return;
 	}
 
-	if (IsValid(GetAbilityByClass(AbilityToGrant)))
+	if (IsValid(GetGrantedAbilityByClass(AbilityToGrant)))
 	{
 		return;
 	}
@@ -76,7 +74,7 @@ void UFireflyAbilityManagerComponent::RemoveAbility(TSubclassOf<UFireflyAbility>
 		return;
 	}
 
-	UFireflyAbility* Ability = GetAbilityByClass(AbilityToRemove);
+	UFireflyAbility* Ability = GetGrantedAbilityByClass(AbilityToRemove);
 	if (!IsValid(Ability))
 	{
 		return;
@@ -97,7 +95,7 @@ void UFireflyAbilityManagerComponent::RemoveAbilityOnEnded(TSubclassOf<UFireflyA
 		return;
 	}
 
-	UFireflyAbility* Ability = GetAbilityByClass(AbilityToRemove);
+	UFireflyAbility* Ability = GetGrantedAbilityByClass(AbilityToRemove);
 	if (!IsValid(Ability))
 	{
 		return;
@@ -121,7 +119,7 @@ UFireflyAbility* UFireflyAbilityManagerComponent::TryActivateAbilityByClass(TSub
 		return nullptr;
 	}
 
-	UFireflyAbility* Ability = GetAbilityByClass(AbilityToActivate);
+	UFireflyAbility* Ability = GetGrantedAbilityByClass(AbilityToActivate);
 	if (!IsValid(Ability))
 	{
 		return nullptr;

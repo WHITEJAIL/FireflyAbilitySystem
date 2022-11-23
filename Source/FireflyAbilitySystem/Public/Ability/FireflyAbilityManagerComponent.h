@@ -32,7 +32,7 @@ public:
 
 protected:
 	UFUNCTION()
-	FORCEINLINE UFireflyAbility* GetAbilityByClass(TSubclassOf<UFireflyAbility> AbilityType) const;
+	FORCEINLINE UFireflyAbility* GetGrantedAbilityByClass(TSubclassOf<UFireflyAbility> AbilityType) const;
 
 public:
 	/** 获取该技能管理器被赋予的所有技能 */

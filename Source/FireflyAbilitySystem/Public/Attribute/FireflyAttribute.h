@@ -14,6 +14,7 @@ class UFireflyAttributeManagerComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FAttributeValueChangeDelegate, TEnumAsByte<EFireflyAttributeType>, AttributeType, const float, OldValue, const float, Newvalue);
 
+/** 属性修改器 */
 USTRUCT()
 struct FFireflyAttributeModifier
 {
@@ -24,19 +25,21 @@ public:
 	UObject* ModSource = nullptr;
 
 	UPROPERTY()
-	float ModValue = 0.f;;
+	float ModValue = 0.f;
+
+	UPROPERTY()
+	int32 StackCount = 0;
 
 	FFireflyAttributeModifier() {}
 
-	FFireflyAttributeModifier(UObject* InSource) : ModSource(InSource) {}
-
 	FFireflyAttributeModifier(UObject* InSource, float InValue) : ModSource(InSource), ModValue(InValue) {}
+
+	FFireflyAttributeModifier(UObject* InSource, float InValue, int32 InStack) : ModSource(InSource), ModValue(InValue), StackCount(InStack) {}
 
 	FORCEINLINE bool operator==(const FFireflyAttributeModifier& Other) const
 	{
-		return ModSource == Other.ModSource;
+		return ModSource == Other.ModSource && ModValue == Other.ModValue;
 	}
-	
 };
 
 /** 属性 */
@@ -111,7 +114,7 @@ protected:
 
 	/** 更新属性的当前值 */
 	UFUNCTION(BlueprintNativeEvent, Category = "FireflyAbilitySystem|Attribute")
-	void UpdateBaseValueToUse(EFireflyAttributeModOperator ModOperator, float ModValue);
+	void UpdateBaseValue(EFireflyAttributeModOperator ModOperator, float ModValue);
 
 	/** 获取属性的加法修改器的合值 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute", Meta = (BlueprintProtected = "true"))

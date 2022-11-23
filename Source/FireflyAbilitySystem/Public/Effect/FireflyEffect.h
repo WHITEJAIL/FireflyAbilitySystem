@@ -37,7 +37,7 @@ protected:
 
 #pragma region Duration
 
-public:
+protected:
 	/** 设置正在执行的效果的剩余持续时间 */
 	UFUNCTION()
 	void SetTimeRemainingOfDuration(float NewDuration);
@@ -63,9 +63,7 @@ protected:
 
 
 #pragma region Periodicity
-
-protected:
-
+	
 protected:
 	/** 效果在生效时是否按周期执行逻辑 */
 	UPROPERTY(EditDefaultsOnly, Category = Periodicity)
@@ -108,7 +106,7 @@ protected:
 
 	/** 效果的持续时间，仅在持续策略为“HasDuration”时起作用 */
 	UPROPERTY(EditDefaultsOnly, Category = Stacking, Meta = (EditCondition = "StackingPolicy == EFireflyEffectStackingPolicy::StackHasLimit"))
-	uint32 StackLimitation;
+	int32 StackLimitation;
 
 	/** 效果有新的实例被执行或堆叠数量增加时，是否刷新持续时间 */
 	UPROPERTY(EditDefaultsOnly, Category = Stacking)
@@ -134,7 +132,7 @@ protected:
 protected:
 	/** 该效果携带的属性修改器 */
 	UPROPERTY(EditDefaultsOnly, Category = Modifier)
-	TArray<FFireflyEffectModifier> Modifiers;
+	TArray<FFireflyEffectModifierData> Modifiers;
 
 	/** 该效果携带的特殊属性 */
 	UPROPERTY(EditDefaultsOnly, Category = Modifier)
@@ -144,6 +142,15 @@ protected:
 
 
 #pragma region Execution
+
+protected:
+	/** 效果被应用时执行的逻辑 */
+	UFUNCTION()
+	virtual void ApplyEffect(AActor* InInstigator = nullptr, AActor* InTarget = nullptr, int32 StackToApply = 1);
+
+	/** 蓝图端实现的效果被应用时执行的逻辑 */
+	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Effect", Meta = (DisplayName = "Apply Effect"))
+	void ReceiveApplyEffect();
 
 protected:
 	/** 效果执行的发起者 */

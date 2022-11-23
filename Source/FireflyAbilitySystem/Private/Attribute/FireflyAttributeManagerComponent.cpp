@@ -109,12 +109,30 @@ void UFireflyAttributeManagerComponent::InitializeAttribute(EFireflyAttributeTyp
 }
 
 void UFireflyAttributeManagerComponent::ApplyModifierToAttribute(EFireflyAttributeType AttributeType,
-	EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue)
+	EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, int32 StackToApply)
 {
 	UFireflyAttribute* AttributeToMod = GetAttributeByType(AttributeType);
 	if (!IsValid(AttributeToMod))
 	{
 		return;
+	}
+
+#define FIREFLY_ATTRIBUTE_MODIFIER_APPLY(ModOperatorName) \
+	{ \
+		if (!AttributeToMod->##ModOperatorName##Mods.Contains(FFireflyAttributeModifier(ModSource, ModValue))) \
+		{ \
+			AttributeToMod->##ModOperatorName##Mods.Push(FFireflyAttributeModifier(ModSource, ModValue, StackToApply)); \
+			break; \
+		} \
+		\
+		for (FFireflyAttributeModifier& Modifier : AttributeToMod->##ModOperatorName##Mods) \
+		{ \
+			if (Modifier.ModSource == ModSource) \
+			{ \
+				Modifier.StackCount += StackToApply; \
+				break; \
+			} \
+		} \
 	}
 
 	switch (ModOperator)
@@ -125,32 +143,32 @@ void UFireflyAttributeManagerComponent::ApplyModifierToAttribute(EFireflyAttribu
 		}
 	case EFireflyAttributeModOperator::Plus:
 		{
-			AttributeToMod->PlusMods.Push(FFireflyAttributeModifier(ModSource, ModValue));
+			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(Plus);
 			break;
 		}
 	case EFireflyAttributeModOperator::Minus:
 		{
-			AttributeToMod->MinusMods.Push(FFireflyAttributeModifier(ModSource, ModValue));
+			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(Minus);
 			break;
 		}
 	case EFireflyAttributeModOperator::Multiply:
 		{
-			AttributeToMod->MultiplyMods.Push(FFireflyAttributeModifier(ModSource, ModValue));
+			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(Multiply);
 			break;
 		}
 	case EFireflyAttributeModOperator::Divide:
 		{
-			AttributeToMod->DivideMods.Push(FFireflyAttributeModifier(ModSource, ModValue));
+			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(Divide);
 			break;
 		}
 	case EFireflyAttributeModOperator::InnerOverride:
 		{
-			AttributeToMod->InnerOverrideMods.Push(FFireflyAttributeModifier(ModSource, ModValue));
+			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(InnerOverride);
 			break;
 		}
 	case EFireflyAttributeModOperator::OuterOverride:
 		{
-			AttributeToMod->OuterOverrideMods.Push(FFireflyAttributeModifier(ModSource, ModValue));
+			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(OuterOverride);
 			break;
 		}	
 	}
@@ -158,20 +176,8 @@ void UFireflyAttributeManagerComponent::ApplyModifierToAttribute(EFireflyAttribu
 	AttributeToMod->UpdateCurrentValue();
 }
 
-void UFireflyAttributeManagerComponent::ApplyModifierToAttributeBase(EFireflyAttributeType AttributeType,
-	EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue)
-{
-	UFireflyAttribute* AttributeToModBase = GetAttributeByType(AttributeType);
-	if (!IsValid(AttributeToModBase))
-	{
-		return;
-	}
-
-	AttributeToModBase->UpdateBaseValueToUse(ModOperator, ModValue);
-}
-
 void UFireflyAttributeManagerComponent::RemoveModifierFromAttribute(EFireflyAttributeType AttributeType,
-	EFireflyAttributeModOperator ModOperator, UObject* ModSource)
+	EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, int32 StackToRemove)
 {
 	UFireflyAttribute* AttributeToMod = GetAttributeByType(AttributeType);
 	if (!IsValid(AttributeToMod))
@@ -179,7 +185,7 @@ void UFireflyAttributeManagerComponent::RemoveModifierFromAttribute(EFireflyAttr
 		return;
 	}
 
-	FFireflyAttributeModifier ModifierToRemove = FFireflyAttributeModifier(ModSource);
+	FFireflyAttributeModifier ModifierToRemove = FFireflyAttributeModifier(ModSource, ModValue);
 
 #define FIREFLY_ATTRIBUTE_MODIFIER_REMOVE(ModOperatorName) \
 	if (AttributeToMod->##ModOperatorName##Mods.Contains(ModifierToRemove)) \
@@ -226,4 +232,16 @@ void UFireflyAttributeManagerComponent::RemoveModifierFromAttribute(EFireflyAttr
 	}
 
 	AttributeToMod->UpdateCurrentValue();
+}
+
+void UFireflyAttributeManagerComponent::ApplyModifierToAttributeInstant(EFireflyAttributeType AttributeType,
+	EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue)
+{
+	UFireflyAttribute* AttributeToMod = GetAttributeByType(AttributeType);
+	if (!IsValid(AttributeToMod))
+	{
+		return;
+	}
+
+	AttributeToMod->UpdateBaseValue(ModOperator, ModValue);
 }

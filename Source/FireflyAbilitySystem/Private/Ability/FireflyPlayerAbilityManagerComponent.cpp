@@ -42,12 +42,12 @@ void UFireflyPlayerAbilityManagerComponent::OnAbilityInputActionStarted(UInputAc
 	TArray<UFireflyAbility_InputBased*> Abilities;
 	for (auto AbilityClass : AbilitiesBoundToInput->Abilities)
 	{
-		if (!IsValid(GetAbilityByClass(AbilityClass)))
+		if (!IsValid(GetGrantedAbilityByClass(AbilityClass)))
 		{
 			continue;
 		}
 
-		UFireflyAbility_InputBased* Ability = Cast<UFireflyAbility_InputBased>(GetAbilityByClass(AbilityClass));
+		UFireflyAbility_InputBased* Ability = Cast<UFireflyAbility_InputBased>(GetGrantedAbilityByClass(AbilityClass));
 		if (!Ability->CanActivateAbility())
 		{
 			continue;
@@ -73,12 +73,12 @@ void UFireflyPlayerAbilityManagerComponent::OnAbilityInputActionOngoing(UInputAc
 	TArray<UFireflyAbility_InputBased*> Abilities;
 	for (auto AbilityClass : AbilitiesBoundToInput->Abilities)
 	{
-		if (!IsValid(GetAbilityByClass(AbilityClass)))
+		if (!IsValid(GetGrantedAbilityByClass(AbilityClass)))
 		{
 			continue;
 		}
 
-		UFireflyAbility_InputBased* Ability = Cast<UFireflyAbility_InputBased>(GetAbilityByClass(AbilityClass));
+		UFireflyAbility_InputBased* Ability = Cast<UFireflyAbility_InputBased>(GetGrantedAbilityByClass(AbilityClass));
 		if (!Ability->bIsActivating)
 		{
 			continue;
@@ -104,12 +104,12 @@ void UFireflyPlayerAbilityManagerComponent::OnAbilityInputActionCanceled(UInputA
 	TArray<UFireflyAbility_InputBased*> Abilities;
 	for (auto AbilityClass : AbilitiesBoundToInput->Abilities)
 	{
-		if (!IsValid(GetAbilityByClass(AbilityClass)))
+		if (!IsValid(GetGrantedAbilityByClass(AbilityClass)))
 		{
 			continue;
 		}
 
-		UFireflyAbility_InputBased* Ability = Cast<UFireflyAbility_InputBased>(GetAbilityByClass(AbilityClass));
+		UFireflyAbility_InputBased* Ability = Cast<UFireflyAbility_InputBased>(GetGrantedAbilityByClass(AbilityClass));
 		if (!Ability->bIsActivating)
 		{
 			continue;
@@ -135,12 +135,12 @@ void UFireflyPlayerAbilityManagerComponent::OnAbilityInputActionTriggered(UInput
 	TArray<UFireflyAbility_InputBased*> Abilities;
 	for (auto AbilityClass : AbilitiesBoundToInput->Abilities)
 	{
-		if (!IsValid(GetAbilityByClass(AbilityClass)))
+		if (!IsValid(GetGrantedAbilityByClass(AbilityClass)))
 		{
 			continue;
 		}
 
-		UFireflyAbility_InputBased* Ability = Cast<UFireflyAbility_InputBased>(GetAbilityByClass(AbilityClass));
+		UFireflyAbility_InputBased* Ability = Cast<UFireflyAbility_InputBased>(GetGrantedAbilityByClass(AbilityClass));
 		if (Ability->bActivateOnTriggered && !Ability->CanActivateAbility())
 		{
 			continue;
@@ -166,12 +166,12 @@ void UFireflyPlayerAbilityManagerComponent::OnAbilityInputActionCompleted(UInput
 	TArray<UFireflyAbility_InputBased*> Abilities;
 	for (auto AbilityClass : AbilitiesBoundToInput->Abilities)
 	{
-		if (!IsValid(GetAbilityByClass(AbilityClass)))
+		if (!IsValid(GetGrantedAbilityByClass(AbilityClass)))
 		{
 			continue;
 		}
 
-		UFireflyAbility_InputBased* Ability = Cast<UFireflyAbility_InputBased>(GetAbilityByClass(AbilityClass));
+		UFireflyAbility_InputBased* Ability = Cast<UFireflyAbility_InputBased>(GetGrantedAbilityByClass(AbilityClass));
 		if (!Ability->bIsActivating)
 		{
 			continue;
@@ -200,12 +200,12 @@ void UFireflyPlayerAbilityManagerComponent::BindAbilityToInput(TSubclassOf<UFire
 		return;
 	}
 
-	if (!IsValid(GetAbilityByClass(AbilityToBind)))
+	if (!IsValid(GetGrantedAbilityByClass(AbilityToBind)))
 	{
 		return;
 	}
 
-	UFireflyAbility_InputBased* Ability = Cast<UFireflyAbility_InputBased>(GetAbilityByClass(AbilityToBind));
+	UFireflyAbility_InputBased* Ability = Cast<UFireflyAbility_InputBased>(GetGrantedAbilityByClass(AbilityToBind));
 	if (!IsValid(Ability))
 	{
 		return;
@@ -243,12 +243,12 @@ void UFireflyPlayerAbilityManagerComponent::UnbindAbilityWithInput(TSubclassOf<U
 		return;
 	}
 
-	if (!IsValid(GetAbilityByClass(AbilityToUnbind)))
+	if (!IsValid(GetGrantedAbilityByClass(AbilityToUnbind)))
 	{
 		return;
 	}
 
-	UFireflyAbility_InputBased* Ability = Cast<UFireflyAbility_InputBased>(GetAbilityByClass(AbilityToUnbind));
+	UFireflyAbility_InputBased* Ability = Cast<UFireflyAbility_InputBased>(GetGrantedAbilityByClass(AbilityToUnbind));
 	if (!IsValid(Ability))
 	{
 		return;
