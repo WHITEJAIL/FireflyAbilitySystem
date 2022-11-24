@@ -154,6 +154,20 @@ enum class EFireflyEffectDurationPolicyOnStackingExpired : uint8
 	RefreshDuration
 };
 
+/** 效果的作用和发起者之间关系的选择策略 */
+UENUM()
+enum class EFireflyEffectInstigatorApplicationPolicy : uint8
+{
+	/** 同一个效果管理器中，只允许一个发起者应用的该效果实例存在 */
+	OnlyOneInstigator,
+
+	/** 同一个效果管理器中，不同的发起者共享同一个该效果实例 */
+	InstigatorsShareOne,
+
+	/** 同一个效果管理器中，不同的发起者生成不同的该效果实例 */
+	InstigatorsApplyTheirOwn
+};
+
 /** 效果携带的属性修改器 */
 USTRUCT(BlueprintType)
 struct FFireflyEffectModifierData
@@ -162,7 +176,7 @@ struct FFireflyEffectModifierData
 
 	/** 修改的属性类型 */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
-	TEnumAsByte<EFireflyAttributeType> Attribute = EFireflyAttributeType::AttributeType_Default;
+	TEnumAsByte<EFireflyAttributeType> AttributeType = EFireflyAttributeType::AttributeType_Default;
 
 	/** 修改的操作符 */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
@@ -176,12 +190,12 @@ struct FFireflyEffectModifierData
 
 	FORCEINLINE bool operator==(const FFireflyEffectModifierData& Other) const
 	{
-		return Attribute == Other.Attribute && ModOperator == Other.ModOperator && ModValue == Other.ModValue;
+		return AttributeType == Other.AttributeType && ModOperator == Other.ModOperator && ModValue == Other.ModValue;
 	}
 
 	FORCEINLINE bool TypeEqual(const FFireflyEffectModifierData& Other) const
 	{
-		return Attribute == Other.Attribute && ModOperator == Other.ModOperator;
+		return AttributeType == Other.AttributeType && ModOperator == Other.ModOperator;
 	}
 };
 
@@ -269,6 +283,18 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = Stacking)
 	bool bShouldResetPeriodicityOnStacking;
 
+	/** 效果的堆叠数达到上限时，触发的额外的效果 */
+	UPROPERTY(BlueprintReadWrite, Category = Stacking)
+	TArray<TSubclassOf<UFireflyEffect>> OverflowEffects;
+
+	/** 效果的堆叠数达到上限时，是否拒绝新的堆叠应用 */
+	UPROPERTY(BlueprintReadWrite, Category = Stacking)
+	bool bDenyNewStackingOnOverflow;
+
+	/** 效果的堆叠数达到上限时，是否清除所有的堆叠数 */
+	UPROPERTY(BlueprintReadWrite, Category = Stacking)
+	bool bClearStackingOnOverflow;
+
 	/** 效果的堆叠到期时，对持续时间的影响 */
 	UPROPERTY(BlueprintReadWrite, Category = Stacking)
 	EFireflyEffectDurationPolicyOnStackingExpired StackExpirationPolicy;
@@ -280,6 +306,10 @@ public:
 	/** 该效果携带的特殊属性 */
 	UPROPERTY(BlueprintReadWrite, Category = Modifier)
 	TArray<FFireflySpecificProperty> SpecificProperties;
+
+	/** 该效果携带的特殊属性 */
+	UPROPERTY(BlueprintReadWrite, Category = Application)
+	EFireflyEffectInstigatorApplicationPolicy InstigatorApplicationPolicy;
 	
 };
 

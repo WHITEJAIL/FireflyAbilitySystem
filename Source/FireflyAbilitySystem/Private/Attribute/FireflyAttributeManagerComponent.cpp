@@ -129,7 +129,7 @@ void UFireflyAttributeManagerComponent::ApplyModifierToAttribute(EFireflyAttribu
 		{ \
 			if (Modifier.ModSource == ModSource) \
 			{ \
-				Modifier.StackCount += StackToApply; \
+				Modifier.StackCount = StackToApply; \
 				break; \
 			} \
 		} \
@@ -177,7 +177,7 @@ void UFireflyAttributeManagerComponent::ApplyModifierToAttribute(EFireflyAttribu
 }
 
 void UFireflyAttributeManagerComponent::RemoveModifierFromAttribute(EFireflyAttributeType AttributeType,
-	EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, int32 StackToRemove)
+	EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue)
 {
 	UFireflyAttribute* AttributeToMod = GetAttributeByType(AttributeType);
 	if (!IsValid(AttributeToMod))

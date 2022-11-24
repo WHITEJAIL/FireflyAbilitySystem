@@ -33,57 +33,42 @@ void UFireflyEffectManagerComponent::TickComponent(float DeltaTime, ELevelTick T
 	// ...
 }
 
-UFireflyEffect* UFireflyEffectManagerComponent::GetActiveEffectByClass(TSubclassOf<UFireflyEffect> EffectType) const
+TArray<UFireflyEffect*> UFireflyEffectManagerComponent::GetActiveEffectByClass(TSubclassOf<UFireflyEffect> EffectType) const
 {
-	UFireflyEffect* OutEffect = nullptr;
+	TArray<UFireflyEffect*> OutEffects = TArray<UFireflyEffect*>{};
 	for (auto Effect : ActiveEffects)
 	{
 		if (Effect->GetClass() == EffectType)
 		{
-			OutEffect = Effect;
-			break;
+			OutEffects.Emplace(Effect);
 		}
 	}
 
-	return OutEffect;
-}
-
-bool UFireflyEffectManagerComponent::IsEffectActive(TSubclassOf<UFireflyEffect> EffectType) const
-{
-	bool bEffectActive = false;
-	for (auto Effect : ActiveEffects)
-	{
-		if (Effect->GetClass() == EffectType)
-		{
-			bEffectActive = true;
-			break;
-		}
-	}
-
-	return bEffectActive;
+	return OutEffects;
 }
 
 void UFireflyEffectManagerComponent::ApplyEffectToSelf(AActor* Instigator, TSubclassOf<UFireflyEffect> EffectType, int32 StackToApply)
 {
-	if (!IsValid(Instigator) || !IsValid(EffectType) || StackToApply <= 0)
+	if (!IsValid(EffectType) || StackToApply <= 0)
 	{
 		return;
 	}
 
-	if (!IsEffectActive(EffectType))
+	if (!IsValid(Instigator))
+	{
+		Instigator = GetOwner();
+	}
+
+	const TArray<UFireflyEffect*> ActiveSpecEffects = GetActiveEffectByClass(EffectType);
+	if (ActiveSpecEffects.Num() == 0)
 	{
 		UFireflyEffect* NewEffect = NewObject<UFireflyEffect>(this, EffectType);
 		NewEffect->ApplyEffect(Instigator, GetOwner(), StackToApply);
-	}
 
-	UFireflyEffect* ActiveEffect = GetActiveEffectByClass(EffectType);
-
-	if (ActiveEffect->StackingPolicy == EFireflyEffectStackingPolicy::None)
-	{
 		return;
 	}
 
-	ActiveEffect->AddEffectStack(StackToApply);
+	UFireflyEffect* EffectCDO = Cast<UFireflyEffect>(EffectType->GetDefaultObject());
 }
 
 void UFireflyEffectManagerComponent::ApplyEffectToTarget(AActor* Target, TSubclassOf<UFireflyEffect> EffectType,
@@ -104,3 +89,11 @@ void UFireflyEffectManagerComponent::ApplyEffectToTarget(AActor* Target, TSubcla
 	TargetEffectMgr->ApplyEffectToSelf(GetOwner(), EffectType, StackToApply);
 }
 
+void UFireflyEffectManagerComponent::RemoveActiveEffectFromSelf(TSubclassOf<UFireflyEffect> EffectType,
+	int32 StackToRemove)
+{
+	if (!IsValid(EffectType))
+	{
+		return;
+	}	
+}

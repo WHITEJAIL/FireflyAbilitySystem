@@ -29,15 +29,11 @@ public:
 #pragma region Application
 
 protected:
-	/** 在该管理器中获取特定类型的被应用的激活中的效果 */
+	/** 在该管理器中获取特定类型的被应用的激活中的所有效果 */
 	UFUNCTION()
-	UFireflyEffect* GetActiveEffectByClass(TSubclassOf<UFireflyEffect> EffectType) const;
+	TArray<UFireflyEffect*> GetActiveEffectByClass(TSubclassOf<UFireflyEffect> EffectType) const;
 
 public:
-	/** 该效果是否在该管理器中处于被应用的激活状态 */
-	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Effect")
-	bool IsEffectActive(TSubclassOf<UFireflyEffect> EffectType) const;
-
 	/** 为自身应用效果 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
 	void ApplyEffectToSelf(AActor* Instigator, TSubclassOf<UFireflyEffect> EffectType, int32 StackToApply = 1);
@@ -45,6 +41,10 @@ public:
 	/** 为目标应用效果 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
 	void ApplyEffectToTarget(AActor* Target, TSubclassOf<UFireflyEffect> EffectType, int32 StackToApply = 1);
+
+	/** 移除自身的特定效果, StackToRemove = -1时，默认移除效果的所有堆叠 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
+	void RemoveActiveEffectFromSelf(TSubclassOf<UFireflyEffect> EffectType, int32 StackToRemove = -1);
 
 protected:
 	/** 所有激活中的执行策略不是Instant的效果 */

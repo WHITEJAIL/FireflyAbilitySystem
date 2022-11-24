@@ -77,7 +77,7 @@ public:
 
 	/** 移除某个作用于某个属性的当前值的修改器 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
-	void RemoveModifierFromAttribute(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, int32 StackToRemove);
+	void RemoveModifierFromAttribute(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue);
 
 	/** 应用一个修改器永久修改某个属性的基础值 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
