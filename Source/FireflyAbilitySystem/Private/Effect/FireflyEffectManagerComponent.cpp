@@ -53,6 +53,8 @@ void UFireflyEffectManagerComponent::ApplyEffectToSelf(AActor* Instigator, TSubc
 	}
 
 	const TArray<UFireflyEffect*> ActiveSpecEffects = GetActiveEffectByClass(EffectType);
+
+	/** 管理器中目前如果不存在被应用的指定效果，则创建一个新效果，应用该效果 */
 	if (ActiveSpecEffects.Num() == 0)
 	{
 		UFireflyEffect* NewEffect = NewObject<UFireflyEffect>(this, EffectType);
@@ -61,7 +63,35 @@ void UFireflyEffectManagerComponent::ApplyEffectToSelf(AActor* Instigator, TSubc
 		return;
 	}
 
+	/** 如果指定效果的默认发起者应用策略为每个发起者应用各自的实例 */
 	UFireflyEffect* EffectCDO = Cast<UFireflyEffect>(EffectType->GetDefaultObject());
+	if (EffectCDO->InstigatorApplicationPolicy == EFireflyEffectInstigatorApplicationPolicy::InstigatorsApplyTheirOwn)
+	{
+		bool bContainsInstigator = false;
+		for (auto Effect : ActiveSpecEffects)
+		{
+			if (Effect->Instigators.Contains(Instigator))
+			{
+				bContainsInstigator = true;
+				break;
+			}			
+		}
+
+		/** 如果指定效果在该管理器中目前不存在已经存在的，和InInstigator相同的发起者，则创建一个新效果，应用该效果 */
+		if (!bContainsInstigator)
+		{
+			UFireflyEffect* NewEffect = NewObject<UFireflyEffect>(this, EffectType);
+			NewEffect->ApplyEffect(Instigator, GetOwner(), StackToApply);
+
+			return;
+		}
+	}
+
+	/** 不考虑特殊情况，将所有当前存在的执行效果重新应用，具体的判定逻辑在效果内部执行 */
+	for (auto Effect : ActiveSpecEffects)
+	{
+		Effect->ApplyEffect(Instigator, GetOwner(), StackToApply);
+	}
 }
 
 void UFireflyEffectManagerComponent::ApplyEffectToTarget(AActor* Target, TSubclassOf<UFireflyEffect> EffectType,
@@ -88,5 +118,34 @@ void UFireflyEffectManagerComponent::RemoveActiveEffectFromSelf(TSubclassOf<UFir
 	if (!IsValid(EffectType))
 	{
 		return;
-	}	
+	}
+
+	TArray<UFireflyEffect*> EffectsToRemove = TArray<UFireflyEffect*>{};
+	for (auto Effect : ActiveEffects)
+	{
+		if (Effect->GetClass() == EffectType)
+		{
+			EffectsToRemove.Add(Effect);
+		}
+	}
+
+	for (auto Effect : EffectsToRemove)
+	{
+		if (Effect->ReduceEffectStack(StackToRemove))
+		{
+			Effect->RemoveEffect();
+		}
+	}
+}
+
+void UFireflyEffectManagerComponent::AddOrRemoveActiveEffect(UFireflyEffect* InEffect, bool bIsAdd)
+{
+	if (bIsAdd)
+	{
+		ActiveEffects.Emplace(InEffect);
+	}
+	else
+	{
+		ActiveEffects.RemoveSingleSwap(InEffect);
+	}
 }

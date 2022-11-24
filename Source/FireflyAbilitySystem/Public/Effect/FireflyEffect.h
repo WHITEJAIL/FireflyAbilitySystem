@@ -46,13 +46,9 @@ protected:
 	UFUNCTION()
 	float GetTimeRemainingOfDuration() const;
 
-	/** 当有新实例被执行或对叠数增加时，尝试刷新持续时间 */
+	/** 尝试执行或刷新持续时间 */
 	UFUNCTION()
-	void TryRefreshDurationOnStacking();
-
-	/** 执行持续时间归零时，效果的堆叠到期策略 */
-	UFUNCTION()
-	void ExecuteStackingExpirationPolicy();
+	void TryExecuteOrRefreshDuration();
 
 protected:
 	/** 效果的持续性策略 */
@@ -73,9 +69,9 @@ protected:
 #pragma region Periodicity
 
 protected:
-	/** 当有新实例被执行或对叠数增加时，尝试重置周期性 */
+	/** 尝试执行或重置周期性逻辑 */
 	UFUNCTION()
-	void TryResetPeriodicityOnStacking();
+	void TryExecuteOrResetPeriodicity();
 	
 protected:
 	/** 效果在生效时是否按周期执行逻辑 */
@@ -106,15 +102,15 @@ protected:
 
 	/** 减少该效果的堆叠数 */
 	UFUNCTION()
-	virtual void ReduceEffectStack(int32 StackCountToReduce);
+	virtual bool ReduceEffectStack(int32 StackCountToReduce);
 
 	/** 蓝图端实现的减少该效果的堆叠数 */
 	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Effect", Meta = (DisplayName = "ReduceEffectStack"))
 	void ReceiveReduceEffectStack(int32 StackCountToReduce);
 
-	/** 当该效果的堆叠数达到上限时触发的逻辑 */
+	/** 尝试执行效果的堆叠数达到上限时的逻辑 */
 	UFUNCTION()
-	virtual void ExecuteEffectStackOverflow();
+	virtual bool TryExecuteEffectStackOverflow();
 
 	/** 蓝图端实现的当该效果的堆叠数达到上限时触发的逻辑 */
 	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Effect", Meta = (DisplayName = "ReduceEffectStack"))
@@ -149,7 +145,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = Stacking)
 	bool bClearStackingOnOverflow;
 
-	/** 效果的持续时间到期时，对堆叠的影响 */
+	/** 堆叠到期策略，即效果的持续时间的到期对堆叠的影响 */
 	UPROPERTY(EditDefaultsOnly, Category = Stacking)
 	EFireflyEffectDurationPolicyOnStackingExpired StackingExpirationPolicy;
 
@@ -210,17 +206,17 @@ protected:
 	void ReceiveRemoveEffect();
 
 protected:
+	/** 该效果携带的特殊属性 */
+	UPROPERTY(EditDefaultsOnly, Category = Modifier)
+	EFireflyEffectInstigatorApplicationPolicy InstigatorApplicationPolicy;
+
 	/** 效果执行的发起者 */
-	UPROPERTY(BlueprintReadOnly, Category = "FireflyAbilitySystem|Effect")
+	UPROPERTY()
 	TArray<AActor*> Instigators;
 
 	/** 效果执行的接受者 */
-	UPROPERTY(BlueprintReadOnly, Category = "FireflyAbilitySystem|Effect")
-	AActor* Target;
-
-	/** 该效果携带的特殊属性 */
-	UPROPERTY(BlueprintReadOnly, Category = "FireflyAbilitySystem|Effect")
-	EFireflyEffectInstigatorApplicationPolicy InstigatorApplicationPolicy;
+	UPROPERTY()
+	AActor* Target;	
 
 #pragma endregion
 	

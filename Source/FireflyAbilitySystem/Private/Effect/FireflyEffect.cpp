@@ -56,145 +56,97 @@ float UFireflyEffect::GetTimeRemainingOfDuration() const
 	return GetWorld()->GetTimerManager().GetTimerRemaining(DurationTimer);
 }
 
-void UFireflyEffect::TryRefreshDurationOnStacking()
+void UFireflyEffect::TryExecuteOrRefreshDuration()
 {
 	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+	/** 如果持续时间尚未开始计时，则执行计时器 */
 	if (!TimerManager.IsTimerActive(DurationTimer))
 	{
 		TimerManager.SetTimer(DurationTimer, this, &UFireflyEffect::ExecuteEffectExpiration, Duration);
 		return;
 	}
 
+	/** 如果堆叠不会刷新执行时间，或者堆叠到期策略为清理所有堆叠数，则不会刷新持续时间 */
 	if (!bShouldRefreshDurationOnStacking || StackingExpirationPolicy == EFireflyEffectDurationPolicyOnStackingExpired::ClearEntireStack)
 	{
 		return;
 	}
 
+	/** 刷新持续时间 */
 	TimerManager.ClearTimer(DurationTimer);
 	TimerManager.SetTimer(DurationTimer, this, &UFireflyEffect::ExecuteEffectExpiration, Duration);
 }
 
-void UFireflyEffect::ExecuteStackingExpirationPolicy()
+void UFireflyEffect::TryExecuteOrResetPeriodicity()
 {
-	GetWorld()->GetTimerManager().ClearTimer(DurationTimer);
-
-	switch (StackingExpirationPolicy)
+	/** 如果该效果不是周期性执行，直接返回 */
+	if (!bIsEffectExecutionPeriodic)
 	{
-	case EFireflyEffectDurationPolicyOnStackingExpired::ClearEntireStack:
-		{
-			RemoveEffect();
-			break;
-		}
-	case EFireflyEffectDurationPolicyOnStackingExpired::RemoveSingleStackAndRefreshDuration:
-		{
-			ReduceEffectStack(1);
-			break;
-		}
-	case EFireflyEffectDurationPolicyOnStackingExpired::RefreshDuration:
-		{
-			TryRefreshDurationOnStacking();
-			break;
-		}
+		return;
 	}
-}
 
-void UFireflyEffect::TryResetPeriodicityOnStacking()
-{
 	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+	/** 如果效果的周期性执行尚未开始，则开始计时器，执行周期性逻辑 */
 	if (!TimerManager.IsTimerActive(PeriodicityTimer))
 	{
 		TimerManager.SetTimer(PeriodicityTimer, this, &UFireflyEffect::ExecuteEffect, PeriodicInterval, true);
 		return;
 	}
 
+	/** 如果堆叠不会重置周期性执行，或者堆叠到期策略为清理所有堆叠数，则不会重置周期性执行 */
 	if (!bShouldResetPeriodicityOnStacking || StackingExpirationPolicy == EFireflyEffectDurationPolicyOnStackingExpired::ClearEntireStack)
 	{
 		return;
 	}
 
+	/** 重置周期性执行 */
 	TimerManager.ClearTimer(PeriodicityTimer);
 	TimerManager.SetTimer(PeriodicityTimer, this, &UFireflyEffect::ExecuteEffect, PeriodicInterval, true);
 }
 
 void UFireflyEffect::AddEffectStack(int32 StackCountToAdd)
 {
-	if (StackCount == StackingLimitation && bDenyNewStackingOnOverflow)
+	/** 如果已经开始堆叠 && 满堆叠 && 满堆叠时拒绝新的堆叠实例，直接返回 */
+	if (StackCount != 0 && StackCount == StackingLimitation && bDenyNewStackingOnOverflow)
 	{
 		return;
 	}
 
+	/** 添加堆叠数，如果堆叠有上限，执行夹值 */
+	StackCount += StackCountToAdd;
 	if (StackingPolicy == EFireflyEffectStackingPolicy::StackHasLimit)
-	{
-		StackCount += StackCountToAdd;
+	{		
 		StackCount = FMath::Clamp<int32>(StackCount, 0, StackingLimitation);
 	}
-	if (StackingPolicy == EFireflyEffectStackingPolicy::StackNoLimit)
-	{
-		StackCount += StackCountToAdd;
-	}
-
-	if (StackCount == StackingLimitation)
-	{
-		ExecuteEffectStackOverflow();
-		if (IsGarbageCollecting())
-		{
-			return;
-		}
-	}
-
-	TryRefreshDurationOnStacking();
-
-	if (bIsEffectExecutionPeriodic)
-	{
-		TryResetPeriodicityOnStacking();
-	}
-	ExecuteEffect();
 
 	ReceiveAddEffectStack(StackCountToAdd);
 }
 
-void UFireflyEffect::ReduceEffectStack(int32 StackCountToReduce)
+bool UFireflyEffect::ReduceEffectStack(int32 StackCountToReduce)
 {
-	if (StackCountToReduce == -1)
-	{
-		RemoveEffect();
-		return;
-	}
+	/** 减少堆叠数 */
+	StackCount -= StackCountToReduce;
 
-	if (StackingPolicy == EFireflyEffectStackingPolicy::StackHasLimit)
-	{
-		StackCount -= StackCountToReduce;
-		StackCount = FMath::Clamp<int32>(StackCount, 0, StackingLimitation);
-	}
-	if (StackingPolicy == EFireflyEffectStackingPolicy::StackNoLimit)
-	{
-		StackCount -= StackCountToReduce;
-	}
+	ReceiveReduceEffectStack(StackCountToReduce);
 
 	if (StackCount == 0)
 	{
-		RemoveEffect();
-		return;
+		return true;
 	}
 
-	TryRefreshDurationOnStacking();
-
-	if (bIsEffectExecutionPeriodic)
-	{
-		TryResetPeriodicityOnStacking();
-	}
-	ExecuteEffect();
-
-	ReceiveReduceEffectStack(StackCountToReduce);
+	return false;
 }
 
-void UFireflyEffect::ExecuteEffectStackOverflow()
+bool UFireflyEffect::TryExecuteEffectStackOverflow()
 {
-	if (!IsValid(GetOwnerManager()))
+	/** 如果管理器不存在 || 堆叠数未达到最大值 || 效果的堆叠不受限制，直接返回 */
+	if (!IsValid(GetOwnerManager()) || StackCount != StackingLimitation
+		|| StackingPolicy != EFireflyEffectStackingPolicy::StackHasLimit)
 	{
-		return;
+		return false;
 	}
 
+	/** 应用堆叠数达到上限时触发的额外效果 */
 	for (auto EffectType : OverflowEffects)
 	{
 		GetOwnerManager()->ApplyEffectToSelf(GetOwnerActor(), EffectType);
@@ -202,32 +154,69 @@ void UFireflyEffect::ExecuteEffectStackOverflow()
 
 	ReceiveExecuteEffectStackOverflow();
 
-	if (bClearStackingOnOverflow)
-	{
-		ReduceEffectStack(-1);
-	}
+	return true;
 }
 
 void UFireflyEffect::ApplyEffect(AActor* InInstigator, AActor* InTarget, int32 StackToApply)
 {
-	if (IsValid(InInstigator) && (Instigators.Contains(InInstigator)))
-	{
-		Instigators.Add(InInstigator);
-	}
-
-	if (IsValid(InTarget) && (Target != InTarget))
-	{
-		Target = InTarget;
-	}
-
+	/** 如果持续时间策略为Instant，直接按照申请的堆叠次数执行逻辑，并结束效果的应用 */
 	if (DurationPolicy == EFireflyEffectDurationPolicy::Instant)
 	{
-		ExecuteEffect();
+		Instigators.Contains(InInstigator);
+		Target = InTarget;
+
+		for (int i = 0; i < StackToApply; ++i)
+		{
+			ExecuteEffect();
+		}		
 		RemoveEffect();
+
 		return;
 	}
 
+	/** 如果发起者应用策略为InstigatorsShareOne，尝试将新的发起者并入效果发起者数组中 */
+	if (InstigatorApplicationPolicy == EFireflyEffectInstigatorApplicationPolicy::InstigatorsShareOne
+		&& !Instigators.Contains(InInstigator))
+	{
+		Instigators.AddUnique(InInstigator);
+	}
+
+	/** 如果该效果不可堆叠 */
+	if (StackingPolicy == EFireflyEffectStackingPolicy::None)
+	{
+		/** 第一次执行效果逻辑 */
+		if (GetWorld()->GetTimerManager().IsTimerActive(DurationTimer))
+		{
+			GetOwnerManager()->AddOrRemoveActiveEffect(this, true);
+			ExecuteEffect();			
+		}
+
+		/** 有新的应用被申请，尝试刷新持续时间，尝试重置周期性执行执行 */
+		TryExecuteOrRefreshDuration();
+		TryExecuteOrResetPeriodicity();
+
+		return;
+	}
+
+	/** 先添加堆叠次数 */
 	AddEffectStack(StackToApply);
+
+	/** 第一次执行有堆叠的效果逻辑 */
+	if (GetWorld()->GetTimerManager().IsTimerActive(DurationTimer))
+	{
+		GetOwnerManager()->AddOrRemoveActiveEffect(this, true);
+		ExecuteEffect();
+	}
+
+	/** 尝试执行满堆叠时的逻辑，如果满堆叠时清理堆叠并结束执行，直接结束效果 */
+	if (TryExecuteEffectStackOverflow() && bClearStackingOnOverflow)
+	{
+		RemoveEffect();
+	}
+
+	/** 尝试刷新持续时间，尝试重置周期性执行执行 */
+	TryExecuteOrRefreshDuration();
+	TryExecuteOrResetPeriodicity();
 }
 
 void UFireflyEffect::ExecuteEffect()
@@ -238,25 +227,31 @@ void UFireflyEffect::ExecuteEffect()
 		return;
 	}
 
+	/** 获取Owner的属性管理器 */
 	UFireflyAttributeManagerComponent* AttributeManager = nullptr;
 	if (!IsValid(OwnerActor->GetComponentByClass(UFireflyAttributeManagerComponent::StaticClass())))
 	{
 		return;
 	}
-	AttributeManager = Cast<UFireflyAttributeManagerComponent>(OwnerActor->GetComponentByClass(UFireflyAttributeManagerComponent::StaticClass()));
+	AttributeManager = Cast<UFireflyAttributeManagerComponent>(OwnerActor->GetComponentByClass(
+		UFireflyAttributeManagerComponent::StaticClass()));
 
 	if (DurationPolicy == EFireflyEffectDurationPolicy::Instant || bIsEffectExecutionPeriodic)
 	{
+		// 如果效果的持续时间策略为Instant，或者效果在持续期间周期性执行
 		for (auto Modifier : Modifiers)
 		{
-			AttributeManager->ApplyModifierToAttributeInstant(Modifier.AttributeType, Modifier.ModOperator, this, Modifier.ModValue);
+			AttributeManager->ApplyModifierToAttributeInstant(Modifier.AttributeType, 
+				Modifier.ModOperator, this, Modifier.ModValue);
 		}
 	}
 	else
 	{
+		// 如果效果在持续期间不周期性执行
 		for (auto Modifier : Modifiers)
 		{
-			AttributeManager->ApplyModifierToAttribute(Modifier.AttributeType, Modifier.ModOperator, this, Modifier.ModValue, StackCount);
+			AttributeManager->ApplyModifierToAttribute(Modifier.AttributeType, Modifier.ModOperator, 
+				this, Modifier.ModValue, StackCount);
 		}
 	}
 
@@ -265,17 +260,36 @@ void UFireflyEffect::ExecuteEffect()
 
 void UFireflyEffect::ExecuteEffectExpiration()
 {
-	if (StackingPolicy == EFireflyEffectStackingPolicy::None)
+	/** 清理持续时间计时器 */
+	GetWorld()->GetTimerManager().ClearTimer(DurationTimer);
+
+	/** 如果该效果不会堆叠，或者堆叠到期策略为 ClearEntireStack，结束效果 */
+	if (StackingExpirationPolicy == EFireflyEffectDurationPolicyOnStackingExpired::ClearEntireStack
+		|| StackingPolicy == EFireflyEffectStackingPolicy::None)
 	{
-		RemoveEffect();
 		ReceiveExecuteEffectExpiration();
+		RemoveEffect();		
 
 		return;
 	}
 
-	ReceiveExecuteEffectExpiration();
+	/** 如果堆叠到期策略为 RemoveSingleStackAndRefreshDuration，减少一个堆叠数 */
+	if (StackingExpirationPolicy == EFireflyEffectDurationPolicyOnStackingExpired::RemoveSingleStackAndRefreshDuration)
+	{
+		/** 如果堆叠数被清到0，结束效果 */
+		if (ReduceEffectStack(1))
+		{
+			ReceiveExecuteEffectExpiration();
+			RemoveEffect();
 
-	ExecuteStackingExpirationPolicy();
+			return;
+		}
+	}
+
+	/** 尝试刷新持续时间 */
+	TryExecuteOrRefreshDuration();
+
+	ReceiveExecuteEffectExpiration();	
 }
 
 void UFireflyEffect::RemoveEffect()
@@ -286,6 +300,7 @@ void UFireflyEffect::RemoveEffect()
 		return;
 	}
 
+	/** 获取Owner的属性管理器 */
 	UFireflyAttributeManagerComponent* AttributeManager = nullptr;
 	if (!IsValid(OwnerActor->GetComponentByClass(UFireflyAttributeManagerComponent::StaticClass())))
 	{
@@ -293,12 +308,15 @@ void UFireflyEffect::RemoveEffect()
 	}
 	AttributeManager = Cast<UFireflyAttributeManagerComponent>(OwnerActor->GetComponentByClass(UFireflyAttributeManagerComponent::StaticClass()));
 
+	/** 清理该效果携带的所有属性修改器 */
 	for (auto Modifier : Modifiers)
 	{
 		AttributeManager->RemoveModifierFromAttribute(Modifier.AttributeType, Modifier.ModOperator, this, Modifier.ModValue);
 	}
 
+	/** 堆叠数重置为0 */
 	StackCount = 0;
+
 	ReceiveRemoveEffect();
 
 	MarkAsGarbage();
