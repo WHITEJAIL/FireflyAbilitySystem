@@ -183,7 +183,7 @@ protected:
 
 	/** 蓝图端实现的效果被应用时的逻辑 */
 	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Effect", Meta = (DisplayName = "Apply Effect"))
-	void ReceiveApplyEffect();	
+	void ReceiveApplyEffect();
 
 	/** 效果的执行逻辑 */
 	UFUNCTION()
