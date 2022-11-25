@@ -9,6 +9,9 @@
 
 class UFireflyEffectManagerComponent;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFireflyEffectExecutionDelegate, UFireflyEffect*, Effect);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FFireflyEffectStackingDelegate, UFireflyEffect*, Effect, int32, NewStackCount, int32, OldStackCount);
+
 /** 效果 */
 UCLASS( Blueprintable )
 class FIREFLYABILITYSYSTEM_API UFireflyEffect : public UObject
@@ -149,6 +152,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = Stacking)
 	EFireflyEffectDurationPolicyOnStackingExpired StackingExpirationPolicy;
 
+	/** 效果的堆叠数发生变化时触发的代理 */
+
 	/** 效果的堆叠数 */
 	UPROPERTY()
 	int32 StackCount;
@@ -205,6 +210,14 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Effect", Meta = (DisplayName = "Remove Effect"))
 	void ReceiveRemoveEffect();
 
+	/** 获取效果的所有发起者 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Effect", Meta = (BlueprintProtected = "true"))
+	FORCEINLINE TArray<AActor*> GetInstigators() const { return Instigators; }
+
+	/** 获取效果的接收者（应该和OwnerActor相同） */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Effect", Meta = (BlueprintProtected = "true"))
+	FORCEINLINE AActor* GetTarget() const { return Target; }
+
 protected:
 	/** 该效果携带的特殊属性 */
 	UPROPERTY(EditDefaultsOnly, Category = Modifier)
@@ -216,7 +229,19 @@ protected:
 
 	/** 效果执行的接受者 */
 	UPROPERTY()
-	AActor* Target;	
+	AActor* Target;
+
+	/** 持续策略不为Instance的效果被应用时触发的代理 */
+	UPROPERTY(BlueprintAssignable, Category = "FireflyAbilitySystem|Effect")
+	FFireflyEffectExecutionDelegate OnEffectApplied;
+
+	/** 持续策略不为Instance的效果被移除时触发的代理 */
+	UPROPERTY(BlueprintAssignable, Category = "FireflyAbilitySystem|Effect")
+	FFireflyEffectExecutionDelegate OnEffectRemoved;
+
+	/** 持续策略为Instance的效果被执行时触发的代理 */
+	UPROPERTY(BlueprintAssignable, Category = "FireflyAbilitySystem|Effect")
+	FFireflyEffectExecutionDelegate OnEffectExecuted;
 
 #pragma endregion
 	
