@@ -7,6 +7,7 @@
 #include "FireflyEffectManagerComponent.generated.h"
 
 class UFireflyEffect;
+
 /** 效果管理器组件 */
 UCLASS( ClassGroup=(FireflyAbilitySystem), meta=(BlueprintSpawnableComponent) )
 class FIREFLYABILITYSYSTEM_API UFireflyEffectManagerComponent : public UActorComponent

@@ -44,11 +44,14 @@ UFireflyEffectManagerComponent* UFireflyEffect::GetOwnerManager() const
 void UFireflyEffect::SetTimeRemainingOfDuration(float NewDuration)
 {
 	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
-	if (TimerManager.IsTimerActive(DurationTimer))
+	if (!TimerManager.IsTimerActive(DurationTimer))
 	{
-		TimerManager.ClearTimer(DurationTimer);
+		return;
 	}
+
+	TimerManager.ClearTimer(DurationTimer);
 	TimerManager.SetTimer(DurationTimer, this, &UFireflyEffect::ExecuteEffectExpiration, NewDuration);
+	OnEffectTimeRemaingChanged.Broadcast(NewDuration, Duration);
 }
 
 float UFireflyEffect::GetTimeRemainingOfDuration() const
@@ -106,6 +109,11 @@ void UFireflyEffect::TryExecuteOrResetPeriodicity()
 
 void UFireflyEffect::AddEffectStack(int32 StackCountToAdd)
 {
+	if (StackCountToAdd <= 0)
+	{
+		return;
+	}
+
 	/** 如果已经开始堆叠 && 满堆叠 && 满堆叠时拒绝新的堆叠实例，直接返回 */
 	if (StackCount != 0 && StackCount == StackingLimitation && bDenyNewStackingOnOverflow)
 	{
@@ -113,19 +121,30 @@ void UFireflyEffect::AddEffectStack(int32 StackCountToAdd)
 	}
 
 	/** 添加堆叠数，如果堆叠有上限，执行夹值 */
+	float OldStackCount = StackCount;
 	StackCount += StackCountToAdd;
 	if (StackingPolicy == EFireflyEffectStackingPolicy::StackHasLimit)
 	{		
 		StackCount = FMath::Clamp<int32>(StackCount, 0, StackingLimitation);
 	}
 
+	OnEffectStackChanged.Broadcast(StackCount, OldStackCount);
+
 	ReceiveAddEffectStack(StackCountToAdd);
 }
 
 bool UFireflyEffect::ReduceEffectStack(int32 StackCountToReduce)
 {
+	if (StackCountToReduce >= 0)
+	{
+		return false;
+	}
+
 	/** 减少堆叠数 */
-	StackCount -= StackCountToReduce;
+	float OldStackCount = StackCount;
+	StackCount = FMath::Clamp<int32>(StackCount - StackCountToReduce, 0, OldStackCount);
+
+	OnEffectStackChanged.Broadcast(StackCount, OldStackCount);
 
 	ReceiveReduceEffectStack(StackCountToReduce);
 
@@ -168,7 +187,8 @@ void UFireflyEffect::ApplyEffect(AActor* InInstigator, AActor* InTarget, int32 S
 		for (int i = 0; i < StackToApply; ++i)
 		{
 			ExecuteEffect();
-		}		
+		}
+		
 		RemoveEffect();
 
 		return;
@@ -185,15 +205,17 @@ void UFireflyEffect::ApplyEffect(AActor* InInstigator, AActor* InTarget, int32 S
 	if (StackingPolicy == EFireflyEffectStackingPolicy::None)
 	{
 		/** 第一次执行效果逻辑 */
-		if (GetWorld()->GetTimerManager().IsTimerActive(DurationTimer))
+		if (!GetWorld()->GetTimerManager().IsTimerActive(DurationTimer))
 		{
 			GetOwnerManager()->AddOrRemoveActiveEffect(this, true);
-			ExecuteEffect();			
+			ExecuteEffect();
 		}
 
 		/** 有新的应用被申请，尝试刷新持续时间，尝试重置周期性执行执行 */
 		TryExecuteOrRefreshDuration();
 		TryExecuteOrResetPeriodicity();
+
+		OnEffectApplied.Broadcast();
 
 		return;
 	}
@@ -202,16 +224,18 @@ void UFireflyEffect::ApplyEffect(AActor* InInstigator, AActor* InTarget, int32 S
 	AddEffectStack(StackToApply);
 
 	/** 第一次执行有堆叠的效果逻辑 */
-	if (GetWorld()->GetTimerManager().IsTimerActive(DurationTimer))
+	if (!GetWorld()->GetTimerManager().IsTimerActive(DurationTimer))
 	{
 		GetOwnerManager()->AddOrRemoveActiveEffect(this, true);
 		ExecuteEffect();
 	}
 
+	OnEffectApplied.Broadcast();
+
 	/** 尝试执行满堆叠时的逻辑，如果满堆叠时清理堆叠并结束执行，直接结束效果 */
 	if (TryExecuteEffectStackOverflow() && bClearStackingOnOverflow)
 	{
-		RemoveEffect();
+		RemoveEffect();		
 	}
 
 	/** 尝试刷新持续时间，尝试重置周期性执行执行 */
@@ -253,7 +277,7 @@ void UFireflyEffect::ExecuteEffect()
 			AttributeManager->ApplyModifierToAttribute(Modifier.AttributeType, Modifier.ModOperator, 
 				this, Modifier.ModValue, StackCount);
 		}
-	}
+	}	
 
 	ReceiveExecuteEffect();
 }
@@ -315,7 +339,12 @@ void UFireflyEffect::RemoveEffect()
 	}
 
 	/** 堆叠数重置为0 */
-	StackCount = 0;
+	if (StackingPolicy != EFireflyEffectStackingPolicy::None && StackCount > 0)
+	{
+		ReduceEffectStack(StackCount);
+	}	
+
+	OnEffectRemoved.Broadcast();
 
 	ReceiveRemoveEffect();
 
