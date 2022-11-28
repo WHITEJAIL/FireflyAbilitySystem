@@ -9,10 +9,6 @@
 
 class UFireflyEffectManagerComponent;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FFireflyEffectExecutionDelegate);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FFireflyEffectStackingDelegate, int32, NewStackCount, int32, OldStackCount);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FFireflyEffectDurationDelegate, float, TimeRemaining, float, TotalDuration);
-
 /** 效果 */
 UCLASS( Blueprintable )
 class FIREFLYABILITYSYSTEM_API UFireflyEffect : public UObject
@@ -62,9 +58,6 @@ protected:
 	/** 效果的持续时间，仅在持续策略为“HasDuration”时起作用 */
 	UPROPERTY(EditDefaultsOnly, Category = Duration, Meta = (EditCondition = "DurationPolicy == EFireflyEffectDurationPolicy::HasDuration"))
 	float Duration;
-
-	UPROPERTY(BlueprintAssignable, Category = "FireflyAbilitySystem|Effect")
-	FFireflyEffectDurationDelegate OnEffectTimeRemaingChanged;
 
 	/** 效果的持续时间计时器句柄 */
 	UPROPERTY()
@@ -156,10 +149,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = Stacking)
 	EFireflyEffectDurationPolicyOnStackingExpired StackingExpirationPolicy;
 
-	/** 效果的堆叠数发生变化时触发的代理 */
-	UPROPERTY(BlueprintAssignable, Category = "FireflyAbilitySystem|Effect")
-	FFireflyEffectStackingDelegate OnEffectStackChanged;
-
 	/** 效果的堆叠数 */
 	UPROPERTY()
 	int32 StackCount;
@@ -236,14 +225,6 @@ protected:
 	/** 效果执行的接受者 */
 	UPROPERTY()
 	AActor* Target;
-
-	/** 持续策略不为Instance的效果被应用时触发的代理 */
-	UPROPERTY(BlueprintAssignable, Category = "FireflyAbilitySystem|Effect")
-	FFireflyEffectExecutionDelegate OnEffectApplied;
-
-	/** 持续策略不为Instance的效果被移除时触发的代理 */
-	UPROPERTY(BlueprintAssignable, Category = "FireflyAbilitySystem|Effect")
-	FFireflyEffectExecutionDelegate OnEffectRemoved;
 
 #pragma endregion
 	

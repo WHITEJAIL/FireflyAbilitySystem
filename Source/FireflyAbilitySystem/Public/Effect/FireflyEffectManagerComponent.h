@@ -32,7 +32,7 @@ public:
 protected:
 	/** 在该管理器中获取特定类型的被应用的激活中的所有效果 */
 	UFUNCTION()
-	TArray<UFireflyEffect*> GetActiveEffectByClass(TSubclassOf<UFireflyEffect> EffectType) const;	
+	TArray<UFireflyEffect*> GetActiveEffectsByClass(TSubclassOf<UFireflyEffect> EffectType) const;	
 
 public:
 	/** 为自身应用效果或应用效果的固定堆叠数 */
@@ -43,7 +43,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
 	void ApplyEffectToTarget(AActor* Target, TSubclassOf<UFireflyEffect> EffectType, int32 StackToApply = 1);
 
-	/** 移除自身特定的所有效果的固定堆叠树, StackToRemove = -1时，移除所有效果的所有堆叠 */
+	/** 移除自身特定的所有效果的固定堆叠数, StackToRemove = -1时，移除所有效果的所有堆叠 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
 	void RemoveActiveEffectFromSelf(TSubclassOf<UFireflyEffect> EffectType, int32 StackToRemove = -1);
 
@@ -55,6 +55,26 @@ protected:
 	/** 所有激活中的执行策略不是Instant的效果 */
 	UPROPERTY()
 	TArray<UFireflyEffect*> ActiveEffects;
+
+#pragma endregion
+
+
+#pragma region Duration
+
+public:
+	/** 获取某种效果的剩余作用时间和总持续时间，若该种效果在管理器中同时存在多个，默认取第一个 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Effect")
+	bool GetSingleActiveEffectTimeDuration(TSubclassOf<UFireflyEffect> EffectType, float& TimeRemaining, float& TotalDuration) const;
+
+#pragma endregion
+
+
+#pragma region Stacking
+
+public:
+	/** 获取某种效果的当前堆叠数，若该种效果在管理器中同时存在多个，默认取第一个 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Effect")
+	bool GetSingleActiveEffectStackingCount(TSubclassOf<UFireflyEffect> EffectType, int32& StackingCount) const;
 
 #pragma endregion
 		

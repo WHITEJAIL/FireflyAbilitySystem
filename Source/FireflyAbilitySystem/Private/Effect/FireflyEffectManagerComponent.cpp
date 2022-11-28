@@ -26,7 +26,7 @@ void UFireflyEffectManagerComponent::TickComponent(float DeltaTime, ELevelTick T
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
-TArray<UFireflyEffect*> UFireflyEffectManagerComponent::GetActiveEffectByClass(TSubclassOf<UFireflyEffect> EffectType) const
+TArray<UFireflyEffect*> UFireflyEffectManagerComponent::GetActiveEffectsByClass(TSubclassOf<UFireflyEffect> EffectType) const
 {
 	TArray<UFireflyEffect*> OutEffects = TArray<UFireflyEffect*>{};
 	for (auto Effect : ActiveEffects)
@@ -52,7 +52,7 @@ void UFireflyEffectManagerComponent::ApplyEffectToSelf(AActor* Instigator, TSubc
 		Instigator = GetOwner();
 	}
 
-	const TArray<UFireflyEffect*> ActiveSpecEffects = GetActiveEffectByClass(EffectType);
+	const TArray<UFireflyEffect*> ActiveSpecEffects = GetActiveEffectsByClass(EffectType);
 
 	/** 管理器中目前如果不存在被应用的指定效果，则创建一个新效果，应用该效果 */
 	if (ActiveSpecEffects.Num() == 0)
@@ -77,7 +77,7 @@ void UFireflyEffectManagerComponent::ApplyEffectToSelf(AActor* Instigator, TSubc
 			}			
 		}
 
-		/** 如果指定效果在该管理器中目前不存在已经存在的，和InInstigator相同的发起者，则创建一个新效果，应用该效果 */
+		// 如果指定效果在该管理器中目前不存在已经存在的，和InInstigator相同的发起者，则创建一个新效果，应用该效果
 		if (!bContainsInstigator)
 		{
 			UFireflyEffect* NewEffect = NewObject<UFireflyEffect>(this, EffectType);
@@ -133,6 +133,7 @@ void UFireflyEffectManagerComponent::RemoveActiveEffectFromSelf(TSubclassOf<UFir
 	{
 		if (Effect->ReduceEffectStack(StackToRemove))
 		{
+			EffectsToRemove.RemoveSingle(Effect);
 			Effect->RemoveEffect();
 		}
 	}
@@ -146,6 +147,45 @@ void UFireflyEffectManagerComponent::AddOrRemoveActiveEffect(UFireflyEffect* InE
 	}
 	else
 	{
-		ActiveEffects.RemoveSingleSwap(InEffect);
+		ActiveEffects.RemoveSingle(InEffect);
 	}
+}
+
+bool UFireflyEffectManagerComponent::GetSingleActiveEffectTimeDuration(TSubclassOf<UFireflyEffect> EffectType,
+	float& TimeRemaining, float& TotalDuration) const
+{
+	if (!IsValid(EffectType))
+	{
+		return false;
+	}
+
+	const TArray<UFireflyEffect*> Effects = GetActiveEffectsByClass(EffectType);
+	if (!Effects.IsValidIndex(0))
+	{
+		return false;
+	}
+
+	TimeRemaining = Effects[0]->GetTimeRemainingOfDuration();
+	TotalDuration = Effects[0]->Duration;
+
+	return true;
+}
+
+bool UFireflyEffectManagerComponent::GetSingleActiveEffectStackingCount(TSubclassOf<UFireflyEffect> EffectType,
+	int32& StackingCount) const
+{
+	if (!IsValid(EffectType))
+	{
+		return false;
+	}
+
+	const TArray<UFireflyEffect*> Effects = GetActiveEffectsByClass(EffectType);
+	if (!Effects.IsValidIndex(0))
+	{
+		return false;
+	}
+
+	StackingCount = Effects[0]->StackCount;
+
+	return true;
 }
