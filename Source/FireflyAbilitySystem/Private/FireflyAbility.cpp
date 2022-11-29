@@ -1,10 +1,9 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Ability/FireflyAbility.h"
+#include "FireflyAbility.h"
 
-#include "FireflyTagManagerComponent.h"
-#include "Ability/FireflyAbilityManagerComponent.h"
+#include "FireflyAbilitySystemComponent.h"
 
 UFireflyAbility::UFireflyAbility(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -75,14 +74,14 @@ ENetRole UFireflyAbility::GetOwnerRole() const
 	return GetOwnerActor()->GetLocalRole();
 }
 
-UFireflyAbilityManagerComponent* UFireflyAbility::GetOwnerManager() const
+UFireflyAbilitySystemComponent* UFireflyAbility::GetOwnerManager() const
 {
 	if (!IsValid(GetOuter()))
 	{
 		return nullptr;
 	}
 
-	return Cast<UFireflyAbilityManagerComponent>(GetOuter());
+	return Cast<UFireflyAbilitySystemComponent>(GetOuter());
 }
 
 void UFireflyAbility::OnAbilityGranted_Implementation()
@@ -288,49 +287,28 @@ void UFireflyAbility::SetCostSettings(TArray<FFireflyEffectModifierData> NewCost
 
 void UFireflyAbility::ExecuteTagRequirementToOwner(bool bIsActivated)
 {
-	GetOwnerManager()->UpdateBlockAndCancelAbilityTags(TagsOfAbilitiesWillBeBlocked, TagsOfAbilitiesWillBeCanceled, bIsActivated);
-
-	if (!IsValid(GetOwnerActor()))
+	if (!IsValid(GetOwnerManager()))
 	{
 		return;
 	}
-
-	if (!IsValid(GetOwnerActor()->GetComponentByClass(UFireflyTagManagerComponent::StaticClass())))
-	{
-		return;
-	}
-
-	UFireflyTagManagerComponent* TagManager = Cast<UFireflyTagManagerComponent>(GetOwnerActor()->GetComponentByClass(
-		UFireflyTagManagerComponent::StaticClass()));
 
 	TArray<FGameplayTag> TagsToUpdate;
 	TagsApplyToOwnerOnActivated.GetGameplayTagArray(TagsToUpdate);
 	for (auto Tag : TagsToUpdate)
 	{
-		bIsActivated ? TagManager->AddTagToManager(Tag, 1) : TagManager->RemoveTagFromManager(Tag, 1);
+		bIsActivated ? GetOwnerManager()->AddTagToManager(Tag, 1) :
+			GetOwnerManager()->RemoveTagFromManager(Tag, 1);
 	}
 }
 
 bool UFireflyAbility::CanActivateAbility() const
 {
-	if (bIsActivating)
-	{
-		return false;
-	}	
-
-	if (!IsValid(GetOwnerActor()))
+	if (bIsActivating || !IsValid(GetOwnerManager()))
 	{
 		return false;
 	}
 
-	if (!IsValid(GetOwnerActor()->GetComponentByClass(UFireflyTagManagerComponent::StaticClass())))
-	{
-		return false;
-	}
-
-	UFireflyTagManagerComponent* TagManager = Cast<UFireflyTagManagerComponent>(GetOwnerActor()->GetComponentByClass(
-		UFireflyTagManagerComponent::StaticClass()));
-	FGameplayTagContainer OwnerTags = TagManager->GetContainedTags();
+	FGameplayTagContainer OwnerTags = GetOwnerManager()->GetContainedTags();
 
 	/** Owner的Tag管理器是否包含阻挡该技能激活的Tag */
 	if (OwnerTags.HasAnyExact(TagsBlockActivationOnOwnerHas))
@@ -372,4 +350,115 @@ bool UFireflyAbility::CanActivateAbility() const
 	return bBlueprintCanActivate
 		&& bOwnerHasRequiredTags
 		&& bHasRequiredActivatingAbility;
+}
+
+void UFireflyAbility::OnAbilityInputStarted()
+{
+	if (!IsValid(GetOwnerManager()->TryActivateAbilityByClass(GetClass())))
+	{
+		return;
+	}
+
+	if (GetOwnerRole() == ROLE_AutonomousProxy)
+	{
+		Server_OnAbilityInputStarted();
+	}
+	ReceiveOnAbilityInputStarted();
+}
+
+void UFireflyAbility::Server_OnAbilityInputStarted_Implementation()
+{
+	OnAbilityInputStarted();
+}
+
+void UFireflyAbility::OnAbilityInputOngoing()
+{
+	if (!bIsActivating)
+	{
+		return;
+	}
+
+	if (GetOwnerRole() == ROLE_AutonomousProxy)
+	{
+		Server_OnAbilityInputOngoing();
+	}
+	ReceiveOnAbilityInputOngoing();
+}
+
+void UFireflyAbility::Server_OnAbilityInputOngoing_Implementation()
+{
+	OnAbilityInputOngoing();
+}
+
+void UFireflyAbility::OnAbilityInputCanceled()
+{
+	if (!bIsActivating)
+	{
+		return;
+	}
+
+	if (GetOwnerRole() == ROLE_AutonomousProxy)
+	{
+		Server_OnAbilityInputCanceled();
+	}
+	ReceiveOnAbilityInputCanceled();
+}
+
+void UFireflyAbility::Server_OnAbilityInputCanceled_Implementation()
+{
+	OnAbilityInputCanceled();
+}
+
+void UFireflyAbility::OnAbilityInputTriggered()
+{
+	if (bActivateOnTriggered)
+	{
+		if (!IsValid(GetOwnerManager()->TryActivateAbilityByClass(GetClass())))
+		{
+			return;
+		}
+
+		if (GetOwnerRole() == ROLE_AutonomousProxy)
+		{
+			Server_OnAbilityInputTriggered();
+		}
+		ReceiveOnAbilityInputTriggered();
+
+		return;
+	}
+
+	if (!bIsActivating)
+	{
+		return;
+	}
+
+	if (GetOwnerRole() == ROLE_AutonomousProxy)
+	{
+		Server_OnAbilityInputTriggered();
+	}
+	ReceiveOnAbilityInputTriggered();
+}
+
+void UFireflyAbility::Server_OnAbilityInputTriggered_Implementation()
+{
+	OnAbilityInputTriggered();
+}
+
+void UFireflyAbility::OnAbilityInputCompleted()
+{
+	if (!bIsActivating)
+	{
+		return;
+	}
+
+	if (GetOwnerRole() == ROLE_AutonomousProxy)
+	{
+		Server_OnAbilityInputCompleted();
+	}
+	ReceiveOnAbilityInputCompleted();
+}
+
+void UFireflyAbility::Server_OnAbilityInputCompleted_Implementation()
+{
+	OnAbilityInputCompleted();
 }

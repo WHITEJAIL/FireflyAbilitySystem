@@ -4,13 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "FireflyAbilitySystemTypes.h"
 #include "FireflyAttribute.generated.h"
 
 // CurrentValue = NewestOuterOverrideMod || (((BaseValue || NewestInnerOverrideMod) + PlusMods - MinusMods) * (1 + MultiplyMods)) / (TotalDivideMod == 0.f ? 1.f : TotalDivideMod))
 
-enum class EFireflyAttributeModOperator : uint8;
-enum EFireflyAttributeType;
-class UFireflyAttributeManagerComponent;
+class UFireflyAbilitySystemComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FAttributeValueChangeDelegate, TEnumAsByte<EFireflyAttributeType>, AttributeType, const float, OldValue, const float, Newvalue);
 
@@ -79,7 +78,7 @@ protected:
 
 	/** 获取属性所属的管理器组件 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute", Meta = (BlueprintProtected = "true"))
-	FORCEINLINE UFireflyAttributeManagerComponent* GetOwnerManager() const;
+	FORCEINLINE UFireflyAbilitySystemComponent* GetOwnerManager() const;
 
 	/** 初始化属性 */
 	void Initialize(float InitValue);
@@ -106,7 +105,7 @@ protected:
 	UPROPERTY()
 	float CurrentValue = 0.f;
 
-	friend UFireflyAttributeManagerComponent;
+	friend UFireflyAbilitySystemComponent;
 
 #pragma endregion
 

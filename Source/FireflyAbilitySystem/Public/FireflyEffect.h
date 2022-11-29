@@ -7,7 +7,7 @@
 #include "UObject/NoExportTypes.h"
 #include "FireflyEffect.generated.h"
 
-class UFireflyEffectManagerComponent;
+class UFireflyAbilitySystemComponent;
 
 /** 效果 */
 UCLASS( Blueprintable )
@@ -38,10 +38,10 @@ protected:
 
 	/** 获取效果所属的管理器组件 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Effect", Meta = (BlueprintProtected = "true"))
-	FORCEINLINE UFireflyEffectManagerComponent* GetOwnerManager() const;
+	FORCEINLINE UFireflyAbilitySystemComponent* GetOwnerManager() const;
 
 protected:
-	friend class UFireflyEffectManagerComponent;
+	friend UFireflyAbilitySystemComponent;
 
 #pragma endregion
 

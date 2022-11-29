@@ -8,7 +8,7 @@
 #include "UObject/NoExportTypes.h"
 #include "FireflyAbility.generated.h"
 
-class UFireflyAbilityManagerComponent;
+class UFireflyAbilitySystemComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FAbilityExecutionDelegate);
 
@@ -45,9 +45,9 @@ protected:
 
 	/** 获取技能所属的管理器组件 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
-	FORCEINLINE UFireflyAbilityManagerComponent* GetOwnerManager() const;
+	FORCEINLINE UFireflyAbilitySystemComponent* GetOwnerManager() const;
 
-	friend class UFireflyAbilityManagerComponent;
+	friend UFireflyAbilitySystemComponent;
 
 #pragma endregion
 
@@ -272,6 +272,77 @@ protected:
 	/** 该技能激活执行期望技能管理器不含如下Tags */
 	UPROPERTY(EditDefaultsOnly, Category = "ActivationRequirement|TagRequired")
 	FGameplayTagContainer TagsBlockActivationOnOwnerHas;
+
+#pragma endregion
+
+
+#pragma region InputBinding
+
+protected:
+	/** 输入事件：开始 */
+	UFUNCTION()
+	virtual void OnAbilityInputStarted();
+
+	/** 本地客户端通知服务端执行输入事件：开始 */
+	UFUNCTION(Server, Reliable)
+	void Server_OnAbilityInputStarted();
+
+	/** 蓝图输入事件：开始 */
+	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability", Meta = (DisplayName = "On Ability Input Started"))
+		void ReceiveOnAbilityInputStarted();
+
+	/** 输入事件：执行中 */
+	UFUNCTION()
+	virtual void OnAbilityInputOngoing();
+
+	/** 本地客户端通知服务端执行输入事件：执行中 */
+	UFUNCTION(Server, Reliable)
+	void Server_OnAbilityInputOngoing();
+
+	/** 蓝图输入事件：执行中 */
+	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability", Meta = (DisplayName = "On Ability Input Ongoing"))
+	void ReceiveOnAbilityInputOngoing();
+
+	/** 输入事件：取消 */
+	UFUNCTION()
+	virtual void OnAbilityInputCanceled();
+
+	/** 本地客户端通知服务端执行输入事件：取消 */
+	UFUNCTION(Server, Reliable)
+	void Server_OnAbilityInputCanceled();
+
+	/** 蓝图输入事件：取消 */
+	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability", Meta = (DisplayName = "On Ability Input Canceled"))
+	void ReceiveOnAbilityInputCanceled();
+
+	/** 输入事件：触发 */
+	UFUNCTION()
+	virtual void OnAbilityInputTriggered();
+
+	/** 本地客户端通知服务端执行输入事件：触发 */
+	UFUNCTION(Server, Reliable)
+	void Server_OnAbilityInputTriggered();
+
+	/** 蓝图输入事件：触发 */
+	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability", Meta = (DisplayName = "On Ability Input Triggered"))
+	void ReceiveOnAbilityInputTriggered();
+
+	/** 输入事件：完成 */
+	UFUNCTION()
+	virtual void OnAbilityInputCompleted();
+
+	/** 本地客户端通知服务端执行输入事件：完成 */
+	UFUNCTION(Server, Reliable)
+	void Server_OnAbilityInputCompleted();
+
+	/** 蓝图输入事件：完成 */
+	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability", Meta = (DisplayName = "On Ability Input Completed"))
+	void ReceiveOnAbilityInputCompleted();
+
+protected:
+	/** 是否在输入事件Triggered时激活技能，如为false，则默认在输入事件Started时激活技能 */
+	UPROPERTY(EditDefaultsOnly, Category = "Input Activation")
+	bool bActivateOnTriggered = false;
 
 #pragma endregion
 	

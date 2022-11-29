@@ -1,10 +1,9 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Effect/FireflyEffect.h"
+#include "FireflyEffect.h"
 
-#include "Attribute/FireflyAttributeManagerComponent.h"
-#include "Effect/FireflyEffectManagerComponent.h"
+#include "FireflyAbilitySystemComponent.h"
 
 UFireflyEffect::UFireflyEffect(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -54,14 +53,14 @@ AActor* UFireflyEffect::GetOwnerActor() const
 	return GetOwnerManager()->GetOwner();
 }
 
-UFireflyEffectManagerComponent* UFireflyEffect::GetOwnerManager() const
+UFireflyAbilitySystemComponent* UFireflyEffect::GetOwnerManager() const
 {
 	if (!IsValid(GetOuter()))
 	{
 		return nullptr;
 	}
 
-	return Cast<UFireflyEffectManagerComponent>(GetOuter());
+	return Cast<UFireflyAbilitySystemComponent>(GetOuter());
 }
 
 void UFireflyEffect::SetTimeRemainingOfDuration(float NewDuration)
@@ -260,27 +259,18 @@ void UFireflyEffect::ApplyEffect(AActor* InInstigator, AActor* InTarget, int32 S
 
 void UFireflyEffect::ExecuteEffect()
 {
-	AActor* OwnerActor = GetOwnerActor();
-	if (!IsValid(OwnerActor))
+	UFireflyAbilitySystemComponent* AbilitySystemManager = GetOwnerManager();
+	if (!IsValid(AbilitySystemManager))
 	{
 		return;
 	}
-
-	/** 获取Owner的属性管理器 */
-	UFireflyAttributeManagerComponent* AttributeManager = nullptr;
-	if (!IsValid(OwnerActor->GetComponentByClass(UFireflyAttributeManagerComponent::StaticClass())))
-	{
-		return;
-	}
-	AttributeManager = Cast<UFireflyAttributeManagerComponent>(OwnerActor->GetComponentByClass(
-		UFireflyAttributeManagerComponent::StaticClass()));
 
 	if (DurationPolicy == EFireflyEffectDurationPolicy::Instant || bIsEffectExecutionPeriodic)
 	{
 		// 如果效果的持续时间策略为Instant，或者效果在持续期间周期性执行
 		for (auto Modifier : Modifiers)
 		{
-			AttributeManager->ApplyModifierToAttributeInstant(Modifier.AttributeType, 
+			AbilitySystemManager->ApplyModifierToAttributeInstant(Modifier.AttributeType,
 				Modifier.ModOperator, this, Modifier.ModValue);
 		}
 	}
@@ -289,7 +279,7 @@ void UFireflyEffect::ExecuteEffect()
 		// 如果效果在持续期间不周期性执行
 		for (auto Modifier : Modifiers)
 		{
-			AttributeManager->ApplyModifierToAttribute(Modifier.AttributeType, Modifier.ModOperator, 
+			AbilitySystemManager->ApplyModifierToAttribute(Modifier.AttributeType, Modifier.ModOperator,
 				this, Modifier.ModValue, StackCount);
 		}
 	}	
@@ -333,24 +323,16 @@ void UFireflyEffect::ExecuteEffectExpiration()
 
 void UFireflyEffect::RemoveEffect()
 {
-	AActor* OwnerActor = GetOwnerActor();
-	if (!IsValid(OwnerActor))
+	UFireflyAbilitySystemComponent* AbilitySystemManager = GetOwnerManager();
+	if (!IsValid(AbilitySystemManager))
 	{
 		return;
 	}
-
-	/** 获取Owner的属性管理器 */
-	UFireflyAttributeManagerComponent* AttributeManager = nullptr;
-	if (!IsValid(OwnerActor->GetComponentByClass(UFireflyAttributeManagerComponent::StaticClass())))
-	{
-		return;
-	}
-	AttributeManager = Cast<UFireflyAttributeManagerComponent>(OwnerActor->GetComponentByClass(UFireflyAttributeManagerComponent::StaticClass()));
 
 	/** 清理该效果携带的所有属性修改器 */
 	for (auto Modifier : Modifiers)
 	{
-		AttributeManager->RemoveModifierFromAttribute(Modifier.AttributeType, Modifier.ModOperator, this, Modifier.ModValue);
+		AbilitySystemManager->RemoveModifierFromAttribute(Modifier.AttributeType, Modifier.ModOperator, this, Modifier.ModValue);
 	}
 
 	/** 堆叠数重置为0 */

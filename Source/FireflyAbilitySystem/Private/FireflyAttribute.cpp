@@ -1,10 +1,10 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Attribute/FireflyAttribute.h"
+#include "FireflyAttribute.h"
 
 #include "FireflyAbilitySystemTypes.h"
-#include "Attribute/FireflyAttributeManagerComponent.h"
+#include "FireflyAbilitySystemComponent.h"
 
 UFireflyAttribute::UFireflyAttribute(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -65,14 +65,14 @@ AActor* UFireflyAttribute::GetOwnerActor() const
 	return GetOwnerManager()->GetOwner();
 }
 
-UFireflyAttributeManagerComponent* UFireflyAttribute::GetOwnerManager() const
+UFireflyAbilitySystemComponent* UFireflyAttribute::GetOwnerManager() const
 {
 	if (!IsValid(GetOuter()))
 	{
 		return nullptr;
 	}
 
-	return Cast<UFireflyAttributeManagerComponent>(GetOuter());
+	return Cast<UFireflyAbilitySystemComponent>(GetOuter());
 }
 
 void UFireflyAttribute::Initialize(float InitValue)
