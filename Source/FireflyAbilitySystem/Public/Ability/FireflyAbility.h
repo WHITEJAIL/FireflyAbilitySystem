@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FireflyAbilitySystemTypes.h"
 #include "GameplayTagContainer.h"
 #include "UObject/NoExportTypes.h"
 #include "FireflyAbility.generated.h"
@@ -17,15 +18,28 @@ class FIREFLYABILITYSYSTEM_API UFireflyAbility : public UObject
 {
 	GENERATED_UCLASS_BODY()
 
-#pragma region Basic
+#pragma region Override
 
 public:
 	virtual UWorld* GetWorld() const override;
 
+	virtual bool CallRemoteFunction(UFunction* Function, void* Parms, FOutParmRec* OutParms, FFrame* Stack) override;
+
+	virtual int32 GetFunctionCallspace(UFunction* Function, FFrame* Stack) override;
+
+#pragma endregion
+
+
+#pragma region Basic
+	
 protected:
 	/** 获取技能所属的管理器的拥有者 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
 	FORCEINLINE AActor* GetOwnerActor() const;
+
+	/** 获取技能所属的拥有者的网络权限 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
+	FORCEINLINE ENetRole GetOwnerRole() const;
 
 	/** 获取技能所属的管理器组件 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
@@ -66,9 +80,25 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
 	virtual void EndAbility();
 
+	/** 本地客户端通知服务端结束技能 */
+	UFUNCTION(Server, Reliable)
+	void Server_EndAbility();
+
+	/** 服务端通知本地客户端结束技能 */
+	UFUNCTION(Client, Reliable)
+	void Client_EndAbility();
+
 	/** 取消技能 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
 	virtual void CancelAbility();
+
+	/** 本地客户端通知服务端取消技能 */
+	UFUNCTION(Server, Reliable)
+	void Server_CancelAbility();
+
+	/** 服务端通知本地客户端取消技能 */
+	UFUNCTION(Client, Reliable)
+	void Client_CancelAbility();
 
 	/** 蓝图端的技能结束时执行的逻辑，分为自动结束和取消结束两种状态 */
 	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability", Meta = (DisplayName = "End Ability"))
@@ -116,15 +146,23 @@ protected:
 
 	/** 单独执行技能的消耗 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
-	bool CommitAbilityCost();
+	void CommitAbilityCost();
+
+	/** 本地客户端通知服务端单独执行机能的消耗 */
+	UFUNCTION(Server, Reliable)
+	void Server_CommitAbilityCost();
 
 	/** 单独执行技能的冷却 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
-	bool CommitAbilityCooldown();
+	void CommitAbilityCooldown();
+
+	/** 本地客户端通知服务端单独执行机能的冷却 */
+	UFUNCTION(Server, Reliable)
+	void Server_CommitAbilityCooldown();
 
 	/** 执行技能的消耗和冷却 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
-	bool CommitAbility();
+	void CommitAbility();
 
 	/** 设置技能的冷却时间 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
@@ -138,9 +176,17 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
 	void SetCooldownTags(FGameplayTagContainer NewCooldownTags);
 
-	/** 获取技能的冷却时间 */
+	/** 获取技能的冷却标签 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
 	FORCEINLINE FGameplayTagContainer GetCooldownTags() const { return CooldownTags; }
+
+	/** 设置技能的消耗设置 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
+	void SetCostSettings(TArray<FFireflyEffectModifierData> NewCostSettings);
+
+	/** 获取技能的消耗设置 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
+	TArray<FFireflyEffectModifierData> GetCostSettings() const { return CostSettings; }
 
 public:
 	/** 当技能的消耗执行成功时触发的代理 */
@@ -151,7 +197,11 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FAbilityExecutionDelegate OnAbilityCooldownCommitted;
 
-protected:
+protected:	
+	/** 技能的消耗设置 */
+	UPROPERTY(EditDefaultsOnly, Category = Cost)
+	TArray<FFireflyEffectModifierData> CostSettings;
+
 	/** 技能的冷却时间设置 */
 	UPROPERTY(EditDefaultsOnly, Category = Cooldown)
 	float CooldownTime = 0.f;
@@ -159,6 +209,14 @@ protected:
 	/** 技能的冷却时间使用的对应Tags */
 	UPROPERTY(EditDefaultsOnly, Category = Cooldown)
 	FGameplayTagContainer CooldownTags;
+
+	/** 技能是否已经执行了消耗 */
+	UPROPERTY()
+	bool bCostCommitted = false;
+
+	/** 技能是否已经执行了冷却 */
+	UPROPERTY()
+	bool bCooldownCommitted = false;
 
 #pragma endregion
 

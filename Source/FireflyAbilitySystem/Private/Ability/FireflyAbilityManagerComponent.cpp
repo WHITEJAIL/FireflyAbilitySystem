@@ -13,6 +13,7 @@ UFireflyAbilityManagerComponent::UFireflyAbilityManagerComponent(const FObjectIn
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
+	SetIsReplicated(true);
 
 	// ...
 }
@@ -34,10 +35,17 @@ void UFireflyAbilityManagerComponent::TickComponent(float DeltaTime, ELevelTick 
 	// ...
 }
 
+UFireflyAbility* UFireflyAbilityManagerComponent::GetGrantedAbilityByID(FName AbilityID) const
+{
+	return *GrantedAbilities.Find(AbilityID);
+}
+
 UFireflyAbility* UFireflyAbilityManagerComponent::GetGrantedAbilityByClass(TSubclassOf<UFireflyAbility> AbilityType) const
 {
 	UFireflyAbility* OutAbility = nullptr;
-	for (auto Ability : GrantedAbilities)
+	TArray<UFireflyAbility*> Abilities = TArray<UFireflyAbility*>{};
+	GrantedAbilities.GenerateValueArray(Abilities);
+	for (auto Ability : Abilities)
 	{
 		if (Ability->GetClass() == AbilityType)
 		{
@@ -49,14 +57,32 @@ UFireflyAbility* UFireflyAbilityManagerComponent::GetGrantedAbilityByClass(TSubc
 	return OutAbility;
 }
 
-void UFireflyAbilityManagerComponent::GrantAbility(TSubclassOf<UFireflyAbility> AbilityToGrant)
+void UFireflyAbilityManagerComponent::Client_OnAbilityGranted_Implementation(FName AbilityID, UFireflyAbility* AbilityJustGranted)
+{
+	if (IsValid(*GrantedAbilities.Find(AbilityID)))
+	{
+		return;
+	}
+	GrantedAbilities.Add(AbilityID, AbilityJustGranted);
+}
+
+void UFireflyAbilityManagerComponent::Client_OnAbilityRemoved_Implementation(FName AbilityID, UFireflyAbility* AbilityJustRemoved)
+{
+	if (!IsValid(*GrantedAbilities.Find(AbilityID)))
+	{
+		return;
+	}
+	GrantedAbilities.Remove(AbilityID);
+}
+
+void UFireflyAbilityManagerComponent::GrantAbility(FName AbilityID, TSubclassOf<UFireflyAbility> AbilityToGrant)
 {
 	if (!IsValid(AbilityToGrant))
 	{
 		return;
 	}
 
-	if (IsValid(GetGrantedAbilityByClass(AbilityToGrant)))
+	if (IsValid(*GrantedAbilities.Find(AbilityID)))
 	{
 		return;
 	}
@@ -64,17 +90,17 @@ void UFireflyAbilityManagerComponent::GrantAbility(TSubclassOf<UFireflyAbility> 
 	FName NewAbilityName = FName(AbilityToGrant->GetName() + FString("_") + GetOwner()->GetName());
 	UFireflyAbility* NewAbility = NewObject<UFireflyAbility>(this, AbilityToGrant, NewAbilityName);
 	NewAbility->OnAbilityGranted();
-	GrantedAbilities.Emplace(NewAbility);
+	GrantedAbilities.Emplace(AbilityID, NewAbility);
 }
 
-void UFireflyAbilityManagerComponent::RemoveAbility(TSubclassOf<UFireflyAbility> AbilityToRemove)
+void UFireflyAbilityManagerComponent::RemoveAbility(FName AbilityID, TSubclassOf<UFireflyAbility> AbilityToRemove)
 {
 	if (!IsValid(AbilityToRemove))
 	{
 		return;
 	}
 
-	UFireflyAbility* Ability = GetGrantedAbilityByClass(AbilityToRemove);
+	UFireflyAbility* Ability = *GrantedAbilities.Find(AbilityID);
 	if (!IsValid(Ability))
 	{
 		return;
@@ -84,18 +110,18 @@ void UFireflyAbilityManagerComponent::RemoveAbility(TSubclassOf<UFireflyAbility>
 	{
 		Ability->CancelAbility();
 	}	
-	GrantedAbilities.RemoveSingleSwap(Ability);
+	GrantedAbilities.Remove(AbilityID);
 	Ability->MarkAsGarbage();
 }
 
-void UFireflyAbilityManagerComponent::RemoveAbilityOnEnded(TSubclassOf<UFireflyAbility> AbilityToRemove)
+void UFireflyAbilityManagerComponent::RemoveAbilityOnEnded(FName AbilityID, TSubclassOf<UFireflyAbility> AbilityToRemove)
 {
 	if (!IsValid(AbilityToRemove))
 	{
 		return;
 	}
 
-	UFireflyAbility* Ability = GetGrantedAbilityByClass(AbilityToRemove);
+	UFireflyAbility* Ability = *GrantedAbilities.Find(AbilityID);
 	if (!IsValid(Ability))
 	{
 		return;
@@ -107,24 +133,39 @@ void UFireflyAbilityManagerComponent::RemoveAbilityOnEnded(TSubclassOf<UFireflyA
 	}
 	else
 	{
-		GrantedAbilities.RemoveSingleSwap(Ability);
+		GrantedAbilities.Remove(AbilityID);
 		Ability->MarkAsGarbage();		
 	}
 }
 
-UFireflyAbility* UFireflyAbilityManagerComponent::TryActivateAbilityByClass(TSubclassOf<UFireflyAbility> AbilityToActivate)
+void UFireflyAbilityManagerComponent::Server_TryActivateAbility_Implementation(UFireflyAbility* AbilityToActivate, bool bNeedValidation)
 {
-	if (!IsValid(AbilityToActivate))
+	if (bNeedValidation)
 	{
-		return nullptr;
+		if (!AbilityToActivate->CanActivateAbility())
+		{
+			AbilityToActivate->Client_CancelAbility();
+			return;
+		}
+
+		TArray<FGameplayTag> BlockTagArray;
+		BlockAbilityTags.GetKeys(BlockTagArray);
+		FGameplayTagContainer BlockTags = FGameplayTagContainer::CreateFromArray(BlockTagArray);
+		if (AbilityToActivate->TagsForAbilityAsset.HasAnyExact(BlockTags))
+		{
+			AbilityToActivate->Client_CancelAbility();
+			return;
+		}
 	}
 
-	UFireflyAbility* Ability = GetGrantedAbilityByClass(AbilityToActivate);
+	AbilityToActivate->ActivateAbility();
+	ActivatingAbilities.Emplace(AbilityToActivate);
+}
+
+UFireflyAbility* UFireflyAbilityManagerComponent::TryActivateAbilityByID(FName AbilityID)
+{
+	UFireflyAbility* Ability = *GrantedAbilities.Find(AbilityID);
 	if (!IsValid(Ability))
-	{
-		return nullptr;
-	}
-	if (!Ability)
 	{
 		return nullptr;
 	}
@@ -142,8 +183,57 @@ UFireflyAbility* UFireflyAbilityManagerComponent::TryActivateAbilityByClass(TSub
 		return nullptr;
 	}
 
-	Ability->ActivateAbility();
-	ActivatingAbilities.Emplace(Ability);
+	if (GetOwnerRole() == ROLE_Authority)
+	{
+		Server_TryActivateAbility(Ability, false);
+	}
+	if (GetOwnerRole() == ROLE_AutonomousProxy)
+	{
+		Ability->ActivateAbility();
+		ActivatingAbilities.Emplace(Ability);
+		Server_TryActivateAbility(Ability, true);
+	}
+
+	return Ability;
+}
+
+UFireflyAbility* UFireflyAbilityManagerComponent::TryActivateAbilityByClass(TSubclassOf<UFireflyAbility> AbilityToActivate)
+{
+	if (!IsValid(AbilityToActivate))
+	{
+		return nullptr;
+	}
+
+	UFireflyAbility* Ability = GetGrantedAbilityByClass(AbilityToActivate);
+	if (!IsValid(Ability))
+	{
+		return nullptr;
+	}
+
+	if (!Ability->CanActivateAbility())
+	{
+		return nullptr;
+	}
+
+	TArray<FGameplayTag> BlockTagArray;
+	BlockAbilityTags.GetKeys(BlockTagArray);
+	FGameplayTagContainer BlockTags = FGameplayTagContainer::CreateFromArray(BlockTagArray);
+	if (Ability->TagsForAbilityAsset.HasAnyExact(BlockTags))
+	{
+		return nullptr;
+	}
+
+	if (GetOwnerRole() == ROLE_Authority)
+	{
+		Server_TryActivateAbility(Ability, false);
+	}
+	if (GetOwnerRole() == ROLE_AutonomousProxy)
+	{
+		Ability->ActivateAbility();
+		ActivatingAbilities.Emplace(Ability);
+		Server_TryActivateAbility(Ability, true);
+	}
+
 	return Ability;
 }
 
@@ -160,7 +250,7 @@ void UFireflyAbilityManagerComponent::CancelAbilitiesWithTags(FGameplayTagContai
 
 void UFireflyAbilityManagerComponent::OnAbilityEndActivation(UFireflyAbility* AbilityJustEnded)
 {
-	ActivatingAbilities.RemoveSingleSwap(AbilityJustEnded);
+	ActivatingAbilities.RemoveSingle(AbilityJustEnded);
 }
 
 void UFireflyAbilityManagerComponent::UpdateBlockAndCancelAbilityTags(FGameplayTagContainer BlockTags,

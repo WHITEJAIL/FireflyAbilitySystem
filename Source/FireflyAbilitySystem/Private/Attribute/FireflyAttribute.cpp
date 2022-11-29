@@ -22,6 +22,29 @@ UWorld* UFireflyAttribute::GetWorld() const
 	return nullptr;
 }
 
+bool UFireflyAttribute::CallRemoteFunction(UFunction* Function, void* Parms, FOutParmRec* OutParms, FFrame* Stack)
+{
+	if (!IsValid(GetOwnerActor()))
+	{
+		return false;
+	}
+
+	UNetDriver* NetDriver = GetOwnerActor()->GetNetDriver();
+	if (!NetDriver)
+	{
+		return false;
+	}
+
+	NetDriver->ProcessRemoteFunction(GetOwnerActor(), Function, Parms, OutParms, Stack, this);
+
+	return true;
+}
+
+int32 UFireflyAttribute::GetFunctionCallspace(UFunction* Function, FFrame* Stack)
+{
+	return (GetOuter() ? GetOuter()->GetFunctionCallspace(Function, Stack) : FunctionCallspace::Local);
+}
+
 float UFireflyAttribute::GetCurrentValue() const
 {
 	return CurrentValue;

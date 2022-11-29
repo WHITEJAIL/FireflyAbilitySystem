@@ -15,10 +15,19 @@ class FIREFLYABILITYSYSTEM_API UFireflyEffect : public UObject
 {
 	GENERATED_UCLASS_BODY()
 
-#pragma region Basic
+#pragma region Override
 
 public:
 	virtual UWorld* GetWorld() const override;
+
+	virtual bool CallRemoteFunction(UFunction* Function, void* Parms, FOutParmRec* OutParms, FFrame* Stack) override;
+
+	virtual int32 GetFunctionCallspace(UFunction* Function, FFrame* Stack) override;
+
+#pragma endregion
+
+
+#pragma region Basic
 
 protected:
 	/** 获取效果所属的管理器的拥有者 */

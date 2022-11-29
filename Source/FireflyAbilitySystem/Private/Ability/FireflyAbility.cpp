@@ -32,6 +32,29 @@ UWorld* UFireflyAbility::GetWorld() const
 	return nullptr;
 }
 
+bool UFireflyAbility::CallRemoteFunction(UFunction* Function, void* Parms, FOutParmRec* OutParms, FFrame* Stack)
+{
+	if (!IsValid(GetOwnerActor()))
+	{
+		return false;
+	}
+		
+	UNetDriver* NetDriver = GetOwnerActor()->GetNetDriver();
+	if (!NetDriver)
+	{
+		return false;
+	}
+
+	NetDriver->ProcessRemoteFunction(GetOwnerActor(), Function, Parms, OutParms, Stack, this);
+
+	return true;
+}
+
+int32 UFireflyAbility::GetFunctionCallspace(UFunction* Function, FFrame* Stack)
+{
+	return (GetOuter() ? GetOuter()->GetFunctionCallspace(Function, Stack) : FunctionCallspace::Local);
+}
+
 AActor* UFireflyAbility::GetOwnerActor() const
 {
 	if (!IsValid(GetOwnerManager()))
@@ -40,6 +63,16 @@ AActor* UFireflyAbility::GetOwnerActor() const
 	}
 
 	return GetOwnerManager()->GetOwner();
+}
+
+ENetRole UFireflyAbility::GetOwnerRole() const
+{
+	if (!IsValid(GetOwnerActor()))
+	{
+		return ROLE_None;
+	}
+
+	return GetOwnerActor()->GetLocalRole();
 }
 
 UFireflyAbilityManagerComponent* UFireflyAbility::GetOwnerManager() const
@@ -74,6 +107,12 @@ void UFireflyAbility::ActivateAbility()
 		}
 	}
 
+	if (GetOwnerRole() == ROLE_Authority)
+	{
+		bCostCommitted = false;
+		bCooldownCommitted = false;
+	}
+
 	bIsActivating = true;
 	ExecuteTagRequirementToOwner(true);	
 	OnAbilityActivated.Broadcast();
@@ -92,6 +131,25 @@ void UFireflyAbility::EndAbility()
 	OnAbilityEnded.Broadcast();
 	GetOwnerManager()->OnAbilityEndActivation(this);
 	ReceiveEndAbility(false);
+
+	if (GetOwnerRole() == ROLE_Authority)
+	{
+		Client_EndAbility();
+	}
+	if (GetOwnerRole() == ROLE_AutonomousProxy)
+	{
+		Server_EndAbility();
+	}
+}
+
+void UFireflyAbility::Server_EndAbility_Implementation()
+{
+	EndAbility();
+}
+
+void UFireflyAbility::Client_EndAbility_Implementation()
+{
+	EndAbility();
 }
 
 void UFireflyAbility::CancelAbility()
@@ -107,6 +165,25 @@ void UFireflyAbility::CancelAbility()
 	OnAbilityCanceled.Broadcast();
 	GetOwnerManager()->OnAbilityEndActivation(this);
 	ReceiveEndAbility(true);
+
+	if (GetOwnerRole() == ROLE_Authority)
+	{
+		Client_CancelAbility();
+	}
+	if (GetOwnerRole() == ROLE_AutonomousProxy)
+	{
+		Server_CancelAbility();
+	}
+}
+
+void UFireflyAbility::Server_CancelAbility_Implementation()
+{
+	CancelAbility();
+}
+
+void UFireflyAbility::Client_CancelAbility_Implementation()
+{
+	CancelAbility();
 }
 
 bool UFireflyAbility::CheckAbilityCost_Implementation() const
@@ -129,31 +206,64 @@ void UFireflyAbility::ApplyAbilityCooldown_Implementation() const
 	OnAbilityCooldownCommitted.Broadcast();
 }
 
-bool UFireflyAbility::CommitAbilityCost()
+void UFireflyAbility::CommitAbilityCost()
 {
-	if (!CheckAbilityCost())
+	if (!CheckAbilityCost() || !bIsActivating || GetOwnerRole() < ROLE_AutonomousProxy)
 	{
-		return false;
+		return;
 	}
 
+	if (GetOwnerRole() == ROLE_AutonomousProxy)
+	{
+		Server_CommitAbilityCost();
+		return;
+	}
+
+	if (GetOwnerRole() != ROLE_Authority || bCostCommitted)
+	{
+		return;
+	}
+
+	bCostCommitted = true;
 	ApplyAbilityCost();
-	return true;
 }
 
-bool UFireflyAbility::CommitAbilityCooldown()
+void UFireflyAbility::Server_CommitAbilityCost_Implementation()
 {
-	if (!CheckAbilityCooldown())
+	CommitAbilityCost();
+}
+
+void UFireflyAbility::CommitAbilityCooldown()
+{
+	if (!CheckAbilityCooldown() || !bIsActivating || GetOwnerRole() < ROLE_AutonomousProxy)
 	{
-		return false;
+		return;
 	}
 
+	if (GetOwnerRole() == ROLE_AutonomousProxy)
+	{
+		Server_CommitAbilityCooldown();
+		return;
+	}
+
+	if (GetOwnerRole() != ROLE_Authority || bCooldownCommitted)
+	{
+		return;
+	}
+
+	bCooldownCommitted = true;
 	ApplyAbilityCooldown();
-	return true;
 }
 
-bool UFireflyAbility::CommitAbility()
+void UFireflyAbility::Server_CommitAbilityCooldown_Implementation()
 {
-	return CommitAbilityCost() && CommitAbilityCooldown();
+	CommitAbilityCooldown();
+}
+
+void UFireflyAbility::CommitAbility()
+{
+	CommitAbilityCost();
+	CommitAbilityCooldown();
 }
 
 void UFireflyAbility::SetCooldownTime(float NewCooldownTime)
@@ -164,6 +274,11 @@ void UFireflyAbility::SetCooldownTime(float NewCooldownTime)
 void UFireflyAbility::SetCooldownTags(FGameplayTagContainer NewCooldownTags)
 {
 	CooldownTags = NewCooldownTags;
+}
+
+void UFireflyAbility::SetCostSettings(TArray<FFireflyEffectModifierData> NewCostSettings)
+{
+	CostSettings = NewCostSettings;
 }
 
 void UFireflyAbility::ExecuteTagRequirementToOwner(bool bIsActivated)
@@ -212,19 +327,29 @@ bool UFireflyAbility::CanActivateAbility() const
 		UFireflyTagManagerComponent::StaticClass()));
 	FGameplayTagContainer OwnerTags = TagManager->GetContainedTags();
 
+	/** Owner的Tag管理器是否包含阻挡该技能激活的Tag */
 	if (OwnerTags.HasAnyExact(TagsBlockActivationOnOwnerHas))
 	{
 		return false;
 	}
 
+	/** 是否可执行技能的冷却和消耗 */
+	if (!CheckAbilityCooldown() || !CheckAbilityCost())
+	{
+		return false;
+	}
+
+	/** Owner的Tag管理器是否包含该技能激活需要的所有Tag */
 	bool bOwnerHasRequiredTags = OwnerTags.HasAll(TagsRequireOwnerHasForActivation);
 
+	/** 蓝图端是否满足技能激活的条件 */
 	bool bBlueprintCanActivate = true;
 	if (bHasBlueprintCanActivate)
 	{
 		bBlueprintCanActivate = ReceiveCanActivateAbility();
 	}
 
+	/** 技能管理器中是否存在该技能激活需要的前置激活中的技能 */
 	bool bHasRequiredActivatingAbility = true;
 	if (RequiredActivatingAbilities.Num())
 	{

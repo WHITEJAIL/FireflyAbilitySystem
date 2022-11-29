@@ -18,7 +18,13 @@ void UFireflyAbility_InputBased::OnAbilityInputStarted()
 		return;
 	}
 
+	Server_OnAbilityInputStarted();
 	ReceiveOnAbilityInputStarted();
+}
+
+void UFireflyAbility_InputBased::Server_OnAbilityInputStarted_Implementation()
+{
+	OnAbilityInputStarted();
 }
 
 void UFireflyAbility_InputBased::OnAbilityInputOngoing()
@@ -28,7 +34,13 @@ void UFireflyAbility_InputBased::OnAbilityInputOngoing()
 		return;
 	}
 
+	Server_OnAbilityInputOngoing();
 	ReceiveOnAbilityInputOngoing();
+}
+
+void UFireflyAbility_InputBased::Server_OnAbilityInputOngoing_Implementation()
+{
+	OnAbilityInputOngoing();
 }
 
 void UFireflyAbility_InputBased::OnAbilityInputCanceled()
@@ -38,7 +50,13 @@ void UFireflyAbility_InputBased::OnAbilityInputCanceled()
 		return;
 	}
 
+	Server_OnAbilityInputCanceled();
 	ReceiveOnAbilityInputCanceled();
+}
+
+void UFireflyAbility_InputBased::Server_OnAbilityInputCanceled_Implementation()
+{
+	OnAbilityInputCanceled();
 }
 
 void UFireflyAbility_InputBased::OnAbilityInputTriggered()
@@ -50,6 +68,7 @@ void UFireflyAbility_InputBased::OnAbilityInputTriggered()
 			return;
 		}
 
+		Server_OnAbilityInputTriggered();
 		ReceiveOnAbilityInputTriggered();
 
 		return;
@@ -60,7 +79,13 @@ void UFireflyAbility_InputBased::OnAbilityInputTriggered()
 		return;
 	}
 
+	Server_OnAbilityInputTriggered();
 	ReceiveOnAbilityInputTriggered();		
+}
+
+void UFireflyAbility_InputBased::Server_OnAbilityInputTriggered_Implementation()
+{
+	OnAbilityInputTriggered();
 }
 
 void UFireflyAbility_InputBased::OnAbilityInputCompleted()
@@ -70,5 +95,11 @@ void UFireflyAbility_InputBased::OnAbilityInputCompleted()
 		return;
 	}
 
+	Server_OnAbilityInputCompleted();
 	ReceiveOnAbilityInputCompleted();
+}
+
+void UFireflyAbility_InputBased::Server_OnAbilityInputCompleted_Implementation()
+{
+	OnAbilityInputCompleted();
 }

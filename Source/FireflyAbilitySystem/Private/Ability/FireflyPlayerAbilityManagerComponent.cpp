@@ -10,6 +10,108 @@ UFireflyPlayerAbilityManagerComponent::UFireflyPlayerAbilityManagerComponent(con
 {
 }
 
+void UFireflyPlayerAbilityManagerComponent::BindAbilityToInput(TSubclassOf<UFireflyAbility_InputBased> AbilityToBind,
+                                                               UInputAction* InputToBind)
+{
+	if (!IsValid(InputToBind) || !IsValid(AbilityToBind))
+	{
+		return;
+	}
+
+	if (GetOwnerRole() != ROLE_AutonomousProxy)
+	{
+		return;
+	}
+
+	UEnhancedInputComponent* EnhancedInput = GetEnhancedInputComponentFromOwner();
+	if (!IsValid(EnhancedInput))
+	{
+		return;
+	}
+
+	if (!IsValid(GetGrantedAbilityByClass(AbilityToBind)))
+	{
+		return;
+	}
+
+	UFireflyAbility_InputBased* Ability = Cast<UFireflyAbility_InputBased>(GetGrantedAbilityByClass(AbilityToBind));
+	if (!IsValid(Ability))
+	{
+		return;
+	}
+
+	FFireflyAbilitiesBoundToInput& AbilitiesBoundToInput = AbilitiesInputBound.FindOrAdd(InputToBind);
+	if (AbilitiesBoundToInput.Abilities.Num() == 0)
+	{
+		AbilitiesBoundToInput.HandleStarted = EnhancedInput->BindAction(InputToBind, ETriggerEvent::Started, this,
+			&UFireflyPlayerAbilityManagerComponent::OnAbilityInputActionStarted, InputToBind).GetHandle();
+		AbilitiesBoundToInput.HandleOngoing = EnhancedInput->BindAction(InputToBind, ETriggerEvent::Ongoing, this,
+			&UFireflyPlayerAbilityManagerComponent::OnAbilityInputActionOngoing, InputToBind).GetHandle();
+		AbilitiesBoundToInput.HandleCanceled = EnhancedInput->BindAction(InputToBind, ETriggerEvent::Canceled, this,
+			&UFireflyPlayerAbilityManagerComponent::OnAbilityInputActionCanceled, InputToBind).GetHandle();
+		AbilitiesBoundToInput.HandleTriggered = EnhancedInput->BindAction(InputToBind, ETriggerEvent::Triggered, this,
+			&UFireflyPlayerAbilityManagerComponent::OnAbilityInputActionTriggered, InputToBind).GetHandle();
+		AbilitiesBoundToInput.HandleCompleted = EnhancedInput->BindAction(InputToBind, ETriggerEvent::Completed, this,
+			&UFireflyPlayerAbilityManagerComponent::OnAbilityInputActionCompleted, InputToBind).GetHandle();
+	}
+
+	AbilitiesBoundToInput.Abilities.AddUnique(AbilityToBind);
+}
+
+void UFireflyPlayerAbilityManagerComponent::UnbindAbilityWithInput(TSubclassOf<UFireflyAbility_InputBased> AbilityToUnbind,
+	UInputAction* InputToUnbind)
+{
+	if (!IsValid(InputToUnbind) || !IsValid(AbilityToUnbind))
+	{
+		return;
+	}
+
+	if (GetOwnerRole() != ROLE_AutonomousProxy)
+	{
+		return;
+	}
+
+	UEnhancedInputComponent* EnhancedInput = GetEnhancedInputComponentFromOwner();
+	if (!IsValid(EnhancedInput))
+	{
+		return;
+	}
+
+	if (!IsValid(GetGrantedAbilityByClass(AbilityToUnbind)))
+	{
+		return;
+	}
+
+	UFireflyAbility_InputBased* Ability = Cast<UFireflyAbility_InputBased>(GetGrantedAbilityByClass(AbilityToUnbind));
+	if (!IsValid(Ability))
+	{
+		return;
+	}
+
+	FFireflyAbilitiesBoundToInput* AbilitiesBoundToInput = AbilitiesInputBound.Find(InputToUnbind);
+	if (AbilitiesBoundToInput == nullptr)
+	{
+		return;
+	}
+
+	if (!AbilitiesBoundToInput->Abilities.Contains(AbilityToUnbind))
+	{
+		return;
+	}
+
+	AbilitiesBoundToInput->Abilities.RemoveSingleSwap(AbilityToUnbind);
+	if (AbilitiesBoundToInput->Abilities.Num() == 0)
+	{
+		EnhancedInput->RemoveBindingByHandle(AbilitiesBoundToInput->HandleStarted);
+		EnhancedInput->RemoveBindingByHandle(AbilitiesBoundToInput->HandleOngoing);
+		EnhancedInput->RemoveBindingByHandle(AbilitiesBoundToInput->HandleCanceled);
+		EnhancedInput->RemoveBindingByHandle(AbilitiesBoundToInput->HandleTriggered);
+		EnhancedInput->RemoveBindingByHandle(AbilitiesBoundToInput->HandleCompleted);
+
+		AbilitiesInputBound.Remove(InputToUnbind);
+	}
+}
+
 UEnhancedInputComponent* UFireflyPlayerAbilityManagerComponent::GetEnhancedInputComponentFromOwner() const
 {
 	if (!IsValid(GetOwner()))
@@ -183,97 +285,5 @@ void UFireflyPlayerAbilityManagerComponent::OnAbilityInputActionCompleted(UInput
 	for (auto Ability : Abilities)
 	{
 		Ability->OnAbilityInputCompleted();
-	}
-}
-
-void UFireflyPlayerAbilityManagerComponent::BindAbilityToInput(TSubclassOf<UFireflyAbility_InputBased> AbilityToBind,
-                                                               UInputAction* InputToBind)
-{
-	if (!IsValid(InputToBind) || !IsValid(AbilityToBind))
-	{
-		return;
-	}
-
-	UEnhancedInputComponent* EnhancedInput = GetEnhancedInputComponentFromOwner();
-	if (!IsValid(EnhancedInput))
-	{
-		return;
-	}
-
-	if (!IsValid(GetGrantedAbilityByClass(AbilityToBind)))
-	{
-		return;
-	}
-
-	UFireflyAbility_InputBased* Ability = Cast<UFireflyAbility_InputBased>(GetGrantedAbilityByClass(AbilityToBind));
-	if (!IsValid(Ability))
-	{
-		return;
-	}
-
-	FFireflyAbilitiesBoundToInput& AbilitiesBoundToInput = AbilitiesInputBound.FindOrAdd(InputToBind);
-	if (AbilitiesBoundToInput.Abilities.Num() == 0)
-	{
-		AbilitiesBoundToInput.HandleStarted = EnhancedInput->BindAction(InputToBind, ETriggerEvent::Started, this,
-			&UFireflyPlayerAbilityManagerComponent::OnAbilityInputActionStarted, InputToBind).GetHandle();
-		AbilitiesBoundToInput.HandleOngoing = EnhancedInput->BindAction(InputToBind, ETriggerEvent::Ongoing, this,
-			&UFireflyPlayerAbilityManagerComponent::OnAbilityInputActionOngoing, InputToBind).GetHandle();
-		AbilitiesBoundToInput.HandleCanceled = EnhancedInput->BindAction(InputToBind, ETriggerEvent::Canceled, this,
-			&UFireflyPlayerAbilityManagerComponent::OnAbilityInputActionCanceled, InputToBind).GetHandle();
-		AbilitiesBoundToInput.HandleTriggered = EnhancedInput->BindAction(InputToBind, ETriggerEvent::Triggered, this,
-			&UFireflyPlayerAbilityManagerComponent::OnAbilityInputActionTriggered, InputToBind).GetHandle();
-		AbilitiesBoundToInput.HandleCompleted = EnhancedInput->BindAction(InputToBind, ETriggerEvent::Completed, this,
-			&UFireflyPlayerAbilityManagerComponent::OnAbilityInputActionCompleted, InputToBind).GetHandle();
-	}
-
-	AbilitiesBoundToInput.Abilities.AddUnique(AbilityToBind);
-}
-
-void UFireflyPlayerAbilityManagerComponent::UnbindAbilityWithInput(TSubclassOf<UFireflyAbility_InputBased> AbilityToUnbind,
-	UInputAction* InputToUnbind)
-{
-	if (!IsValid(InputToUnbind) || !IsValid(AbilityToUnbind))
-	{
-		return;
-	}
-
-	UEnhancedInputComponent* EnhancedInput = GetEnhancedInputComponentFromOwner();
-	if (!IsValid(EnhancedInput))
-	{
-		return;
-	}
-
-	if (!IsValid(GetGrantedAbilityByClass(AbilityToUnbind)))
-	{
-		return;
-	}
-
-	UFireflyAbility_InputBased* Ability = Cast<UFireflyAbility_InputBased>(GetGrantedAbilityByClass(AbilityToUnbind));
-	if (!IsValid(Ability))
-	{
-		return;
-	}
-
-	FFireflyAbilitiesBoundToInput* AbilitiesBoundToInput = AbilitiesInputBound.Find(InputToUnbind);
-	if (AbilitiesBoundToInput == nullptr)
-	{
-		return;
-	}
-
-	if (!AbilitiesBoundToInput->Abilities.Contains(AbilityToUnbind))
-	{
-		return;
-	}
-
-	AbilitiesBoundToInput->Abilities.RemoveSingleSwap(AbilityToUnbind);
-	if (AbilitiesBoundToInput->Abilities.Num() == 0)
-	{
-		EnhancedInput->RemoveBindingByHandle(AbilitiesBoundToInput->HandleStarted);
-		EnhancedInput->RemoveBindingByHandle(AbilitiesBoundToInput->HandleOngoing);
-		EnhancedInput->RemoveBindingByHandle(AbilitiesBoundToInput->HandleCanceled);
-		EnhancedInput->RemoveBindingByHandle(AbilitiesBoundToInput->HandleTriggered);
-		EnhancedInput->RemoveBindingByHandle(AbilitiesBoundToInput->HandleCompleted);
-
-		AbilitiesInputBound.Remove(InputToUnbind);
 	}
 }

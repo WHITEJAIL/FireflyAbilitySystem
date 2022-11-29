@@ -31,38 +31,56 @@ public:
 #pragma region Granting
 
 protected:
-	UFUNCTION()
+	/** 根据ID获取一个该管理器中的技能实例 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability")
+	FORCEINLINE UFireflyAbility* GetGrantedAbilityByID(FName AbilityID) const;
+
+	/** 根据类型获取一个该管理器中的技能实例 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability")
 	FORCEINLINE UFireflyAbility* GetGrantedAbilityByClass(TSubclassOf<UFireflyAbility> AbilityType) const;
 
+	/** 服务器通知本地客户端某个技能被赋予，用于更新GrantedAbilities容器 */
+	UFUNCTION(Client, Reliable)
+	void Client_OnAbilityGranted(FName AbilityID, UFireflyAbility* AbilityJustGranted);
+
+	/** 服务器通知本地客户端某个技能被移除，用于更新GrantedAbilities容器 */
+	UFUNCTION(Client, Reliable)
+	void Client_OnAbilityRemoved(FName AbilityID, UFireflyAbility* AbilityJustRemoved);
+
 public:
-	/** 获取该技能管理器被赋予的所有技能 */
-	UFUNCTION()
-	FORCEINLINE TArray<UFireflyAbility*> GetGrantedAbilities() const { return GrantedAbilities; }
+	/** 为技能管理器赋予一个技能，必须在拥有权限端执行，否则无效 */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "FireflyAbilitySystem|Ability")
+	virtual void GrantAbility(FName AbilityID, TSubclassOf<UFireflyAbility> AbilityToGrant);
 
-	/** 为技能管理器赋予一个技能 */
-	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
-	virtual void GrantAbility(TSubclassOf<UFireflyAbility> AbilityToGrant);
+	/** 从技能管理器中移除一个技能，必须在拥有权限端执行，否则无效 */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "FireflyAbilitySystem|Ability")
+	virtual void RemoveAbility(FName AbilityID, TSubclassOf<UFireflyAbility> AbilityToRemove);
 
-	/** 从技能管理器中移除一个技能 */
-	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
-	virtual void RemoveAbility(TSubclassOf<UFireflyAbility> AbilityToRemove);
-
-	/** 从技能管理器中移除一个技能 */
-	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
-	virtual void RemoveAbilityOnEnded(TSubclassOf<UFireflyAbility> AbilityToRemove);
+	/** 从技能管理器中移除一个技能，必须在拥有权限端执行，否则无效 */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "FireflyAbilitySystem|Ability")
+	virtual void RemoveAbilityOnEnded(FName AbilityID, TSubclassOf<UFireflyAbility> AbilityToRemove);
 
 protected:
 	/** 技能管理器被赋予的技能 */
 	UPROPERTY()
-	TArray<UFireflyAbility*> GrantedAbilities;
+	TMap<FName, UFireflyAbility*> GrantedAbilities;
 
 #pragma endregion
 
 
 #pragma region Execution
 
+protected:
+	/** 服务器激活技能，可能会验证技能是否真的可以执行 */
+	UFUNCTION(Server, Reliable)
+	void Server_TryActivateAbility(UFireflyAbility* AbilityToActivate, bool bNeedValidation);
+
 public:
-	/** 尝试激活并执行技能逻辑 */
+	/** 尝试通过ID激活并执行技能逻辑，该函数若在本地先行检测技能是否可激活，则服务端可能会进行二次验证 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
+	virtual UFireflyAbility* TryActivateAbilityByID(FName AbilityID);
+
+	/** 尝试通过类型激活并执行技能逻辑，该函数若在本地先行检测技能是否可激活，则服务端可能会进行二次验证 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
 	virtual UFireflyAbility* TryActivateAbilityByClass(TSubclassOf<UFireflyAbility> AbilityToActivate);
 
@@ -70,8 +88,8 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability")
 	FORCEINLINE TArray<UFireflyAbility*> GetActivatingAbilities() const { return ActivatingAbilities; }
 
-	/** 取消所有带有特定资产Tag的技能的激活状态 */
-	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
+	/** 取消所有带有特定资产Tag的技能的激活状态，必须在拥有权限端执行，否则无效 */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "FireflyAbilitySystem|Ability")
 	void CancelAbilitiesWithTags(FGameplayTagContainer CancelTags);
 	
 	/** 某个技能结束执行时执行的函数 */
@@ -89,6 +107,7 @@ protected:
 #pragma region Requirement
 
 public:
+	/** 更新管理器的阻断技能Tags，或当CancelTags生效时取消某些技能，仅当某个技能激活时才会触发 */
 	UFUNCTION()
 	void UpdateBlockAndCancelAbilityTags(FGameplayTagContainer BlockTags, FGameplayTagContainer CancelTags, bool bIsActivated);
 

@@ -23,6 +23,10 @@ protected:
 	UFUNCTION()
 	virtual void OnAbilityInputStarted();
 
+	/** 本地客户端通知服务端执行输入事件：开始 */
+	UFUNCTION(Server, Reliable)
+	void Server_OnAbilityInputStarted();
+
 	/** 蓝图输入事件：开始 */
 	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability")
 	void ReceiveOnAbilityInputStarted();
@@ -30,6 +34,10 @@ protected:
 	/** 输入事件：执行中 */
 	UFUNCTION()
 	virtual void OnAbilityInputOngoing();
+
+	/** 本地客户端通知服务端执行输入事件：执行中 */
+	UFUNCTION(Server, Reliable)
+	void Server_OnAbilityInputOngoing();
 
 	/** 蓝图输入事件：执行中 */
 	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability")
@@ -39,6 +47,10 @@ protected:
 	UFUNCTION()
 	virtual void OnAbilityInputCanceled();
 
+	/** 本地客户端通知服务端执行输入事件：取消 */
+	UFUNCTION(Server, Reliable)
+	void Server_OnAbilityInputCanceled();
+
 	/** 蓝图输入事件：取消 */
 	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability")
 	void ReceiveOnAbilityInputCanceled();
@@ -47,6 +59,10 @@ protected:
 	UFUNCTION()
 	virtual void OnAbilityInputTriggered();
 
+	/** 本地客户端通知服务端执行输入事件：触发 */
+	UFUNCTION(Server, Reliable)
+	void Server_OnAbilityInputTriggered();
+
 	/** 蓝图输入事件：触发 */
 	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability")
 	void ReceiveOnAbilityInputTriggered();
@@ -54,6 +70,10 @@ protected:
 	/** 输入事件：完成 */
 	UFUNCTION()
 	virtual void OnAbilityInputCompleted();
+
+	/** 本地客户端通知服务端执行输入事件：完成 */
+	UFUNCTION(Server, Reliable)
+	void Server_OnAbilityInputCompleted();
 
 	/** 蓝图输入事件：完成 */
 	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability")

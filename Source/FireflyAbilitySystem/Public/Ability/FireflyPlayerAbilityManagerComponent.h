@@ -63,6 +63,25 @@ class FIREFLYABILITYSYSTEM_API UFireflyPlayerAbilityManagerComponent : public UF
 
 #pragma region InputBinding
 
+public:
+	/** 将技能与输入绑定，绑定操作应该在本地客户端执行，技能需要存在于技能管理器中，输入也应当有效 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
+	void BindAbilityToInput(TSubclassOf<UFireflyAbility_InputBased> AbilityToBind, UInputAction* InputToBind);
+
+	/** 将技能与输入解绑，解绑操作应该在本地客户端执行，技能需要存在于技能管理器中，输入也应当有效 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
+	void UnbindAbilityWithInput(TSubclassOf<UFireflyAbility_InputBased> AbilityToUnbind, UInputAction* InputToUnbind);
+
+protected:
+	/** 所有和输入绑定了的技能 */
+	UPROPERTY()
+	TMap<UInputAction*, FFireflyAbilitiesBoundToInput> AbilitiesInputBound;
+
+#pragma endregion
+
+
+#pragma region InputEvent
+
 protected:
 	/** 从组件拥有者身上获取增强输入组件 */
 	UFUNCTION()
@@ -87,20 +106,6 @@ protected:
 	/** 组件管理的输入事件触发：完成 */
 	UFUNCTION()
 	virtual void OnAbilityInputActionCompleted(UInputAction* Input);
-
-public:
-	/** 将技能与输入绑定，技能需要存在于技能管理器中，输入也应当有效 */
-	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
-	void BindAbilityToInput(TSubclassOf<UFireflyAbility_InputBased> AbilityToBind, UInputAction* InputToBind);
-
-	/** 将技能与输入绑定，技能需要存在于技能管理器中，输入也应当有效 */
-	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
-	void UnbindAbilityWithInput(TSubclassOf<UFireflyAbility_InputBased> AbilityToUnbind, UInputAction* InputToUnbind);
-
-protected:
-	/** 所有和输入绑定了的技能 */
-	UPROPERTY()
-	TMap<UInputAction*, FFireflyAbilitiesBoundToInput> AbilitiesInputBound;
 
 #pragma endregion
 	
