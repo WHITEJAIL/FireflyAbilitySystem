@@ -25,45 +25,37 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	virtual bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 #pragma endregion
 
 
 #pragma region Granting
 
 protected:
-	/** 根据ID获取一个该管理器中的技能实例 */
-	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability")
-	FORCEINLINE UFireflyAbility* GetGrantedAbilityByID(FName AbilityID) const;
-
 	/** 根据类型获取一个该管理器中的技能实例 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability")
 	FORCEINLINE UFireflyAbility* GetGrantedAbilityByClass(TSubclassOf<UFireflyAbility> AbilityType) const;
 
-	/** 服务器通知本地客户端某个技能被赋予，用于更新GrantedAbilities容器 */
-	UFUNCTION(Client, Reliable)
-	void Client_OnAbilityGranted(FName AbilityID, UFireflyAbility* AbilityJustGranted);
-
-	/** 服务器通知本地客户端某个技能被移除，用于更新GrantedAbilities容器 */
-	UFUNCTION(Client, Reliable)
-	void Client_OnAbilityRemoved(FName AbilityID, UFireflyAbility* AbilityJustRemoved);
-
 public:
 	/** 为技能管理器赋予一个技能，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "FireflyAbilitySystem|Ability")
-	virtual void GrantAbility(FName AbilityID, TSubclassOf<UFireflyAbility> AbilityToGrant);
+	virtual void GrantAbility(TSubclassOf<UFireflyAbility> AbilityToGrant);
 
 	/** 从技能管理器中移除一个技能，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "FireflyAbilitySystem|Ability")
-	virtual void RemoveAbility(FName AbilityID, TSubclassOf<UFireflyAbility> AbilityToRemove);
+	virtual void RemoveAbility(TSubclassOf<UFireflyAbility> AbilityToRemove);
 
 	/** 从技能管理器中移除一个技能，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "FireflyAbilitySystem|Ability")
-	virtual void RemoveAbilityOnEnded(FName AbilityID, TSubclassOf<UFireflyAbility> AbilityToRemove);
+	virtual void RemoveAbilityOnEnded(TSubclassOf<UFireflyAbility> AbilityToRemove);
 
 protected:
 	/** 技能管理器被赋予的技能 */
-	UPROPERTY()
-	TMap<FName, UFireflyAbility*> GrantedAbilities;
+	UPROPERTY(Replicated)
+	TArray<UFireflyAbility*> GrantedAbilities;
 
 #pragma endregion
 
@@ -76,10 +68,6 @@ protected:
 	void Server_TryActivateAbility(UFireflyAbility* AbilityToActivate, bool bNeedValidation);
 
 public:
-	/** 尝试通过ID激活并执行技能逻辑，该函数若在本地先行检测技能是否可激活，则服务端可能会进行二次验证 */
-	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
-	virtual UFireflyAbility* TryActivateAbilityByID(FName AbilityID);
-
 	/** 尝试通过类型激活并执行技能逻辑，该函数若在本地先行检测技能是否可激活，则服务端可能会进行二次验证 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
 	virtual UFireflyAbility* TryActivateAbilityByClass(TSubclassOf<UFireflyAbility> AbilityToActivate);

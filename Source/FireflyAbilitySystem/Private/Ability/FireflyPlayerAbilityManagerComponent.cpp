@@ -10,6 +10,52 @@ UFireflyPlayerAbilityManagerComponent::UFireflyPlayerAbilityManagerComponent(con
 {
 }
 
+UEnhancedInputComponent* UFireflyPlayerAbilityManagerComponent::GetEnhancedInputComponentFromOwner() const
+{
+	if (!IsValid(GetOwner()))
+	{
+		return nullptr;
+	}
+
+	APawn* PawnOwner = Cast<APawn>(GetOwner());
+	if (!IsValid(PawnOwner))
+	{
+		return nullptr;
+	}
+
+	if (!IsValid(PawnOwner->InputComponent))
+	{
+		return nullptr;
+	}
+
+	return Cast<UEnhancedInputComponent>(PawnOwner->InputComponent);
+}
+
+bool UFireflyPlayerAbilityManagerComponent::IsOwnerLocallyControlled() const
+{
+	const ENetMode NetMode = GetOwner()->GetNetMode();
+
+	if (NetMode == NM_Standalone)
+	{
+		// Not networked.
+		return true;
+	}
+
+	if (NetMode == NM_Client && GetOwnerRole() == ROLE_AutonomousProxy)
+	{
+		// Networked client in control.
+		return true;
+	}
+
+	if (GetOwner()->GetRemoteRole() != ROLE_AutonomousProxy && GetOwnerRole() == ROLE_Authority)
+	{
+		// Local authority in control.
+		return true;
+	}
+
+	return false;
+}
+
 void UFireflyPlayerAbilityManagerComponent::BindAbilityToInput(TSubclassOf<UFireflyAbility_InputBased> AbilityToBind,
                                                                UInputAction* InputToBind)
 {
@@ -18,7 +64,7 @@ void UFireflyPlayerAbilityManagerComponent::BindAbilityToInput(TSubclassOf<UFire
 		return;
 	}
 
-	if (GetOwnerRole() != ROLE_AutonomousProxy)
+	if (!IsOwnerLocallyControlled())
 	{
 		return;
 	}
@@ -66,7 +112,7 @@ void UFireflyPlayerAbilityManagerComponent::UnbindAbilityWithInput(TSubclassOf<U
 		return;
 	}
 
-	if (GetOwnerRole() != ROLE_AutonomousProxy)
+	if (!IsOwnerLocallyControlled())
 	{
 		return;
 	}
@@ -110,27 +156,6 @@ void UFireflyPlayerAbilityManagerComponent::UnbindAbilityWithInput(TSubclassOf<U
 
 		AbilitiesInputBound.Remove(InputToUnbind);
 	}
-}
-
-UEnhancedInputComponent* UFireflyPlayerAbilityManagerComponent::GetEnhancedInputComponentFromOwner() const
-{
-	if (!IsValid(GetOwner()))
-	{
-		return nullptr;
-	}
-
-	APawn* PawnOwner = Cast<APawn>(GetOwner());
-	if (!IsValid(PawnOwner))
-	{
-		return nullptr;
-	}
-
-	if (!IsValid(PawnOwner->InputComponent))
-	{
-		return nullptr;
-	}
-
-	return Cast<UEnhancedInputComponent>(PawnOwner->InputComponent);
 }
 
 void UFireflyPlayerAbilityManagerComponent::OnAbilityInputActionStarted(UInputAction* Input)

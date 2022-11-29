@@ -28,7 +28,7 @@ protected:
 	void Server_OnAbilityInputStarted();
 
 	/** 蓝图输入事件：开始 */
-	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability")
+	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability", Meta = (DisplayName = "On Ability Input Started"))
 	void ReceiveOnAbilityInputStarted();
 
 	/** 输入事件：执行中 */
@@ -40,7 +40,7 @@ protected:
 	void Server_OnAbilityInputOngoing();
 
 	/** 蓝图输入事件：执行中 */
-	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability")
+	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability", Meta = (DisplayName = "On Ability Input Ongoing"))
 	void ReceiveOnAbilityInputOngoing();
 
 	/** 输入事件：取消 */
@@ -52,7 +52,7 @@ protected:
 	void Server_OnAbilityInputCanceled();
 
 	/** 蓝图输入事件：取消 */
-	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability")
+	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability", Meta = (DisplayName = "On Ability Input Canceled"))
 	void ReceiveOnAbilityInputCanceled();
 
 	/** 输入事件：触发 */
@@ -64,7 +64,7 @@ protected:
 	void Server_OnAbilityInputTriggered();
 
 	/** 蓝图输入事件：触发 */
-	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability")
+	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability", Meta = (DisplayName = "On Ability Input Triggered"))
 	void ReceiveOnAbilityInputTriggered();
 
 	/** 输入事件：完成 */
@@ -76,7 +76,7 @@ protected:
 	void Server_OnAbilityInputCompleted();
 
 	/** 蓝图输入事件：完成 */
-	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability")
+	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability", Meta = (DisplayName = "On Ability Input Completed"))
 	void ReceiveOnAbilityInputCompleted();
 
 protected:

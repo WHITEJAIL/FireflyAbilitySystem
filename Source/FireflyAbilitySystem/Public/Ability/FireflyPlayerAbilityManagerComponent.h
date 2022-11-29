@@ -61,6 +61,20 @@ class FIREFLYABILITYSYSTEM_API UFireflyPlayerAbilityManagerComponent : public UF
 {
 	GENERATED_UCLASS_BODY()
 
+#pragma region Basic
+
+protected:
+	/** 从组件拥有者身上获取增强输入组件 */
+	UFUNCTION()
+	FORCEINLINE UEnhancedInputComponent* GetEnhancedInputComponentFromOwner() const;
+
+	/** 组件拥有者是否拥有本地控制权限 */
+	UFUNCTION()
+	FORCEINLINE bool IsOwnerLocallyControlled() const;
+
+#pragma endregion
+
+
 #pragma region InputBinding
 
 public:
@@ -83,10 +97,6 @@ protected:
 #pragma region InputEvent
 
 protected:
-	/** 从组件拥有者身上获取增强输入组件 */
-	UFUNCTION()
-	FORCEINLINE UEnhancedInputComponent* GetEnhancedInputComponentFromOwner() const;
-
 	/** 组件管理的输入事件触发：开始 */
 	UFUNCTION()
 	virtual void OnAbilityInputActionStarted(UInputAction* Input);

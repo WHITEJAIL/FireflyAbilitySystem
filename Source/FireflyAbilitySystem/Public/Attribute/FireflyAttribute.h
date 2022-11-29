@@ -53,6 +53,8 @@ class FIREFLYABILITYSYSTEM_API UFireflyAttribute : public UObject
 public:
 	virtual UWorld* GetWorld() const override;
 
+	virtual bool IsSupportedForNetworking() const override { return true; }
+
 	virtual bool CallRemoteFunction(UFunction* Function, void* Parms, FOutParmRec* OutParms, FFrame* Stack) override;
 
 	virtual int32 GetFunctionCallspace(UFunction* Function, FFrame* Stack) override;

@@ -18,7 +18,10 @@ void UFireflyAbility_InputBased::OnAbilityInputStarted()
 		return;
 	}
 
-	Server_OnAbilityInputStarted();
+	if (GetOwnerRole() == ROLE_AutonomousProxy)
+	{
+		Server_OnAbilityInputStarted();
+	}
 	ReceiveOnAbilityInputStarted();
 }
 
@@ -34,7 +37,10 @@ void UFireflyAbility_InputBased::OnAbilityInputOngoing()
 		return;
 	}
 
-	Server_OnAbilityInputOngoing();
+	if (GetOwnerRole() == ROLE_AutonomousProxy)
+	{
+		Server_OnAbilityInputOngoing();
+	}
 	ReceiveOnAbilityInputOngoing();
 }
 
@@ -50,7 +56,10 @@ void UFireflyAbility_InputBased::OnAbilityInputCanceled()
 		return;
 	}
 
-	Server_OnAbilityInputCanceled();
+	if (GetOwnerRole() == ROLE_AutonomousProxy)
+	{
+		Server_OnAbilityInputCanceled();
+	}
 	ReceiveOnAbilityInputCanceled();
 }
 
@@ -68,7 +77,10 @@ void UFireflyAbility_InputBased::OnAbilityInputTriggered()
 			return;
 		}
 
-		Server_OnAbilityInputTriggered();
+		if (GetOwnerRole() == ROLE_AutonomousProxy)
+		{
+			Server_OnAbilityInputTriggered();
+		}
 		ReceiveOnAbilityInputTriggered();
 
 		return;
@@ -79,7 +91,10 @@ void UFireflyAbility_InputBased::OnAbilityInputTriggered()
 		return;
 	}
 
-	Server_OnAbilityInputTriggered();
+	if (GetOwnerRole() == ROLE_AutonomousProxy)
+	{
+		Server_OnAbilityInputTriggered();
+	}
 	ReceiveOnAbilityInputTriggered();		
 }
 
@@ -95,7 +110,10 @@ void UFireflyAbility_InputBased::OnAbilityInputCompleted()
 		return;
 	}
 
-	Server_OnAbilityInputCompleted();
+	if (GetOwnerRole() == ROLE_AutonomousProxy)
+	{
+		Server_OnAbilityInputCompleted();
+	}
 	ReceiveOnAbilityInputCompleted();
 }
 

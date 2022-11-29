@@ -27,6 +27,17 @@ void UFireflyEffectManagerComponent::TickComponent(float DeltaTime, ELevelTick T
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
+bool UFireflyEffectManagerComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch,
+	FReplicationFlags* RepFlags)
+{
+	return Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
+}
+
+void UFireflyEffectManagerComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+}
+
 TArray<UFireflyEffect*> UFireflyEffectManagerComponent::GetActiveEffectsByClass(TSubclassOf<UFireflyEffect> EffectType) const
 {
 	TArray<UFireflyEffect*> OutEffects = TArray<UFireflyEffect*>{};

@@ -140,6 +140,11 @@ void UFireflyAbility::EndAbility()
 	{
 		Server_EndAbility();
 	}
+
+	if (bRemoveOnEndedExecution)
+	{
+		GetOwnerManager()->RemoveAbility(GetClass());
+	}
 }
 
 void UFireflyAbility::Server_EndAbility_Implementation()
@@ -188,7 +193,7 @@ void UFireflyAbility::Client_CancelAbility_Implementation()
 
 bool UFireflyAbility::CheckAbilityCost_Implementation() const
 {
-	return false;
+	return true;
 }
 
 void UFireflyAbility::ApplyAbilityCost_Implementation() const
@@ -198,7 +203,7 @@ void UFireflyAbility::ApplyAbilityCost_Implementation() const
 
 bool UFireflyAbility::CheckAbilityCooldown_Implementation() const
 {
-	return false;
+	return true;
 }
 
 void UFireflyAbility::ApplyAbilityCooldown_Implementation() const
