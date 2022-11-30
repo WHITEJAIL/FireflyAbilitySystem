@@ -7,6 +7,7 @@
 #include "Engine/DataTable.h"
 #include "FireflyAbilitySystemTypes.generated.h"
 
+class UFireflyAttribute;
 class UFireflyEffect;
 
 #pragma region Attribute
@@ -81,7 +82,7 @@ enum EFireflyAttributeType
 	AttributeType_Max UMETA(Hidden)
 };
 
-/** 效果的属性修改操作符 */
+/** 属性的修改器操作符 */
 UENUM()
 enum class EFireflyAttributeModOperator : uint8
 {
@@ -105,6 +106,38 @@ enum class EFireflyAttributeModOperator : uint8
 
 	/** 全局覆盖操作 */
 	OuterOverride
+};
+
+/** 属性的构造器 */
+USTRUCT(BlueprintType)
+struct FFireflyAttributeConstructor
+{
+	GENERATED_BODY()
+
+public:
+	/** 属性的类型 */
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
+	TEnumAsByte<EFireflyAttributeType> AttributeType = AttributeType_Default;
+
+	/** 属性的初始值 */
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
+	float AttributeInitValue = 0.f;
+
+	/** 属性是否拥有夹值 */
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
+	bool bAttributeHasRange = false;
+
+	/** 属性的范围最小值 */
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
+	float RangeMinValue = 0.f;
+
+	/** 属性的范围最大值 */
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
+	float RangeMaxValue = 0.f;
+
+	/** 属性的范围最大值属性类型，基于另一个属性的当前值 */
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
+	TEnumAsByte<EFireflyAttributeType> RangeMaxValueType = AttributeType_Default;
 };
 
 #pragma endregion
@@ -174,6 +207,7 @@ struct FFireflyEffectModifierData
 {
 	GENERATED_BODY()
 
+public:
 	/** 修改的属性类型 */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
 	TEnumAsByte<EFireflyAttributeType> AttributeType = EFireflyAttributeType::AttributeType_Default;

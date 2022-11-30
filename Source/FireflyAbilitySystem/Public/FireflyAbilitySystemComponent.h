@@ -57,6 +57,21 @@ public:
 	}
 };
 
+/** 技能执行周期的代理声明 */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAbilityExecutionDelegate, TSubclassOf<UFireflyAbility>, AbilityType);
+/** 技能执行冷却的代理声明 */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAbilityCooldownExecutionDelegate, TSubclassOf<UFireflyAbility>, AbilityType, float, TotoalDuration);
+/** 技能冷却的剩余时间 */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FAbilityCooldownChangedDelegate, TSubclassOf<UFireflyAbility>, AbilityType, float, NewTimeRemaining, float, TotalDuration);
+
+/** 属性数值变更的代理声明 */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FAttributeValueChangeDelegate, TEnumAsByte<EFireflyAttributeType>, AttributeType, float, OldValue, float, Newvalue);
+
+/** 效果执行开始的代理声明 */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FEffectStartExecutingDelegate, TSubclassOf<UFireflyEffect>, EffectType, float, TotoalDuration);
+/** 效果执行结束的代理声明 */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FEffectEndExecutingDelegate, TSubclassOf<UFireflyEffect>, EffectType);
+
 /** 技能系统管理器的组件 */
 UCLASS(ClassGroup = (FireflyAbilitySystem), meta = (BlueprintSpawnableComponent))
 class FIREFLYABILITYSYSTEM_API UFireflyAbilitySystemComponent : public UActorComponent
@@ -147,6 +162,27 @@ protected:
 	UPROPERTY()
 	TArray<UFireflyAbility*> ActivatingAbilities;
 
+public:
+	/** 技能激活时触发的代理 */
+	UPROPERTY(BlueprintAssignable, Category = "FireflyAbilitySystem|Ability")
+	FAbilityExecutionDelegate OnAbilityActivated;
+
+	/** 技能结束时触发的代理 */
+	UPROPERTY(BlueprintAssignable, Category = "FireflyAbilitySystem|Ability")
+	FAbilityExecutionDelegate OnAbilityEnded;
+
+	/** 技能取消时触发的代理 */
+	UPROPERTY(BlueprintAssignable, Category = "FireflyAbilitySystem|Ability")
+	FAbilityExecutionDelegate OnAbilityCanceled;
+
+	/** 当技能的消耗执行成功时触发的代理 */
+	UPROPERTY(BlueprintAssignable)
+	FAbilityExecutionDelegate OnAbilityCostCommitted;
+
+	/** 当技能的冷却执行成功时触发的代理 */
+	UPROPERTY(BlueprintAssignable)
+	FAbilityCooldownExecutionDelegate OnAbilityCooldownCommitted;
+
 #pragma endregion
 
 
@@ -221,7 +257,6 @@ protected:
 	/** 构造并返回一个属性实例的名称 */
 	FString GetAttributeTypeName(EFireflyAttributeType AttributeType) const;
 
-public:
 	/** 根据属性类型获取属性实例 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute")
 	UFireflyAttribute* GetAttributeByType(EFireflyAttributeType AttributeType) const;	
@@ -235,13 +270,13 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute")
 	float GetAttributeBaseValue(EFireflyAttributeType AttributeType) const;
 
-	/** 通过类构造属性并添加到属性修改器中 */
+	/** 通过构造器设置构造属性并添加到属性修改器中 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
-	void ConstructAttributeByClass(TSubclassOf<UFireflyAttribute> AttributeToConstruct, EFireflyAttributeType AttributeType);
+	void ConstructAttribute(FFireflyAttributeConstructor AttributeConstructor);
 
 	/** 通过属性类型构造属性并添加到属性修改器中 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
-	void ConstructAttributeByType(EFireflyAttributeType AttributeType);
+	void ConstructAttributeByType(EFireflyAttributeType AttributeType, float InitValue);
 
 	/** 初始化属性值 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
@@ -251,6 +286,15 @@ protected:
 	/** 属性容器 */
 	UPROPERTY(Replicated)
 	TArray<UFireflyAttribute*> AttributeContainer;
+
+public:
+	/** 属性的当前值更新时触发的代理 */
+	UPROPERTY(BlueprintAssignable, Category = "FireflyAbilitySystem|Attribute")
+	FAttributeValueChangeDelegate OnAttributeValueChanged;
+
+	/** 属性的基础值更新时触发的代理 */
+	UPROPERTY(BlueprintAssignable, Category = "FireflyAbilitySystem|Attribute")
+	FAttributeValueChangeDelegate OnAttributeBaseValueChanged;
 
 #pragma endregion
 
@@ -265,6 +309,10 @@ public:
 	/** 移除某个作用于某个属性的当前值的修改器 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
 	void RemoveModifierFromAttribute(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue);
+
+	/** 检验某个属性修改器是否可以被应用，该函数仅考虑属性的值被修改器修改后是否仍处于属性的价值范围内，所以要被检验的属性必须是被夹值的 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute")
+	bool  CanApplyModifierInstant(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, float ModValue) const;
 
 	/** 应用一个修改器永久修改某个属性的基础值 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
@@ -281,6 +329,7 @@ protected:
 	TArray<UFireflyEffect*> GetActiveEffectsByClass(TSubclassOf<UFireflyEffect> EffectType) const;
 
 public:
+
 	/** 为自身应用效果或应用效果的固定堆叠数 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
 	void ApplyEffectToSelf(AActor* Instigator, TSubclassOf<UFireflyEffect> EffectType, int32 StackToApply = 1);

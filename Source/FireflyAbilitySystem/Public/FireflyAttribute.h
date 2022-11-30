@@ -11,8 +11,6 @@
 
 class UFireflyAbilitySystemComponent;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FAttributeValueChangeDelegate, TEnumAsByte<EFireflyAttributeType>, AttributeType, const float, OldValue, const float, Newvalue);
-
 /** 属性修改器 */
 USTRUCT()
 struct FFireflyAttributeModifier
@@ -83,19 +81,10 @@ protected:
 	/** 初始化属性 */
 	void Initialize(float InitValue);
 
-public:
-	/** 属性的当前值更新时触发的代理 */
-	UPROPERTY(BlueprintAssignable, Category = "FireflyAbilitySystem|Attribute")
-	FAttributeValueChangeDelegate OnAttributeValueChanged;
-
-	/** 属性的基础值更新时触发的代理 */
-	UPROPERTY(BlueprintAssignable, Category = "FireflyAbilitySystem|Attribute")
-	FAttributeValueChangeDelegate OnAttributeBaseValueChanged;
-
 protected:
 	/** 属性名 */
 	UPROPERTY(EditDefaultsOnly, Category = "FireflyAbilitySystem|Attribute")
-	TEnumAsByte<EFireflyAttributeType> AttributeType;
+	TEnumAsByte<EFireflyAttributeType> AttributeType = AttributeType_Default;
 
 	/** 属性的基础值 */
 	UPROPERTY()
@@ -104,6 +93,22 @@ protected:
 	/** 属性的当前值 */
 	UPROPERTY()
 	float CurrentValue = 0.f;
+
+	/** 属性是否需要夹值 */
+	UPROPERTY(EditDefaultsOnly, Category = "FireflyAbilitySystem|Attribute")
+	bool bAttributeHasRange = false;
+
+	/** 属性的范围最小值 */
+	UPROPERTY(EditDefaultsOnly, Category = "FireflyAbilitySystem|Attribute")
+	float RangeMinValue = 0.f;
+
+	/** 属性的范围最大值 */
+	UPROPERTY(EditDefaultsOnly, Category = "FireflyAbilitySystem|Attribute")
+	float RangeMaxValue = 0.f;
+
+	/** 属性的范围最大值属性类型，基于另一个属性的当前值 */
+	UPROPERTY(EditDefaultsOnly, Category = "FireflyAbilitySystem|Attribute")
+	TEnumAsByte<EFireflyAttributeType> RangeMaxValueType = AttributeType_Default;
 
 	friend UFireflyAbilitySystemComponent;
 
@@ -120,6 +125,10 @@ protected:
 	/** 更新属性的当前值 */
 	UFUNCTION(BlueprintNativeEvent, Category = "FireflyAbilitySystem|Attribute")
 	void UpdateBaseValue(EFireflyAttributeModOperator ModOperator, float ModValue);
+
+	/** 检测某个值是否在该属性的夹值范围中 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute", Meta = (BlueprintProtected = "true"))
+	bool IsValueInAttributeRange(float InValue);
 
 	/** 获取属性的加法修改器的合值 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute", Meta = (BlueprintProtected = "true"))

@@ -81,21 +81,26 @@ void UFireflyAttribute::Initialize(float InitValue)
 
 	OldValue = BaseValue;
 	BaseValue = InitValue;
-	OnAttributeValueChanged.Broadcast(AttributeType, OldValue, CurrentValue);
+	GetOwnerManager()->OnAttributeValueChanged.Broadcast(AttributeType, OldValue, CurrentValue);
 
 	OldValue = CurrentValue;
 	CurrentValue = InitValue;
-	OnAttributeBaseValueChanged.Broadcast(AttributeType, OldValue, CurrentValue);
+	GetOwnerManager()->OnAttributeBaseValueChanged.Broadcast(AttributeType, OldValue, CurrentValue);
 }
 
 void UFireflyAttribute::UpdateCurrentValue_Implementation()
 {
+	if (!IsValid(GetOwnerManager()))
+	{
+		return;
+	}
+
 	const float OldValue = CurrentValue;
 
 	if (OuterOverrideMods.IsValidIndex(0))
 	{
 		CurrentValue = OuterOverrideMods[0].ModValue;
-		OnAttributeValueChanged.Broadcast(AttributeType, OldValue, CurrentValue);
+		GetOwnerManager()->OnAttributeValueChanged.Broadcast(AttributeType, OldValue, CurrentValue);
 		return;
 	}
 
@@ -107,11 +112,26 @@ void UFireflyAttribute::UpdateCurrentValue_Implementation()
 	float BaseValueToUse = GetBaseValueToUse();
 
 	CurrentValue = (BaseValueToUse + TotalPlusMod - TotalMinusMod) * (1.f + TotalMultiplyMod) / TotalDivideMod;
-	OnAttributeValueChanged.Broadcast(AttributeType, OldValue, CurrentValue);
+
+	if (bAttributeHasRange)
+	{
+		float FinalRangeMax = RangeMaxValueType != AttributeType_Default ?
+			GetOwnerManager()->GetAttributeValue(RangeMaxValueType) : RangeMaxValue;
+		CurrentValue = FMath::Clamp<float>(CurrentValue, RangeMinValue, FinalRangeMax);
+	}	
+
+	GetOwnerManager()->OnAttributeValueChanged.Broadcast(AttributeType, OldValue, CurrentValue);
 }
 
 void UFireflyAttribute::UpdateBaseValue_Implementation(EFireflyAttributeModOperator ModOperator, float ModValue)
 {
+	if (!IsValid(GetOwnerManager()))
+	{
+		return;
+	}
+
+	const float OldValue = BaseValue;
+
 	switch (ModOperator)
 	{
 	case EFireflyAttributeModOperator::None:
@@ -145,6 +165,28 @@ void UFireflyAttribute::UpdateBaseValue_Implementation(EFireflyAttributeModOpera
 		break;
 	}
 	}
+
+	if (bAttributeHasRange)
+	{
+		float FinalRangeMax = RangeMaxValueType != EFireflyAttributeType::AttributeType_Default ?
+			GetOwnerManager()->GetAttributeValue(RangeMaxValueType) : RangeMaxValue;
+		BaseValue = FMath::Clamp<float>(BaseValue, RangeMinValue, FinalRangeMax);
+	}	
+
+	GetOwnerManager()->OnAttributeBaseValueChanged.Broadcast(AttributeType, OldValue, BaseValue);
+}
+
+bool UFireflyAttribute::IsValueInAttributeRange(float InValue)
+{
+	if (bAttributeHasRange)
+	{
+		return true;
+	}
+
+	float FinalRangeMax = RangeMaxValueType != EFireflyAttributeType::AttributeType_Default ?
+		GetOwnerManager()->GetAttributeValue(RangeMaxValueType) : RangeMaxValue;
+
+	return InValue >= RangeMinValue && InValue <= FinalRangeMax;
 }
 
 float UFireflyAttribute::GetTotalPlusModifier() const

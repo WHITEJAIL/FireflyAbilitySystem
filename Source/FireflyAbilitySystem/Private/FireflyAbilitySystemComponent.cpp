@@ -636,20 +636,29 @@ float UFireflyAbilitySystemComponent::GetAttributeBaseValue(EFireflyAttributeTyp
 	return OutBaseValue;
 }
 
-void UFireflyAbilitySystemComponent::ConstructAttributeByClass(TSubclassOf<UFireflyAttribute> AttributeToConstruct,
-	EFireflyAttributeType AttributeType)
+void UFireflyAbilitySystemComponent::ConstructAttribute(FFireflyAttributeConstructor AttributeConstructor)
 {
-	FString NewAttributeName = *GetAttributeTypeName(AttributeType) + FString("_") + (TEXT("%s"), GetOwner()->GetName());
-	UFireflyAttribute* NewAttribute = NewObject<UFireflyAttribute>(this, AttributeToConstruct, *NewAttributeName);
-	NewAttribute->AttributeType = AttributeType;
+	FString NewAttributeName = *GetAttributeTypeName(AttributeConstructor.AttributeType) + FString("_") + (TEXT("%s"), GetOwner()->GetName());
+
+	UFireflyAttribute* NewAttribute = NewObject<UFireflyAttribute>(this, *NewAttributeName);
+	NewAttribute->AttributeType = AttributeConstructor.AttributeType;
+	NewAttribute->Initialize(AttributeConstructor.AttributeInitValue);
+	NewAttribute->bAttributeHasRange = AttributeConstructor.bAttributeHasRange;
+	NewAttribute->RangeMinValue = AttributeConstructor.RangeMinValue;
+	NewAttribute->RangeMaxValue = AttributeConstructor.RangeMaxValue;
+	NewAttribute->RangeMaxValueType = AttributeConstructor.RangeMaxValueType;
+
 	AttributeContainer.Emplace(NewAttribute);
 }
 
-void UFireflyAbilitySystemComponent::ConstructAttributeByType(EFireflyAttributeType AttributeType)
+void UFireflyAbilitySystemComponent::ConstructAttributeByType(EFireflyAttributeType AttributeType, float InitValue)
 {
 	FString NewAttributeName = *GetAttributeTypeName(AttributeType) + FString("_") + (TEXT("%s"), GetOwner()->GetName());
+
 	UFireflyAttribute* NewAttribute = NewObject<UFireflyAttribute>(this, *NewAttributeName);
 	NewAttribute->AttributeType = AttributeType;
+	NewAttribute->Initialize(InitValue);
+
 	AttributeContainer.Emplace(NewAttribute);
 }
 
@@ -666,7 +675,7 @@ void UFireflyAbilitySystemComponent::InitializeAttribute(EFireflyAttributeType A
 }
 
 void UFireflyAbilitySystemComponent::ApplyModifierToAttribute(EFireflyAttributeType AttributeType,
-	EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, int32 StackToApply)
+                                                              EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, int32 StackToApply)
 {
 	UFireflyAttribute* AttributeToMod = GetAttributeByType(AttributeType);
 	if (!IsValid(AttributeToMod))
@@ -695,39 +704,39 @@ void UFireflyAbilitySystemComponent::ApplyModifierToAttribute(EFireflyAttributeT
 	switch (ModOperator)
 	{
 	case EFireflyAttributeModOperator::None:
-	{
-		break;
-	}
+		{
+			break;
+		}
 	case EFireflyAttributeModOperator::Plus:
-	{
-		FIREFLY_ATTRIBUTE_MODIFIER_APPLY(Plus);
-		break;
-	}
+		{
+			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(Plus);
+			break;
+		}
 	case EFireflyAttributeModOperator::Minus:
-	{
-		FIREFLY_ATTRIBUTE_MODIFIER_APPLY(Minus);
-		break;
-	}
+		{
+			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(Minus);
+			break;
+		}
 	case EFireflyAttributeModOperator::Multiply:
-	{
-		FIREFLY_ATTRIBUTE_MODIFIER_APPLY(Multiply);
-		break;
-	}
+		{
+			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(Multiply);
+			break;
+		}
 	case EFireflyAttributeModOperator::Divide:
-	{
-		FIREFLY_ATTRIBUTE_MODIFIER_APPLY(Divide);
-		break;
-	}
+		{
+			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(Divide);
+			break;
+		}
 	case EFireflyAttributeModOperator::InnerOverride:
-	{
-		FIREFLY_ATTRIBUTE_MODIFIER_APPLY(InnerOverride);
-		break;
-	}
+		{
+			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(InnerOverride);
+			break;
+		}
 	case EFireflyAttributeModOperator::OuterOverride:
-	{
-		FIREFLY_ATTRIBUTE_MODIFIER_APPLY(OuterOverride);
-		break;
-	}
+		{
+			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(OuterOverride);
+			break;
+		}
 	}
 
 	AttributeToMod->UpdateCurrentValue();
@@ -753,46 +762,93 @@ void UFireflyAbilitySystemComponent::RemoveModifierFromAttribute(EFireflyAttribu
 	switch (ModOperator)
 	{
 	case EFireflyAttributeModOperator::None:
-	{
-		break;
-	}
+		{
+			break;
+		}
 	case EFireflyAttributeModOperator::Plus:
-	{
-		FIREFLY_ATTRIBUTE_MODIFIER_REMOVE(Plus);
-		break;
-	}
+		{
+			FIREFLY_ATTRIBUTE_MODIFIER_REMOVE(Plus);
+			break;
+		}
 	case EFireflyAttributeModOperator::Minus:
-	{
-		FIREFLY_ATTRIBUTE_MODIFIER_REMOVE(Minus);
-		break;
-	}
+		{
+			FIREFLY_ATTRIBUTE_MODIFIER_REMOVE(Minus);
+			break;
+		}
 	case EFireflyAttributeModOperator::Multiply:
-	{
-		FIREFLY_ATTRIBUTE_MODIFIER_REMOVE(Multiply);
-		break;
-	}
+		{
+			FIREFLY_ATTRIBUTE_MODIFIER_REMOVE(Multiply);
+			break;
+		}
 	case EFireflyAttributeModOperator::Divide:
-	{
-		FIREFLY_ATTRIBUTE_MODIFIER_REMOVE(Divide);
-		break;
-	}
+		{
+			FIREFLY_ATTRIBUTE_MODIFIER_REMOVE(Divide);
+			break;
+		}
 	case EFireflyAttributeModOperator::InnerOverride:
-	{
-		FIREFLY_ATTRIBUTE_MODIFIER_REMOVE(InnerOverride);
-		break;
+		{
+			FIREFLY_ATTRIBUTE_MODIFIER_REMOVE(InnerOverride);
+			break;
 	}
 	case EFireflyAttributeModOperator::OuterOverride:
-	{
-		FIREFLY_ATTRIBUTE_MODIFIER_REMOVE(OuterOverride);
-		break;
-	}
+		{
+			FIREFLY_ATTRIBUTE_MODIFIER_REMOVE(OuterOverride);
+			break;
+		}
 	}
 
 	AttributeToMod->UpdateCurrentValue();
 }
 
+bool UFireflyAbilitySystemComponent::CanApplyModifierInstant(EFireflyAttributeType AttributeType,
+	EFireflyAttributeModOperator ModOperator, float ModValue) const
+{
+	UFireflyAttribute* AttributeToMod = GetAttributeByType(AttributeType);
+	if (!IsValid(AttributeToMod))
+	{
+		return false;
+	}
+
+	bool bResult = true;
+	switch (ModOperator)
+	{
+	case EFireflyAttributeModOperator::None:
+		{
+			bResult = false;
+		}
+	case EFireflyAttributeModOperator::Plus:
+	case EFireflyAttributeModOperator::Multiply:
+		{
+			break;
+		}
+	case EFireflyAttributeModOperator::Minus:
+		{
+			bResult = AttributeToMod->IsValueInAttributeRange(AttributeToMod->BaseValue - ModValue);
+			break;
+		}
+	case EFireflyAttributeModOperator::Divide:
+		{
+			if (ModValue == 0.f)
+			{
+				break;
+			}
+
+			bResult = AttributeToMod->IsValueInAttributeRange(AttributeToMod->BaseValue / ModValue);
+			break;
+		}
+	case EFireflyAttributeModOperator::InnerOverride:
+	case EFireflyAttributeModOperator::OuterOverride:
+		{
+			bResult = AttributeToMod->IsValueInAttributeRange(AttributeToMod->BaseValue);
+			break;
+		}
+	}
+
+	return bResult;
+}
+
 void UFireflyAbilitySystemComponent::ApplyModifierToAttributeInstant(EFireflyAttributeType AttributeType,
-	EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue)
+                                                                     EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue)
 {
 	UFireflyAttribute* AttributeToMod = GetAttributeByType(AttributeType);
 	if (!IsValid(AttributeToMod))
