@@ -56,6 +56,5 @@ public:
 	/** Load Attribute Type data from INI file **/
 	/** this changes displayname meta data. That means we won't need it outside of editor*/
 	void LoadSurfaceType();
-#endif
-	
+#endif	
 };

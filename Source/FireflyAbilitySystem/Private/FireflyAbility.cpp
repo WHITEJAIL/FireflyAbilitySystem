@@ -516,3 +516,42 @@ void UFireflyAbility::Server_OnAbilityInputCompleted_Implementation()
 {
 	OnAbilityInputCompleted();
 }
+
+UAnimInstance* UFireflyAbility::GetAnimInstanceOfOwner() const
+{
+	if (!IsValid(GetOwnerActor()))
+	{
+		return nullptr;
+	}
+
+	USkeletalMeshComponent* OwnerSkeletalMesh = nullptr;
+	if (!IsValid(GetOwnerActor()->GetComponentByClass(USkeletalMeshComponent::StaticClass())))
+	{
+		return nullptr;
+	}
+
+	OwnerSkeletalMesh = Cast<USkeletalMeshComponent>(GetOwnerActor()->GetComponentByClass(USkeletalMeshComponent::StaticClass()));
+
+	return OwnerSkeletalMesh->GetAnimInstance();
+}
+
+float UFireflyAbility::PlayMontageForOwner(UAnimMontage* MontageToPlay, float PlayRate, FName Section)
+{
+	UAnimInstance* OwnerAnimInstance = GetAnimInstanceOfOwner();
+	if (!IsValid(OwnerAnimInstance))
+	{
+		return 0.f;
+	}
+
+	return OwnerAnimInstance->Montage_Play(MontageToPlay, PlayRate, EMontagePlayReturnType::Duration);
+}
+
+void UFireflyAbility::Server_PlayMontageForOwner_Implementation(UAnimMontage* MontageToPlay, float PlayRate,
+                                                                FName Section)
+{
+}
+
+void UFireflyAbility::Multi_PlayMontageForOwner_Implementation(UAnimMontage* MontageToPlay, float PlayRate,
+	FName Section)
+{
+}

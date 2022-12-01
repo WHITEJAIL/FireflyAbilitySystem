@@ -321,5 +321,26 @@ protected:
 	bool bActivateOnTriggered = false;
 
 #pragma endregion
-	
+
+
+#pragma region MontagePlay
+
+protected:
+	/** 获取拥有者的动画实例 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability", Meta = (DisplayName = "On Ability Input Completed"))
+	UAnimInstance* GetAnimInstanceOfOwner() const;
+
+	/** 让拥有者播放指定的蒙太奇 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability", Meta = (DisplayName = "On Ability Input Completed"))
+	float PlayMontageForOwner(UAnimMontage* MontageToPlay, float PlayRate, FName Section);
+
+	/** 本地通知服务端让拥有者播放指定的蒙太奇 */
+	UFUNCTION(Server, Reliable)
+	void Server_PlayMontageForOwner(UAnimMontage* MontageToPlay, float PlayRate, FName Section);
+
+	/** 服务端广播通知让拥有者播放指定的蒙太奇 */
+	UFUNCTION(NetMulticast, Reliable)
+	void Multi_PlayMontageForOwner(UAnimMontage* MontageToPlay, float PlayRate, FName Section);
+
+#pragma endregion	
 };

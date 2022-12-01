@@ -296,6 +296,5 @@ protected:
 	UPROPERTY()
 	bool bOngoingEffective = true;
 
-#pragma endregion
-	
+#pragma endregion	
 };
