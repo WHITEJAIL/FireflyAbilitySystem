@@ -4,6 +4,7 @@
 #include "FireflyAbility.h"
 
 #include "FireflyAbilitySystemComponent.h"
+#include "FireflyEffect.h"
 
 UFireflyAbility::UFireflyAbility(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -213,18 +214,47 @@ bool UFireflyAbility::CheckAbilityCost_Implementation() const
 	return bCostMaySucceed;
 }
 
-void UFireflyAbility::ApplyAbilityCost_Implementation()
+void UFireflyAbility::ApplyAbilityCost()
 {
+	UFireflyAbilitySystemComponent* Manager = GetOwnerManager();
+	if (!IsValid(Manager))
+	{
+		return;
+	}
+
+	FFireflyEffectDynamicConstructor CostSetup;
+	CostSetup.DurationPolicy = EFireflyEffectDurationPolicy::Instant;
+	CostSetup.Modifiers = CostSettings;
+	GetOwnerManager()->ApplyEffectDynamicConstructorToOwner(nullptr, CostSetup);
+
 	GetOwnerManager()->OnAbilityCostCommitted.Broadcast(GetClass());
 }
 
 bool UFireflyAbility::CheckAbilityCooldown_Implementation() const
 {
-	return true;
+	UFireflyAbilitySystemComponent* Manager = GetOwnerManager();
+	if (!IsValid(Manager))
+	{
+		return false;
+	}
+
+	return !Manager->GetContainedTags().HasAnyExact(CooldownTags);
 }
 
-void UFireflyAbility::ApplyAbilityCooldown_Implementation()
+void UFireflyAbility::ApplyAbilityCooldown()
 {
+	UFireflyAbilitySystemComponent* Manager = GetOwnerManager();
+	if (!IsValid(Manager))
+	{
+		return;
+	}
+
+	FFireflyEffectDynamicConstructor CostSetup;
+	CostSetup.DurationPolicy = EFireflyEffectDurationPolicy::HasDuration;
+	CostSetup.Duration = CooldownTime;
+	CostSetup.TagsApplyToOwnerOnApplied = CooldownTags;
+	GetOwnerManager()->ApplyEffectDynamicConstructorToOwner(nullptr, CostSetup);
+
 	GetOwnerManager()->OnAbilityCooldownCommitted.Broadcast(GetClass(), CooldownTime);
 }
 

@@ -287,63 +287,95 @@ struct FFireflyEffectDynamicConstructor
 public:
 	/** 效果的持续性策略 */
 	UPROPERTY(BlueprintReadWrite, Category = Duration)
-	EFireflyEffectDurationPolicy DurationPolicy;
+	EFireflyEffectDurationPolicy DurationPolicy = EFireflyEffectDurationPolicy::Instant;
 
 	/** 效果的持续时间，仅在持续策略为“HasDuration”时起作用 */
 	UPROPERTY(BlueprintReadWrite, Category = Duration, Meta = (EditCondition = "DurationPolicy == EFireflyEffectDurationPolicy::HasDuration"))
-	float Duration;
+	float Duration = 0.f;
 
 	/** 效果在生效时是否按周期执行逻辑 */
 	UPROPERTY(BlueprintReadWrite, Category = Periodicity)
-	bool bIsEffectExecutionPeriodic;
+	bool bIsEffectExecutionPeriodic = false;
 
 	/** 效果的周期间隔时间，尽在周期性策略为“true”时起作用 */
 	UPROPERTY(BlueprintReadWrite, Category = Periodicity, Meta = (EditCondition = "bIsEffectExecutionPeriodic == true"))
-	float PeriodicInterval;
+	float PeriodicInterval = 0.f;
 
 	/** 该效果选择的堆叠策略 */
 	UPROPERTY(BlueprintReadWrite, Category = Stacking)
-	EFireflyEffectStackingPolicy StackingPolicy;
+	EFireflyEffectStackingPolicy StackingPolicy = EFireflyEffectStackingPolicy::None;
 
 	/** 效果的持续时间，仅在持续策略为“HasDuration”时起作用 */
 	UPROPERTY(BlueprintReadWrite, Category = Stacking, Meta = (EditCondition = "StackingPolicy == EFireflyEffectStackingPolicy::StackHasLimit"))
-	int32 StackLimitation;
+	int32 StackingLimitation = 0;
 
 	/** 效果有新的实例被执行或堆叠数量增加时，是否刷新持续时间 */
 	UPROPERTY(BlueprintReadWrite, Category = Stacking)
-	bool bShouldRefreshDurationOnStacking;
+	bool bShouldRefreshDurationOnStacking = false;
 
 	/** 效果有新的实例被执行或堆叠数量增加时，是否重置周期性 */
 	UPROPERTY(BlueprintReadWrite, Category = Stacking)
-	bool bShouldResetPeriodicityOnStacking;
+	bool bShouldResetPeriodicityOnStacking = false;
 
 	/** 效果的堆叠数达到上限时，触发的额外的效果 */
 	UPROPERTY(BlueprintReadWrite, Category = Stacking)
-	TArray<TSubclassOf<UFireflyEffect>> OverflowEffects;
+	TArray<TSubclassOf<UFireflyEffect>> OverflowEffects = TArray<TSubclassOf<UFireflyEffect>>{};
 
 	/** 效果的堆叠数达到上限时，是否拒绝新的堆叠应用 */
 	UPROPERTY(BlueprintReadWrite, Category = Stacking)
-	bool bDenyNewStackingOnOverflow;
+	bool bDenyNewStackingOnOverflow = false;
 
 	/** 效果的堆叠数达到上限时，是否清除所有的堆叠数 */
 	UPROPERTY(BlueprintReadWrite, Category = Stacking)
-	bool bClearStackingOnOverflow;
+	bool bClearStackingOnOverflow = false;
 
 	/** 效果的堆叠到期时，对持续时间的影响 */
 	UPROPERTY(BlueprintReadWrite, Category = Stacking)
-	EFireflyEffectDurationPolicyOnStackingExpired StackExpirationPolicy;
+	EFireflyEffectDurationPolicyOnStackingExpired StackingExpirationPolicy = EFireflyEffectDurationPolicyOnStackingExpired::ClearEntireStack;
 
 	/** 该效果携带的属性修改器 */
 	UPROPERTY(BlueprintReadWrite, Category = Modifier)
-	TArray<FFireflyEffectModifierData> Modifiers;
+	TArray<FFireflyEffectModifierData> Modifiers = TArray<FFireflyEffectModifierData>{};
 
 	/** 该效果携带的特殊属性 */
 	UPROPERTY(BlueprintReadWrite, Category = Modifier)
-	TArray<FFireflySpecificProperty> SpecificProperties;
+	TArray<FFireflySpecificProperty> SpecificProperties = TArray<FFireflySpecificProperty>{};
 
 	/** 该效果携带的特殊属性 */
 	UPROPERTY(BlueprintReadWrite, Category = Application)
-	EFireflyEffectInstigatorApplicationPolicy InstigatorApplicationPolicy;
+	EFireflyEffectInstigatorApplicationPolicy InstigatorApplicationPolicy = EFireflyEffectInstigatorApplicationPolicy::InstigatorsApplyTheirOwn;
+
+	/** 效果的标签Tags，仅用于描述修饰效果资产 */
+	UPROPERTY(BlueprintReadWrite, Category = Tags)
+	FGameplayTagContainer TagsForEffectAsset = FGameplayTagContainer::EmptyContainer;
+
+	/** 效果被应用时，会应用给管理器组件的Tags */
+	UPROPERTY(BlueprintReadWrite, Category = Tags)
+	FGameplayTagContainer TagsApplyToOwnerOnApplied = FGameplayTagContainer::EmptyContainer;
+
+	/** 效果被应用时，管理器组件需要拥有这些Tags，该效果才能真的起作用 */
+	UPROPERTY(BlueprintReadWrite, Category = Tags)
+	FGameplayTagContainer TagsRequiredOngoing = FGameplayTagContainer::EmptyContainer;
+
+	/** 效果被应用时，管理器组件需要没有这些Tags，该效果才能真的起作用 */
+	UPROPERTY(BlueprintReadWrite, Category = Tags)
+	FGameplayTagContainer TagsBlockedOngoing = FGameplayTagContainer::EmptyContainer;
+
+	/** 该效果的激活应用会取消带有这些资产标记Tags的效果的应用 */
+	UPROPERTY(BlueprintReadWrite, Category = Tags)
+	FGameplayTagContainer TagsOfEffectsWillBeRemoved = FGameplayTagContainer::EmptyContainer;
+
+	/** 该效果的激活应用会阻断带有这些资产标记Tags的效果的应用 */
+	UPROPERTY(BlueprintReadWrite, Category = Tags)
+	FGameplayTagContainer TagsOfEffectsWillBeBlocked = FGameplayTagContainer::EmptyContainer;
+
+	/** 该效果的激活应用需要管理器含有如下Tags */
+	UPROPERTY(BlueprintReadWrite, Category = Tags)
+	FGameplayTagContainer TagsRequireOwnerHasForApplication = FGameplayTagContainer::EmptyContainer;
+
+	/** 该效果的激活应用期望管理器不含如下Tags */
+	UPROPERTY(BlueprintReadWrite, Category = Tags)
+	FGameplayTagContainer TagsBlockApplicationOnOwnerHas = FGameplayTagContainer::EmptyContainer;
 	
 };
 

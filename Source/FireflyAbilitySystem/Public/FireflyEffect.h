@@ -40,6 +40,10 @@ protected:
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Effect", Meta = (BlueprintProtected = "true"))
 	FORCEINLINE UFireflyAbilitySystemComponent* GetOwnerManager() const;
 
+	/** 根据效果的动态构造器设置效果属性 */
+	UFUNCTION()
+	FORCEINLINE void SetupEffectByDynamicConstructor(FFireflyEffectDynamicConstructor EffectSetup);
+
 protected:
 	friend UFireflyAbilitySystemComponent;
 

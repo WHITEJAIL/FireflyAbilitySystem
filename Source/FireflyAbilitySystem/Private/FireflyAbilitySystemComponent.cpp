@@ -82,8 +82,16 @@ void UFireflyAbilitySystemComponent::GetLifetimeReplicatedProps(TArray<FLifetime
 	DOREPLIFETIME(UFireflyAbilitySystemComponent, AttributeContainer);
 }
 
-bool UFireflyAbilitySystemComponent::IsOwnerLocallyControlled() const
+bool UFireflyAbilitySystemComponent::HasAuthority() const
 {
+	AActor* Owner = GetOwner();
+	check(Owner);
+	return Owner->HasAuthority();
+}
+
+bool UFireflyAbilitySystemComponent::IsLocallyControlled() const
+{
+	check(GetOwner());
 	const ENetMode NetMode = GetOwner()->GetNetMode();
 
 	if (NetMode == NM_Standalone)
@@ -125,7 +133,7 @@ UFireflyAbility* UFireflyAbilitySystemComponent::GetGrantedAbilityByClass(
 
 void UFireflyAbilitySystemComponent::GrantAbility(TSubclassOf<UFireflyAbility> AbilityToGrant)
 {
-	if (!IsValid(AbilityToGrant))
+	if (!IsValid(AbilityToGrant) || !HasAuthority())
 	{
 		return;
 	}
@@ -143,7 +151,7 @@ void UFireflyAbilitySystemComponent::GrantAbility(TSubclassOf<UFireflyAbility> A
 
 void UFireflyAbilitySystemComponent::RemoveAbility(TSubclassOf<UFireflyAbility> AbilityToRemove)
 {
-	if (!IsValid(AbilityToRemove))
+	if (!IsValid(AbilityToRemove) || !HasAuthority())
 	{
 		return;
 	}
@@ -164,7 +172,7 @@ void UFireflyAbilitySystemComponent::RemoveAbility(TSubclassOf<UFireflyAbility> 
 
 void UFireflyAbilitySystemComponent::RemoveAbilityOnEnded(TSubclassOf<UFireflyAbility> AbilityToRemove)
 {
-	if (!IsValid(AbilityToRemove))
+	if (!IsValid(AbilityToRemove) || !HasAuthority())
 	{
 		return;
 	}
@@ -248,6 +256,11 @@ UFireflyAbility* UFireflyAbilitySystemComponent::TryActivateAbilityByClass(
 
 void UFireflyAbilitySystemComponent::CancelAbilitiesWithTags(FGameplayTagContainer CancelTags)
 {
+	if (!HasAuthority())
+	{
+		return;
+	}
+
 	for (auto Ability : GetActivatingAbilities())
 	{
 		if (Ability->TagsForAbilityAsset.HasAnyExact(CancelTags))
@@ -339,7 +352,7 @@ void UFireflyAbilitySystemComponent::BindAbilityToInput(TSubclassOf<UFireflyAbil
 		return;
 	}
 
-	if (!IsOwnerLocallyControlled())
+	if (!IsLocallyControlled())
 	{
 		return;
 	}
@@ -387,7 +400,7 @@ void UFireflyAbilitySystemComponent::UnbindAbilityWithInput(TSubclassOf<UFirefly
 		return;
 	}
 
-	if (!IsOwnerLocallyControlled())
+	if (!IsLocallyControlled())
 	{
 		return;
 	}
@@ -643,6 +656,11 @@ float UFireflyAbilitySystemComponent::GetAttributeBaseValue(EFireflyAttributeTyp
 
 void UFireflyAbilitySystemComponent::ConstructAttribute(FFireflyAttributeConstructor AttributeConstructor)
 {
+	if (!HasAuthority())
+	{
+		return;
+	}
+
 	FString NewAttributeName = *GetAttributeTypeName(AttributeConstructor.AttributeType) + FString("_") + (TEXT("%s"), GetOwner()->GetName());
 
 	UFireflyAttribute* NewAttribute = NewObject<UFireflyAttribute>(this, *NewAttributeName);
@@ -658,6 +676,11 @@ void UFireflyAbilitySystemComponent::ConstructAttribute(FFireflyAttributeConstru
 
 void UFireflyAbilitySystemComponent::ConstructAttributeByType(EFireflyAttributeType AttributeType, float InitValue)
 {
+	if (!HasAuthority())
+	{
+		return;
+	}
+
 	FString NewAttributeName = *GetAttributeTypeName(AttributeType) + FString("_") + (TEXT("%s"), GetOwner()->GetName());
 
 	UFireflyAttribute* NewAttribute = NewObject<UFireflyAttribute>(this, *NewAttributeName);
@@ -669,6 +692,11 @@ void UFireflyAbilitySystemComponent::ConstructAttributeByType(EFireflyAttributeT
 
 void UFireflyAbilitySystemComponent::InitializeAttribute(EFireflyAttributeType AttributeType, float NewInitValue)
 {
+	if (!HasAuthority())
+	{
+		return;
+	}
+
 	UFireflyAttribute* AttributeToInit = GetAttributeByType(AttributeType);
 	if (!IsValid(AttributeToInit))
 	{
@@ -682,6 +710,11 @@ void UFireflyAbilitySystemComponent::InitializeAttribute(EFireflyAttributeType A
 void UFireflyAbilitySystemComponent::ApplyModifierToAttribute(EFireflyAttributeType AttributeType,
                                                               EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, int32 StackToApply)
 {
+	if (!HasAuthority())
+	{
+		return;
+	}
+
 	UFireflyAttribute* AttributeToMod = GetAttributeByType(AttributeType);
 	if (!IsValid(AttributeToMod))
 	{
@@ -750,6 +783,11 @@ void UFireflyAbilitySystemComponent::ApplyModifierToAttribute(EFireflyAttributeT
 void UFireflyAbilitySystemComponent::RemoveModifierFromAttribute(EFireflyAttributeType AttributeType,
 	EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue)
 {
+	if (!HasAuthority())
+	{
+		return;
+	}
+
 	UFireflyAttribute* AttributeToMod = GetAttributeByType(AttributeType);
 	if (!IsValid(AttributeToMod))
 	{
@@ -855,6 +893,11 @@ bool UFireflyAbilitySystemComponent::CanApplyModifierInstant(EFireflyAttributeTy
 void UFireflyAbilitySystemComponent::ApplyModifierToAttributeInstant(EFireflyAttributeType AttributeType,
                                                                      EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue)
 {
+	if (!HasAuthority())
+	{
+		return;
+	}
+
 	UFireflyAttribute* AttributeToMod = GetAttributeByType(AttributeType);
 	if (!IsValid(AttributeToMod))
 	{
@@ -890,10 +933,10 @@ FGameplayTagContainer UFireflyAbilitySystemComponent::GetBlockEffectTags() const
 	return OutTags;
 }
 
-void UFireflyAbilitySystemComponent::ApplyEffectToSelf(AActor* Instigator, TSubclassOf<UFireflyEffect> EffectType,
-                                                       int32 StackToApply)
+void UFireflyAbilitySystemComponent::ApplyEffectToOwner(AActor* Instigator, UFireflyEffect* EffectInstance,
+	int32 StackToApply)
 {
-	if (!IsValid(EffectType) || StackToApply <= 0)
+	if (!IsValid(EffectInstance) || !HasAuthority() || StackToApply <= 0)
 	{
 		return;
 	}
@@ -903,28 +946,30 @@ void UFireflyAbilitySystemComponent::ApplyEffectToSelf(AActor* Instigator, TSubc
 		Instigator = GetOwner();
 	}
 
-	UFireflyEffect* EffectCDO = Cast<UFireflyEffect>(EffectType->GetDefaultObject());
 	/** 若效果会被阻挡，则应用无效 */
-	if (EffectCDO->TagsForEffectAsset.HasAnyExact(GetBlockEffectTags())
-		|| !EffectCDO->TagsRequireOwnerHasForApplication.HasAll(GetContainedTags())
-		|| EffectCDO->TagsBlockApplicationOnOwnerHas.HasAnyExact(GetContainedTags()))
+	if (EffectInstance->TagsForEffectAsset.HasAnyExact(GetBlockEffectTags())
+		|| !EffectInstance->TagsRequireOwnerHasForApplication.HasAll(GetContainedTags())
+		|| EffectInstance->TagsBlockApplicationOnOwnerHas.HasAnyExact(GetContainedTags()))
 	{
+		if (!ActiveEffects.Contains(EffectInstance))
+		{
+			EffectInstance->MarkAsGarbage();
+		}
 		return;
 	}
 
-	const TArray<UFireflyEffect*> ActiveSpecEffects = GetActiveEffectsByClass(EffectType);
+	const TArray<UFireflyEffect*> ActiveSpecEffects = GetActiveEffectsByClass(EffectInstance->GetClass());
 
-	/** 管理器中目前如果不存在被应用的指定效果，则创建一个新效果，应用该效果 */
+	/** 管理器中目前如果不存在被应用的指定效果，则直接应用该效果实例 */
 	if (ActiveSpecEffects.Num() == 0)
 	{
-		UFireflyEffect* NewEffect = NewObject<UFireflyEffect>(this, EffectType);
-		NewEffect->ApplyEffect(Instigator, GetOwner(), StackToApply);
+		EffectInstance->ApplyEffect(Instigator, GetOwner(), StackToApply);
 
 		return;
-	}	
+	}
 
 	/** 如果指定效果的默认发起者应用策略为每个发起者应用各自的实例 */
-	if (EffectCDO->InstigatorApplicationPolicy == EFireflyEffectInstigatorApplicationPolicy::InstigatorsApplyTheirOwn)
+	if (EffectInstance->InstigatorApplicationPolicy == EFireflyEffectInstigatorApplicationPolicy::InstigatorsApplyTheirOwn)
 	{
 		bool bContainsInstigator = false;
 		for (auto Effect : ActiveSpecEffects)
@@ -936,11 +981,10 @@ void UFireflyAbilitySystemComponent::ApplyEffectToSelf(AActor* Instigator, TSubc
 			}
 		}
 
-		// 如果指定效果在该管理器中目前不存在已经存在的，和InInstigator相同的发起者，则创建一个新效果，应用该效果
+		// 如果指定效果在该管理器中目前不存在已经存在的，和InInstigator相同的发起者，则应用该效果实例
 		if (!bContainsInstigator)
 		{
-			UFireflyEffect* NewEffect = NewObject<UFireflyEffect>(this, EffectType);
-			NewEffect->ApplyEffect(Instigator, GetOwner(), StackToApply);
+			EffectInstance->ApplyEffect(Instigator, GetOwner(), StackToApply);
 
 			return;
 		}
@@ -953,28 +997,94 @@ void UFireflyAbilitySystemComponent::ApplyEffectToSelf(AActor* Instigator, TSubc
 	}
 }
 
-void UFireflyAbilitySystemComponent::ApplyEffectToTarget(AActor* Target, TSubclassOf<UFireflyEffect> EffectType,
+void UFireflyAbilitySystemComponent::ApplyEffectToTarget(AActor* Target, UFireflyEffect* EffectInstance,
 	int32 StackToApply)
 {
-	if (!IsValid(Target) || !IsValid(EffectType) || StackToApply <= 0)
+	if (!IsValid(Target) || !IsValid(EffectInstance) || StackToApply <= 0 || !HasAuthority())
 	{
 		return;
 	}
 
 	UFireflyAbilitySystemComponent* TargetEffectMgr = nullptr;
-	if (!IsValid(Target->GetComponentByClass(GetClass())))
+	if (!IsValid(Target->GetComponentByClass(UFireflyAbilitySystemComponent::StaticClass())))
 	{
 		return;
 	}
 
-	TargetEffectMgr = Cast<UFireflyAbilitySystemComponent>(Target->GetComponentByClass(GetClass()));
-	TargetEffectMgr->ApplyEffectToSelf(GetOwner(), EffectType, StackToApply);
+	TargetEffectMgr = Cast<UFireflyAbilitySystemComponent>(Target->GetComponentByClass(UFireflyAbilitySystemComponent::StaticClass()));
+	TargetEffectMgr->ApplyEffectToOwner(GetOwner(), EffectInstance, StackToApply);
 }
 
-void UFireflyAbilitySystemComponent::RemoveActiveEffectFromSelf(TSubclassOf<UFireflyEffect> EffectType,
-	int32 StackToRemove)
+void UFireflyAbilitySystemComponent::ApplyEffectToOwnerByClass(AActor* Instigator, TSubclassOf<UFireflyEffect> EffectType,
+                                                        int32 StackToApply)
 {
-	if (!IsValid(EffectType))
+	if (!IsValid(EffectType) || StackToApply <= 0 || !HasAuthority())
+	{
+		return;
+	}
+
+	if (!IsValid(Instigator))
+	{
+		Instigator = GetOwner();
+	}
+
+	UFireflyEffect* NewEffect = NewObject<UFireflyEffect>(this, EffectType);
+	ApplyEffectToOwner(Instigator, NewEffect, StackToApply);
+}
+
+void UFireflyAbilitySystemComponent::ApplyEffectToTargetByClass(AActor* Target, TSubclassOf<UFireflyEffect> EffectType,
+	int32 StackToApply)
+{
+	if (!IsValid(Target) || !IsValid(EffectType) || StackToApply <= 0 || !HasAuthority())
+	{
+		return;
+	}
+
+	UFireflyAbilitySystemComponent* TargetEffectMgr = nullptr;
+	if (!IsValid(Target->GetComponentByClass(UFireflyAbilitySystemComponent::StaticClass())))
+	{
+		return;
+	}
+
+	TargetEffectMgr = Cast<UFireflyAbilitySystemComponent>(Target->GetComponentByClass(UFireflyAbilitySystemComponent::StaticClass()));
+	TargetEffectMgr->ApplyEffectToOwnerByClass(GetOwner(), EffectType, StackToApply);
+}
+
+void UFireflyAbilitySystemComponent::ApplyEffectDynamicConstructorToOwner(AActor* Instigator,
+	FFireflyEffectDynamicConstructor EffectSetup, int32 StackToApply)
+{
+	if (StackToApply <= 0 || !HasAuthority())
+	{
+		return;
+	}
+
+	UFireflyEffect* Effect = NewObject<UFireflyEffect>(this);
+	Effect->SetupEffectByDynamicConstructor(EffectSetup);
+	ApplyEffectToOwner(Instigator, Effect, StackToApply);
+}
+
+void UFireflyAbilitySystemComponent::ApplyEffectDynamicConstructorToTarget(AActor* Target,
+	FFireflyEffectDynamicConstructor EffectSetup, int32 StackToApply)
+{
+	if (!IsValid(Target) || StackToApply <= 0 || !HasAuthority())
+	{
+		return;
+	}
+
+	UFireflyAbilitySystemComponent* TargetEffectMgr = nullptr;
+	if (!IsValid(Target->GetComponentByClass(UFireflyAbilitySystemComponent::StaticClass())))
+	{
+		return;
+	}
+
+	TargetEffectMgr = Cast<UFireflyAbilitySystemComponent>(Target->GetComponentByClass(UFireflyAbilitySystemComponent::StaticClass()));
+	TargetEffectMgr->ApplyEffectDynamicConstructorToOwner(GetOwner(), EffectSetup, StackToApply);
+}
+
+void UFireflyAbilitySystemComponent::RemoveActiveEffectByClass(TSubclassOf<UFireflyEffect> EffectType,
+                                                                 int32 StackToRemove)
+{
+	if (!IsValid(EffectType) || !HasAuthority())
 	{
 		return;
 	}
@@ -1007,9 +1117,9 @@ void UFireflyAbilitySystemComponent::RemoveActiveEffectFromSelf(TSubclassOf<UFir
 	}
 }
 
-void UFireflyAbilitySystemComponent::RemoveEffectsWithTags(FGameplayTagContainer RemoveTags)
+void UFireflyAbilitySystemComponent::RemoveActiveEffectsWithTags(FGameplayTagContainer RemoveTags)
 {
-	if (!RemoveTags.IsValid())
+	if (!RemoveTags.IsValid() || !HasAuthority())
 	{
 		return;
 	}
@@ -1032,6 +1142,11 @@ void UFireflyAbilitySystemComponent::RemoveEffectsWithTags(FGameplayTagContainer
 
 void UFireflyAbilitySystemComponent::AddOrRemoveActiveEffect(UFireflyEffect* InEffect, bool bIsAdd)
 {
+	if (!HasAuthority())
+	{
+		return;
+	}
+
 	if (bIsAdd)
 	{
 		ActiveEffects.Emplace(InEffect);
@@ -1045,9 +1160,14 @@ void UFireflyAbilitySystemComponent::AddOrRemoveActiveEffect(UFireflyEffect* InE
 void UFireflyAbilitySystemComponent::UpdateBlockAndRemoveEffectTags(FGameplayTagContainer BlockTags,
 	FGameplayTagContainer RemoveTags, bool bIsApplied)
 {
+	if (!HasAuthority())
+	{
+		return;
+	}
+
 	if (bIsApplied)
 	{
-		RemoveEffectsWithTags(RemoveTags);
+		RemoveActiveEffectsWithTags(RemoveTags);
 
 		TArray<FGameplayTag> Tags;
 		BlockTags.GetGameplayTagArray(Tags);

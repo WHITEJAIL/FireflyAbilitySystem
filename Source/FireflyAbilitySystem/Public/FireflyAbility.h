@@ -120,16 +120,16 @@ protected:
 	bool CheckAbilityCost() const;
 
 	/** 申请执行技能的消耗 */
-	UFUNCTION(BlueprintNativeEvent, Category = "FireflyAbilitySystem|Ability")
-	void ApplyAbilityCost() ;
+	UFUNCTION()
+	virtual void ApplyAbilityCost();
 
 	/** 检测技能的冷却是否可执行 */
 	UFUNCTION(BlueprintNativeEvent, Category = "FireflyAbilitySystem|Ability")
 	bool CheckAbilityCooldown() const;
 
 	/** 申请执行技能的冷却 */
-	UFUNCTION(BlueprintNativeEvent, Category = "FireflyAbilitySystem|Ability")
-	void ApplyAbilityCooldown();
+	UFUNCTION()
+	virtual void ApplyAbilityCooldown();
 
 	/** 单独执行技能的消耗 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
@@ -176,13 +176,9 @@ protected:
 	TArray<FFireflyEffectModifierData> GetCostSettings() const { return CostSettings; }
 
 protected:	
-	/** 技能的消耗设置 */
+	/** 技能的消耗属性设置 */
 	UPROPERTY(EditDefaultsOnly, Category = Cost)
 	TArray<FFireflyEffectModifierData> CostSettings;
-
-	/** 技能的消耗使用的效果类 */
-	UPROPERTY(EditDefaultsOnly, Category = Cost)
-	TSubclassOf<UFireflyEffect> CostEffectType;
 
 	/** 技能的冷却时间设置 */
 	UPROPERTY(EditDefaultsOnly, Category = Cooldown)
@@ -191,10 +187,6 @@ protected:
 	/** 技能的冷却时间使用的对应Tags */
 	UPROPERTY(EditDefaultsOnly, Category = Cooldown)
 	FGameplayTagContainer CooldownTags;
-
-	/** 技能的冷却使用的效果类 */
-	UPROPERTY(EditDefaultsOnly, Category = Cooldown)
-	TSubclassOf<UFireflyEffect> CooldownEffectType;
 
 	/** 技能是否已经执行了消耗 */
 	UPROPERTY()

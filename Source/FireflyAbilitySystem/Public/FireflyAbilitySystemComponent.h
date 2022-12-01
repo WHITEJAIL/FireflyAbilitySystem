@@ -98,12 +98,16 @@ public:
 #pragma endregion
 
 
-#pragma region Ability_Basic
+#pragma region Basic
 
 protected:
+	/** 管理器的拥有者是否拥有权威权限 */
+	UFUNCTION(BlueprintPure, Category = "FierflyAbilitySystem", Meta = (BlueprintProtected = true))
+	FORCEINLINE bool HasAuthority() const;
+
 	/** 组件拥有者是否拥有本地控制权限 */
-	UFUNCTION()
-	FORCEINLINE bool IsOwnerLocallyControlled() const;
+	UFUNCTION(BlueprintPure, Category = "FierflyAbilitySystem", Meta = (BlueprintProtected = true))
+	FORCEINLINE bool IsLocallyControlled() const;
 
 #pragma endregion
 
@@ -117,15 +121,15 @@ protected:
 
 public:
 	/** 为技能管理器赋予一个技能，必须在拥有权限端执行，否则无效 */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "FireflyAbilitySystem|Ability")
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
 	virtual void GrantAbility(TSubclassOf<UFireflyAbility> AbilityToGrant);
 
 	/** 从技能管理器中移除一个技能，必须在拥有权限端执行，否则无效 */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "FireflyAbilitySystem|Ability")
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
 	virtual void RemoveAbility(TSubclassOf<UFireflyAbility> AbilityToRemove);
 
 	/** 从技能管理器中移除一个技能，必须在拥有权限端执行，否则无效 */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "FireflyAbilitySystem|Ability")
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
 	virtual void RemoveAbilityOnEnded(TSubclassOf<UFireflyAbility> AbilityToRemove);
 
 protected:
@@ -153,7 +157,7 @@ public:
 	FORCEINLINE TArray<UFireflyAbility*> GetActivatingAbilities() const { return ActivatingAbilities; }
 
 	/** 取消所有带有特定资产Tag的技能的激活状态，必须在拥有权限端执行，否则无效 */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "FireflyAbilitySystem|Ability")
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
 	void CancelAbilitiesWithTags(FGameplayTagContainer CancelTags);
 
 	/** 某个技能结束执行时执行的函数 */
@@ -310,19 +314,19 @@ public:
 #pragma region Attribute_Modifier
 
 public:
-	/** 应用一个修改器到某个属性的当前值中 */
+	/** 应用一个修改器到某个属性的当前值中，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
 	void ApplyModifierToAttribute(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, int32 StackToApply);
 
-	/** 移除某个作用于某个属性的当前值的修改器 */
+	/** 移除某个作用于某个属性的当前值的修改器，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
 	void RemoveModifierFromAttribute(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue);
 
 	/** 检验某个属性修改器是否可以被应用，该函数仅考虑属性的值被修改器修改后是否仍处于属性的价值范围内，所以要被检验的属性必须是被夹值的 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute")
-	bool  CanApplyModifierInstant(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, float ModValue) const;
+	bool CanApplyModifierInstant(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, float ModValue) const;
 
-	/** 应用一个修改器永久修改某个属性的基础值 */
+	/** 应用一个修改器永久修改某个属性的基础值，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
 	void ApplyModifierToAttributeInstant(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue);
 
@@ -341,27 +345,43 @@ protected:
 	FGameplayTagContainer GetBlockEffectTags() const;
 	
 public:
-	/** 为自身应用效果或应用效果的固定堆叠数 */
+	/** 为自身应用一个效果实例，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
-	void ApplyEffectToSelf(AActor* Instigator, TSubclassOf<UFireflyEffect> EffectType, int32 StackToApply = 1);
+	void ApplyEffectToOwner(AActor* Instigator, UFireflyEffect* EffectInstance, int32 StackToApply = 1);
 
-	/** 为目标应用效果或应用效果的固定堆叠数 */
+	/** 为目标应用一个效果实例，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
-	void ApplyEffectToTarget(AActor* Target, TSubclassOf<UFireflyEffect> EffectType, int32 StackToApply = 1);
+	void ApplyEffectToTarget(AActor* Target, UFireflyEffect* EffectInstance, int32 StackToApply = 1);
 
-	/** 移除自身特定的所有效果的固定堆叠数, StackToRemove = -1时，移除所有效果的所有堆叠 */
+	/** 为自身应用效果或应用效果的固定堆叠数，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
-	void RemoveActiveEffectFromSelf(TSubclassOf<UFireflyEffect> EffectType, int32 StackToRemove = -1);
+	void ApplyEffectToOwnerByClass(AActor* Instigator, TSubclassOf<UFireflyEffect> EffectType, int32 StackToApply = 1);
+
+	/** 为目标应用效果或应用效果的固定堆叠数，必须在拥有权限端执行，否则无效 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
+	void ApplyEffectToTargetByClass(AActor* Target, TSubclassOf<UFireflyEffect> EffectType, int32 StackToApply = 1);
+
+	/** 为目标应用一个根据动态构造器实现的效果，必须在拥有权限端执行，否则无效 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
+	void ApplyEffectDynamicConstructorToOwner(AActor* Instigator, FFireflyEffectDynamicConstructor EffectSetup, int32 StackToApply = 1);
+
+	/** 为目标应用一个根据动态构造器实现的效果，必须在拥有权限端执行，否则无效 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
+	void ApplyEffectDynamicConstructorToTarget(AActor* Target, FFireflyEffectDynamicConstructor EffectSetup, int32 StackToApply = 1);
+
+	/** 移除自身特定的所有效果的固定堆叠数, StackToRemove = -1时，移除所有效果的所有堆叠，必须在拥有权限端执行，否则无效 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
+	void RemoveActiveEffectByClass(TSubclassOf<UFireflyEffect> EffectType, int32 StackToRemove = -1);
 
 	/** 移除所有带有特定资产Tag的效果的应用状态，必须在拥有权限端执行，否则无效 */
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "FireflyAbilitySystem|Ability")
-	void RemoveEffectsWithTags(FGameplayTagContainer RemoveTags);
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
+	void RemoveActiveEffectsWithTags(FGameplayTagContainer RemoveTags);	
 
-	/** 将某个效果从ActiveEffects中添加或删除 */
+	/** 将某个效果从ActiveEffects中添加或删除，必须在拥有权限端执行，否则无效 */
 	UFUNCTION()
 	void AddOrRemoveActiveEffect(UFireflyEffect* InEffect, bool bIsAdd);
 
-	/** 更新管理器的阻断技能Tags，或当CancelTags生效时取消某些效果，仅当某个不为Instant的效果被应用时才会触发 */
+	/** 更新管理器的阻断技能Tags，或当CancelTags生效时取消某些效果，仅当某个不为Instant的效果被应用时才会触发，必须在拥有权限端执行，否则无效 */
 	UFUNCTION()
 	void UpdateBlockAndRemoveEffectTags(FGameplayTagContainer BlockTags, FGameplayTagContainer RemoveTags, bool bIsApplied);
 

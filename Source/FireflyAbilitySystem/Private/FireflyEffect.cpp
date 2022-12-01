@@ -64,6 +64,33 @@ UFireflyAbilitySystemComponent* UFireflyEffect::GetOwnerManager() const
 	return Cast<UFireflyAbilitySystemComponent>(GetOuter());
 }
 
+void UFireflyEffect::SetupEffectByDynamicConstructor(FFireflyEffectDynamicConstructor EffectSetup)
+{
+	DurationPolicy = EffectSetup.DurationPolicy;
+	Duration = EffectSetup.Duration;
+	bIsEffectExecutionPeriodic = EffectSetup.bIsEffectExecutionPeriodic;
+	PeriodicInterval = EffectSetup.PeriodicInterval;
+	StackingPolicy = EffectSetup.StackingPolicy;
+	StackingLimitation = EffectSetup.StackingLimitation;
+	bShouldRefreshDurationOnStacking = EffectSetup.bShouldRefreshDurationOnStacking;
+	bShouldResetPeriodicityOnStacking = EffectSetup.bShouldResetPeriodicityOnStacking;
+	OverflowEffects = EffectSetup.OverflowEffects;
+	bDenyNewStackingOnOverflow = EffectSetup.bDenyNewStackingOnOverflow;
+	bClearStackingOnOverflow = EffectSetup.bClearStackingOnOverflow;
+	StackingExpirationPolicy = EffectSetup.StackingExpirationPolicy;
+	Modifiers = EffectSetup.Modifiers;
+	SpecificProperties = EffectSetup.SpecificProperties;
+	InstigatorApplicationPolicy = EffectSetup.InstigatorApplicationPolicy;
+	TagsForEffectAsset = EffectSetup.TagsForEffectAsset;
+	TagsApplyToOwnerOnApplied = EffectSetup.TagsApplyToOwnerOnApplied;
+	TagsRequiredOngoing = EffectSetup.TagsRequiredOngoing;
+	TagsBlockedOngoing = EffectSetup.TagsBlockedOngoing;
+	TagsOfEffectsWillBeRemoved = EffectSetup.TagsOfEffectsWillBeRemoved;
+	TagsOfEffectsWillBeBlocked = EffectSetup.TagsOfEffectsWillBeBlocked;
+	TagsRequireOwnerHasForApplication = EffectSetup.TagsRequireOwnerHasForApplication;
+	TagsBlockApplicationOnOwnerHas = EffectSetup.TagsBlockApplicationOnOwnerHas;
+}
+
 void UFireflyEffect::SetTimeRemainingOfDuration(float NewDuration)
 {
 	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
@@ -188,7 +215,7 @@ bool UFireflyEffect::TryExecuteEffectStackOverflow()
 	/** 应用堆叠数达到上限时触发的额外效果 */
 	for (auto EffectType : OverflowEffects)
 	{
-		Manager->ApplyEffectToSelf(GetOwnerActor(), EffectType);
+		Manager->ApplyEffectToOwnerByClass(GetOwnerActor(), EffectType);
 	}
 
 	ReceiveExecuteEffectStackOverflow();
@@ -361,6 +388,8 @@ void UFireflyEffect::RemoveEffect()
 
 	/** 停止监听管理器的TagContainer更新 */
 	Manager->OnTagContainerUpdated.RemoveDynamic(this, &UFireflyEffect::OnOwnerTagContainerUpdated);
+
+	Manager->AddOrRemoveActiveEffect(this, false);
 
 	ExecuteEffectTagRequirementToOwner(false);
 	ReceiveRemoveEffect();
