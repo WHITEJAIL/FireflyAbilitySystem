@@ -222,7 +222,7 @@ protected:
 
 	/** 当技能激活或结束时，执行对Owner的Tag更新管理 */
 	UFUNCTION()
-	void ExecuteTagRequirementToOwner(bool bIsActivated);
+	void ExecuteAbilityTagRequirementToOwner(bool bIsActivated);
 
 protected:
 	/** 该技能的激活需要的正在执行的技能，数组中有一个技能正在激活，都可以让该技能激活 */
@@ -325,7 +325,7 @@ protected:
 
 protected:
 	/** 是否在输入事件Triggered时激活技能，如为false，则默认在输入事件Started时激活技能 */
-	UPROPERTY(EditDefaultsOnly, Category = "Input Activation")
+	UPROPERTY(EditDefaultsOnly, Category = "ActivationRequirement|InputRequired")
 	bool bActivateOnTriggered = false;
 
 #pragma endregion

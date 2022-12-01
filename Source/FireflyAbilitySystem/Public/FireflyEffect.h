@@ -238,5 +238,60 @@ protected:
 	AActor* Target;
 
 #pragma endregion
+
+
+#pragma region TagRequirement
+
+protected:
+	/** 当拥有者的管理器的TagContainer更新时触发的代理 */
+	UFUNCTION()
+	void OnOwnerTagContainerUpdated(FGameplayTagContainer OwnerTagContainer);
+
+	/** 切换效果运行时的生效和暂时无效 */
+	UFUNCTION()
+	void SwitchEffectOngoingValidation(bool bIsEffective);
+
+	/** 当效果被应用或移除时，执行对Owner的Tag更新管理 */
+	UFUNCTION()
+	void ExecuteEffectTagRequirementToOwner(bool bIsApplied);
+
+protected:
+	/** 效果的标签Tags，仅用于描述修饰效果资产 */
+	UPROPERTY(EditDefaultsOnly, Category = Tags)
+	FGameplayTagContainer TagsForEffectAsset;
+
+	/** 效果被应用时，会应用给管理器组件的Tags */
+	UPROPERTY(EditDefaultsOnly, Category = Tags)
+	FGameplayTagContainer TagsApplyToOwnerOnApplied;
+
+	/** 效果被应用时，管理器组件需要拥有这些Tags，该效果才能真的起作用 */
+	UPROPERTY(EditDefaultsOnly, Category = Tags)
+	FGameplayTagContainer TagsRequiredOngoing;
+
+	/** 效果被应用时，管理器组件需要没有这些Tags，该效果才能真的起作用 */
+	UPROPERTY(EditDefaultsOnly, Category = Tags)
+	FGameplayTagContainer TagsBlockedOngoing;
+
+	/** 该效果的激活应用会取消带有这些资产标记Tags的效果的应用 */
+	UPROPERTY(EditDefaultsOnly, Category = Tags)
+	FGameplayTagContainer TagsOfEffectsWillBeRemoved;
+
+	/** 该效果的激活应用会阻断带有这些资产标记Tags的效果的应用 */
+	UPROPERTY(EditDefaultsOnly, Category = Tags)
+	FGameplayTagContainer TagsOfEffectsWillBeBlocked;
+
+	/** 该效果的激活应用需要管理器含有如下Tags */
+	UPROPERTY(EditDefaultsOnly, Category = Tags)
+	FGameplayTagContainer TagsRequireOwnerHasForApplication;
+
+	/** 该效果的激活应用期望管理器不含如下Tags */
+	UPROPERTY(EditDefaultsOnly, Category = Tags)
+	FGameplayTagContainer TagsBlockApplicationOnOwnerHas;
+
+	/** 该效果在运行时是否处于生效状态 */
+	UPROPERTY()
+	bool bOngoingEffective = true;
+
+#pragma endregion
 	
 };

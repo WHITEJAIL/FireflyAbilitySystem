@@ -90,10 +90,12 @@ void UFireflyAbility::OnAbilityGranted_Implementation()
 
 void UFireflyAbility::ActivateAbility()
 {
-	if (bIsActivating)
+	if (bIsActivating || !IsValid(GetOwnerManager()))
 	{
 		return;
 	}
+
+	UFireflyAbilitySystemComponent* Manager = GetOwnerManager();
 
 	if (bCancelRequiredAbilities)
 	{
@@ -113,22 +115,24 @@ void UFireflyAbility::ActivateAbility()
 	}
 
 	bIsActivating = true;
-	ExecuteTagRequirementToOwner(true);	
-	GetOwnerManager()->OnAbilityActivated.Broadcast(GetClass());
+	ExecuteAbilityTagRequirementToOwner(true);	
+	Manager->OnAbilityActivated.Broadcast(GetClass());
 	ReceiveActivateAbility();
 }
 
 void UFireflyAbility::EndAbility()
 {
-	if (!bIsActivating)
+	if (!bIsActivating || !IsValid(GetOwnerManager()))
 	{
-		return;		
+		return;
 	}
+
+	UFireflyAbilitySystemComponent* Manager = GetOwnerManager();
 	
 	bIsActivating = false;
-	ExecuteTagRequirementToOwner(false);
-	GetOwnerManager()->OnAbilityEnded.Broadcast(GetClass());
-	GetOwnerManager()->OnAbilityEndActivation(this);
+	ExecuteAbilityTagRequirementToOwner(false);
+	Manager->OnAbilityEnded.Broadcast(GetClass());
+	Manager->OnAbilityEndActivation(this);
 	ReceiveEndAbility(false);
 
 	if (GetOwnerRole() == ROLE_Authority)
@@ -158,16 +162,18 @@ void UFireflyAbility::Client_EndAbility_Implementation()
 
 void UFireflyAbility::CancelAbility()
 {
-	if (!bIsActivating)
+	if (!bIsActivating || !IsValid(GetOwnerManager()))
 	{
 		return;
 	}
 
+	UFireflyAbilitySystemComponent* Manager = GetOwnerManager();
+
 	bIsActivating = false;
-	ExecuteTagRequirementToOwner(false);
-	GetOwnerManager()->OnAbilityEnded.Broadcast(GetClass());
-	GetOwnerManager()->OnAbilityCanceled.Broadcast(GetClass());
-	GetOwnerManager()->OnAbilityEndActivation(this);
+	ExecuteAbilityTagRequirementToOwner(false);
+	Manager->OnAbilityEnded.Broadcast(GetClass());
+	Manager->OnAbilityCanceled.Broadcast(GetClass());
+	Manager->OnAbilityEndActivation(this);
 	ReceiveEndAbility(true);
 
 	if (GetOwnerRole() == ROLE_Authority)
@@ -297,19 +303,23 @@ void UFireflyAbility::SetCostSettings(TArray<FFireflyEffectModifierData> NewCost
 	CostSettings = NewCostSettings;
 }
 
-void UFireflyAbility::ExecuteTagRequirementToOwner(bool bIsActivated)
+void UFireflyAbility::ExecuteAbilityTagRequirementToOwner(bool bIsActivated)
 {
 	if (!IsValid(GetOwnerManager()))
 	{
 		return;
 	}
 
-	TArray<FGameplayTag> TagsToUpdate;
-	TagsApplyToOwnerOnActivated.GetGameplayTagArray(TagsToUpdate);
-	for (auto Tag : TagsToUpdate)
+	UFireflyAbilitySystemComponent* Manager = GetOwnerManager();
+
+	Manager->UpdateBlockAndCancelAbilityTags(TagsOfAbilitiesWillBeBlocked, TagsOfAbilitiesWillBeCanceled, bIsActivated);
+	if (bIsActivated)
 	{
-		bIsActivated ? GetOwnerManager()->AddTagToManager(Tag, 1) :
-			GetOwnerManager()->RemoveTagFromManager(Tag, 1);
+		Manager->AddTagsToManager(TagsApplyToOwnerOnActivated, 1);
+	}
+	else
+	{
+		Manager->RemoveTagsFromManager(TagsApplyToOwnerOnActivated, 1);
 	}
 }
 
@@ -320,7 +330,9 @@ bool UFireflyAbility::CanActivateAbility() const
 		return false;
 	}
 
-	FGameplayTagContainer OwnerTags = GetOwnerManager()->GetContainedTags();
+	UFireflyAbilitySystemComponent* Manager = GetOwnerManager();
+
+	FGameplayTagContainer OwnerTags = Manager->GetContainedTags();
 
 	/** Owner的Tag管理器是否包含阻挡该技能激活的Tag */
 	if (OwnerTags.HasAnyExact(TagsBlockActivationOnOwnerHas))
@@ -349,7 +361,7 @@ bool UFireflyAbility::CanActivateAbility() const
 	if (RequiredActivatingAbilities.Num())
 	{
 		bHasRequiredActivatingAbility = false;
-		for (auto OtherAbility : GetOwnerManager()->GetActivatingAbilities())
+		for (auto OtherAbility : Manager->GetActivatingAbilities())
 		{
 			if (RequiredActivatingAbilities.Contains(OtherAbility->GetClass()))
 			{

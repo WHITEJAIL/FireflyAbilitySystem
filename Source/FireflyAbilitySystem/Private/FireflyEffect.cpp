@@ -45,12 +45,13 @@ int32 UFireflyEffect::GetFunctionCallspace(UFunction* Function, FFrame* Stack)
 
 AActor* UFireflyEffect::GetOwnerActor() const
 {
-	if(!IsValid(GetOwnerManager()))
+	UFireflyAbilitySystemComponent* Manager = GetOwnerManager();
+	if(!IsValid(Manager))
 	{
 		return nullptr;
 	}
 
-	return GetOwnerManager()->GetOwner();
+	return Manager->GetOwner();
 }
 
 UFireflyAbilitySystemComponent* UFireflyEffect::GetOwnerManager() const
@@ -177,7 +178,8 @@ bool UFireflyEffect::ReduceEffectStack(int32 StackCountToReduce)
 bool UFireflyEffect::TryExecuteEffectStackOverflow()
 {
 	/** 如果管理器不存在 || 堆叠数未达到最大值 || 效果的堆叠不受限制，直接返回 */
-	if (!IsValid(GetOwnerManager()) || StackCount != StackingLimitation
+	UFireflyAbilitySystemComponent* Manager = GetOwnerManager();
+	if (!IsValid(Manager) || StackCount != StackingLimitation
 		|| StackingPolicy != EFireflyEffectStackingPolicy::StackHasLimit)
 	{
 		return false;
@@ -186,7 +188,7 @@ bool UFireflyEffect::TryExecuteEffectStackOverflow()
 	/** 应用堆叠数达到上限时触发的额外效果 */
 	for (auto EffectType : OverflowEffects)
 	{
-		GetOwnerManager()->ApplyEffectToSelf(GetOwnerActor(), EffectType);
+		Manager->ApplyEffectToSelf(GetOwnerActor(), EffectType);
 	}
 
 	ReceiveExecuteEffectStackOverflow();
@@ -196,6 +198,12 @@ bool UFireflyEffect::TryExecuteEffectStackOverflow()
 
 void UFireflyEffect::ApplyEffect(AActor* InInstigator, AActor* InTarget, int32 StackToApply)
 {
+	UFireflyAbilitySystemComponent* Manager = GetOwnerManager();
+	if (!IsValid(Manager))
+	{
+		return;
+	}
+
 	/** 如果持续时间策略为Instant，直接按照申请的堆叠次数执行逻辑，并结束效果的应用 */
 	if (DurationPolicy == EFireflyEffectDurationPolicy::Instant)
 	{
@@ -207,10 +215,10 @@ void UFireflyEffect::ApplyEffect(AActor* InInstigator, AActor* InTarget, int32 S
 			ExecuteEffect();
 		}
 		
-		RemoveEffect();
+		MarkAsGarbage();
 
 		return;
-	}
+	}	
 
 	/** 如果发起者应用策略为InstigatorsShareOne，尝试将新的发起者并入效果发起者数组中 */
 	if (InstigatorApplicationPolicy == EFireflyEffectInstigatorApplicationPolicy::InstigatorsShareOne
@@ -225,8 +233,10 @@ void UFireflyEffect::ApplyEffect(AActor* InInstigator, AActor* InTarget, int32 S
 		/** 第一次执行效果逻辑 */
 		if (!GetWorld()->GetTimerManager().IsTimerActive(DurationTimer))
 		{
-			GetOwnerManager()->AddOrRemoveActiveEffect(this, true);
-			ExecuteEffect();
+			Manager->AddOrRemoveActiveEffect(this, true);
+			Manager->OnTagContainerUpdated.AddDynamic(this, &UFireflyEffect::OnOwnerTagContainerUpdated);
+			ExecuteEffectTagRequirementToOwner(true);
+			ExecuteEffect();			
 		}
 
 		/** 有新的应用被申请，尝试刷新持续时间，尝试重置周期性执行执行 */
@@ -242,7 +252,9 @@ void UFireflyEffect::ApplyEffect(AActor* InInstigator, AActor* InTarget, int32 S
 	/** 第一次执行有堆叠的效果逻辑 */
 	if (!GetWorld()->GetTimerManager().IsTimerActive(DurationTimer))
 	{
-		GetOwnerManager()->AddOrRemoveActiveEffect(this, true);
+		Manager->AddOrRemoveActiveEffect(this, true);
+		Manager->OnTagContainerUpdated.AddDynamic(this, &UFireflyEffect::OnOwnerTagContainerUpdated);
+		ExecuteEffectTagRequirementToOwner(true);
 		ExecuteEffect();
 	}
 
@@ -259,8 +271,8 @@ void UFireflyEffect::ApplyEffect(AActor* InInstigator, AActor* InTarget, int32 S
 
 void UFireflyEffect::ExecuteEffect()
 {
-	UFireflyAbilitySystemComponent* AbilitySystemManager = GetOwnerManager();
-	if (!IsValid(AbilitySystemManager))
+	UFireflyAbilitySystemComponent* Manager = GetOwnerManager();
+	if (!IsValid(Manager))
 	{
 		return;
 	}
@@ -270,16 +282,21 @@ void UFireflyEffect::ExecuteEffect()
 		// 如果效果的持续时间策略为Instant，或者效果在持续期间周期性执行
 		for (auto Modifier : Modifiers)
 		{
-			AbilitySystemManager->ApplyModifierToAttributeInstant(Modifier.AttributeType,
+			Manager->ApplyModifierToAttributeInstant(Modifier.AttributeType,
 				Modifier.ModOperator, this, Modifier.ModValue);
 		}
 	}
 	else
 	{
+		if (!bOngoingEffective)
+		{
+			return;
+		}
+
 		// 如果效果在持续期间不周期性执行
 		for (auto Modifier : Modifiers)
 		{
-			AbilitySystemManager->ApplyModifierToAttribute(Modifier.AttributeType, Modifier.ModOperator,
+			Manager->ApplyModifierToAttribute(Modifier.AttributeType, Modifier.ModOperator,
 				this, Modifier.ModValue, StackCount);
 		}
 	}	
@@ -323,8 +340,8 @@ void UFireflyEffect::ExecuteEffectExpiration()
 
 void UFireflyEffect::RemoveEffect()
 {
-	UFireflyAbilitySystemComponent* AbilitySystemManager = GetOwnerManager();
-	if (!IsValid(AbilitySystemManager))
+	UFireflyAbilitySystemComponent* Manager = GetOwnerManager();
+	if (!IsValid(Manager))
 	{
 		return;
 	}
@@ -332,7 +349,8 @@ void UFireflyEffect::RemoveEffect()
 	/** 清理该效果携带的所有属性修改器 */
 	for (auto Modifier : Modifiers)
 	{
-		AbilitySystemManager->RemoveModifierFromAttribute(Modifier.AttributeType, Modifier.ModOperator, this, Modifier.ModValue);
+		Manager->RemoveModifierFromAttribute(Modifier.AttributeType, Modifier.ModOperator, 
+			this, Modifier.ModValue);
 	}
 
 	/** 堆叠数重置为0 */
@@ -341,7 +359,84 @@ void UFireflyEffect::RemoveEffect()
 		ReduceEffectStack(StackCount);
 	}
 
+	/** 停止监听管理器的TagContainer更新 */
+	Manager->OnTagContainerUpdated.RemoveDynamic(this, &UFireflyEffect::OnOwnerTagContainerUpdated);
+
+	ExecuteEffectTagRequirementToOwner(false);
 	ReceiveRemoveEffect();
 
 	MarkAsGarbage();
+}
+
+void UFireflyEffect::OnOwnerTagContainerUpdated(FGameplayTagContainer OwnerTagContainer)
+{
+	if (OwnerTagContainer.HasAnyExact(TagsBlockedOngoing))
+	{
+		/** 使效果失效 */
+		SwitchEffectOngoingValidation(false);
+		return;
+	}
+
+	if (OwnerTagContainer.HasAllExact(TagsRequiredOngoing))
+	{
+		/** 使效果重新生效 */
+		SwitchEffectOngoingValidation(true);
+		return;
+	}
+
+	SwitchEffectOngoingValidation(false);
+}
+
+void UFireflyEffect::SwitchEffectOngoingValidation(bool bIsEffective)
+{
+	UFireflyAbilitySystemComponent* Manager = GetOwnerManager();
+	if (!IsValid(Manager))
+	{
+		return;
+	}
+
+	if (bIsEffective)
+	{
+		bOngoingEffective = true;
+
+		ExecuteEffectTagRequirementToOwner(false);
+
+		GetWorld()->GetTimerManager().UnPauseTimer(PeriodicityTimer);
+
+		ExecuteEffect();
+	}
+	else
+	{
+		bOngoingEffective = false;
+
+		ExecuteEffectTagRequirementToOwner(false);
+
+		GetWorld()->GetTimerManager().PauseTimer(PeriodicityTimer); 
+
+		for (auto Modifier : Modifiers)
+		{
+			Manager->RemoveModifierFromAttribute(Modifier.AttributeType, Modifier.ModOperator, 
+				this, Modifier.ModValue);
+		}
+	}
+}
+
+void UFireflyEffect::ExecuteEffectTagRequirementToOwner(bool bIsApplied)
+{
+	if (!IsValid(GetOwnerManager()))
+	{
+		return;
+	}
+
+	UFireflyAbilitySystemComponent* Manager = GetOwnerManager();
+
+	Manager->UpdateBlockAndRemoveEffectTags(TagsOfEffectsWillBeBlocked, TagsOfEffectsWillBeRemoved, bIsApplied);
+	if (bIsApplied)
+	{
+		Manager->AddTagsToManager(TagsApplyToOwnerOnApplied, 1);
+	}
+	else
+	{
+		Manager->RemoveTagsFromManager(TagsApplyToOwnerOnApplied, 1);
+	}
 }

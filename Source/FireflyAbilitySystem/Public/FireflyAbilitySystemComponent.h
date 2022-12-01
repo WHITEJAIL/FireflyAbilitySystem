@@ -72,6 +72,9 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FEffectStartExecutingDelegate, TSub
 /** 效果执行结束的代理声明 */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FEffectEndExecutingDelegate, TSubclassOf<UFireflyEffect>, EffectType);
 
+/** Tag存在周期的代理声明 */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGameplayTagExecutionDelegate, FGameplayTagContainer, TagsUpdated);
+
 /** 技能系统管理器的组件 */
 UCLASS(ClassGroup = (FireflyAbilitySystem), meta = (BlueprintSpawnableComponent))
 class FIREFLYABILITYSYSTEM_API UFireflyAbilitySystemComponent : public UActorComponent
@@ -187,6 +190,11 @@ public:
 
 
 #pragma region Ability_Requirement
+
+protected:
+	/** 获取管理器当前会阻挡激活的技能资产Tags */
+	UFUNCTION()
+	FGameplayTagContainer GetBlockAbilityTags() const;
 
 public:
 	/** 更新管理器的阻断技能Tags，或当CancelTags生效时取消某些技能，仅当某个技能激活时才会触发 */
@@ -328,8 +336,11 @@ protected:
 	UFUNCTION()
 	TArray<UFireflyEffect*> GetActiveEffectsByClass(TSubclassOf<UFireflyEffect> EffectType) const;
 
+	/** 获取管理器当前会阻挡激活的技能资产Tags */
+	UFUNCTION()
+	FGameplayTagContainer GetBlockEffectTags() const;
+	
 public:
-
 	/** 为自身应用效果或应用效果的固定堆叠数 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
 	void ApplyEffectToSelf(AActor* Instigator, TSubclassOf<UFireflyEffect> EffectType, int32 StackToApply = 1);
@@ -342,14 +353,26 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
 	void RemoveActiveEffectFromSelf(TSubclassOf<UFireflyEffect> EffectType, int32 StackToRemove = -1);
 
+	/** 移除所有带有特定资产Tag的效果的应用状态，必须在拥有权限端执行，否则无效 */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "FireflyAbilitySystem|Ability")
+	void RemoveEffectsWithTags(FGameplayTagContainer RemoveTags);
+
 	/** 将某个效果从ActiveEffects中添加或删除 */
 	UFUNCTION()
 	void AddOrRemoveActiveEffect(UFireflyEffect* InEffect, bool bIsAdd);
+
+	/** 更新管理器的阻断技能Tags，或当CancelTags生效时取消某些效果，仅当某个不为Instant的效果被应用时才会触发 */
+	UFUNCTION()
+	void UpdateBlockAndRemoveEffectTags(FGameplayTagContainer BlockTags, FGameplayTagContainer RemoveTags, bool bIsApplied);
 
 protected:
 	/** 所有激活中的执行策略不是Instant的效果 */
 	UPROPERTY(Replicated)
 	TArray<UFireflyEffect*> ActiveEffects;
+
+	/** 携带这些资产Tag的技能会被阻拦激活 */
+	UPROPERTY()
+	TMap<FGameplayTag, int32> BlockEffectTags;
 
 #pragma endregion
 
@@ -389,10 +412,23 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Tag")
 	void RemoveTagFromManager(FGameplayTag TagToRemove, int32 CountToRemove = 1);
 
+	/** 将一些Tag添加到管理器中 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Tag")
+	void AddTagsToManager(FGameplayTagContainer TagsToAdd, int32 CountToAdd = 1);
+
+	/** 将一些Tag从管理器中移除 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Tag")
+	void RemoveTagsFromManager(FGameplayTagContainer TagsToRemove, int32 CountToRemove = 1);
+
 protected:
 	/** 所有拥有的Tag及其对应的堆叠数 */
 	UPROPERTY()
 	TMap<FGameplayTag, int32> TagCountContainer;
+
+public:
+	/** 管理器的TagCountContainer更新时触发的代理 */
+	UPROPERTY(BlueprintAssignable, Category = "FireflyAbilitySystem|Tag")
+	FGameplayTagExecutionDelegate OnTagContainerUpdated;
 
 #pragma endregion
 };
