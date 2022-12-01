@@ -275,6 +275,31 @@ void UFireflyAbilitySystemComponent::OnAbilityEndActivation(UFireflyAbility* Abi
 	ActivatingAbilities.RemoveSingle(AbilityJustEnded);
 }
 
+void UFireflyAbilitySystemComponent::SetAbilityCooldownRemaining(TSubclassOf<UFireflyAbility> AbilityType,
+	float NewTimeRemaining)
+{
+	if (!IsValid(AbilityType) || !HasAuthority())
+	{
+		return;
+	}
+
+	UFireflyAbility* Ability =  GetGrantedAbilityByClass(AbilityType);
+	if (!IsValid(Ability))
+	{
+		return;
+	}
+
+	TArray<UFireflyEffect*> CooldownEffects = GetActiveEffectsByTag(Ability->CooldownTags);
+	if (!CooldownEffects.IsValidIndex(0))
+	{
+		return;
+	}
+
+	CooldownEffects[0]->SetTimeRemainingOfDuration(NewTimeRemaining);
+
+	OnAbilityCooldownRemainingChanged.Broadcast(AbilityType, NewTimeRemaining, CooldownEffects[0]->Duration);
+}
+
 FGameplayTagContainer UFireflyAbilitySystemComponent::GetBlockAbilityTags() const
 {
 	FGameplayTagContainer OutTags;
@@ -922,6 +947,21 @@ TArray<UFireflyEffect*> UFireflyAbilitySystemComponent::GetActiveEffectsByClass(
 	return OutEffects;
 }
 
+TArray<UFireflyEffect*> UFireflyAbilitySystemComponent::GetActiveEffectsByTag(
+	FGameplayTagContainer EffectAssetTags) const
+{
+	TArray<UFireflyEffect*> OutEffects = TArray<UFireflyEffect*>{};
+	for (auto Effect : ActiveEffects)
+	{
+		if (Effect->TagsForEffectAsset.HasAllExact(EffectAssetTags))
+		{
+			OutEffects.Emplace(Effect);
+		}
+	}
+
+	return OutEffects;
+}
+
 FGameplayTagContainer UFireflyAbilitySystemComponent::GetBlockEffectTags() const
 {
 	FGameplayTagContainer OutTags;
@@ -1219,8 +1259,27 @@ bool UFireflyAbilitySystemComponent::GetSingleActiveEffectTimeDuration(TSubclass
 	return true;
 }
 
+void UFireflyAbilitySystemComponent::SetSingleActiveEffectTimeRemaining(TSubclassOf<UFireflyEffect> EffectType,
+	float NewTimeRemaining)
+{
+	if (!IsValid(EffectType) || !HasAuthority())
+	{
+		return;
+	}
+
+	const TArray<UFireflyEffect*> Effects = GetActiveEffectsByClass(EffectType);
+	if (!Effects.IsValidIndex(0))
+	{
+		return;
+	}
+
+	Effects[0]->SetTimeRemainingOfDuration(NewTimeRemaining);
+
+	OnEffectTimeRemainingChanged.Broadcast(EffectType, NewTimeRemaining, Effects[0]->Duration);
+}
+
 bool UFireflyAbilitySystemComponent::GetSingleActiveEffectStackingCount(TSubclassOf<UFireflyEffect> EffectType,
-	int32& StackingCount) const
+                                                                        int32& StackingCount) const
 {
 	if (!IsValid(EffectType))
 	{

@@ -179,6 +179,7 @@ void UFireflyEffect::AddEffectStack(int32 StackCountToAdd)
 	}
 	
 	ReceiveAddEffectStack(StackCountToAdd);
+	GetOwnerManager()->OnEffectStackingChanged.Broadcast(GetClass(), StackCount, OldStackCount);
 }
 
 bool UFireflyEffect::ReduceEffectStack(int32 StackCountToReduce)
@@ -193,6 +194,7 @@ bool UFireflyEffect::ReduceEffectStack(int32 StackCountToReduce)
 	StackCount = FMath::Clamp<int32>(StackCount - StackCountToReduce, 0, OldStackCount);
 
 	ReceiveReduceEffectStack(StackCountToReduce);
+	GetOwnerManager()->OnEffectStackingChanged.Broadcast(GetClass(), StackCount, OldStackCount);
 
 	if (StackCount == 0)
 	{
@@ -261,9 +263,10 @@ void UFireflyEffect::ApplyEffect(AActor* InInstigator, AActor* InTarget, int32 S
 		if (!GetWorld()->GetTimerManager().IsTimerActive(DurationTimer))
 		{
 			Manager->AddOrRemoveActiveEffect(this, true);
+			Manager->OnActiveEffectApplied.Broadcast(GetClass(), Duration);
 			Manager->OnTagContainerUpdated.AddDynamic(this, &UFireflyEffect::OnOwnerTagContainerUpdated);
 			ExecuteEffectTagRequirementToOwner(true);
-			ExecuteEffect();			
+			ExecuteEffect();
 		}
 
 		/** 有新的应用被申请，尝试刷新持续时间，尝试重置周期性执行执行 */
@@ -280,6 +283,7 @@ void UFireflyEffect::ApplyEffect(AActor* InInstigator, AActor* InTarget, int32 S
 	if (!GetWorld()->GetTimerManager().IsTimerActive(DurationTimer))
 	{
 		Manager->AddOrRemoveActiveEffect(this, true);
+		Manager->OnTagContainerUpdated.AddDynamic(this, &UFireflyEffect::OnOwnerTagContainerUpdated);
 		Manager->OnTagContainerUpdated.AddDynamic(this, &UFireflyEffect::OnOwnerTagContainerUpdated);
 		ExecuteEffectTagRequirementToOwner(true);
 		ExecuteEffect();
@@ -386,6 +390,7 @@ void UFireflyEffect::RemoveEffect()
 		ReduceEffectStack(StackCount);
 	}
 
+	Manager->OnActiveEffectRemoved.Broadcast(GetClass());
 	/** 停止监听管理器的TagContainer更新 */
 	Manager->OnTagContainerUpdated.RemoveDynamic(this, &UFireflyEffect::OnOwnerTagContainerUpdated);
 

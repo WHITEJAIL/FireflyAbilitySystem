@@ -238,7 +238,7 @@ bool UFireflyAbility::CheckAbilityCooldown_Implementation() const
 		return false;
 	}
 
-	return !Manager->GetContainedTags().HasAnyExact(CooldownTags);
+	return Manager->GetActiveEffectsByTag(CooldownTags).Num() > 0;
 }
 
 void UFireflyAbility::ApplyAbilityCooldown()
@@ -252,7 +252,7 @@ void UFireflyAbility::ApplyAbilityCooldown()
 	FFireflyEffectDynamicConstructor CostSetup;
 	CostSetup.DurationPolicy = EFireflyEffectDurationPolicy::HasDuration;
 	CostSetup.Duration = CooldownTime;
-	CostSetup.TagsApplyToOwnerOnApplied = CooldownTags;
+	CostSetup.TagsForEffectAsset = CooldownTags;
 	GetOwnerManager()->ApplyEffectDynamicConstructorToOwner(nullptr, CostSetup);
 
 	GetOwnerManager()->OnAbilityCooldownCommitted.Broadcast(GetClass(), CooldownTime);

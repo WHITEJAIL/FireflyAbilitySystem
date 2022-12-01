@@ -58,22 +58,26 @@ public:
 };
 
 /** 技能执行周期的代理声明 */
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAbilityExecutionDelegate, TSubclassOf<UFireflyAbility>, AbilityType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFireflyAbilityExecutionDelegate, TSubclassOf<UFireflyAbility>, AbilityType);
 /** 技能执行冷却的代理声明 */
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAbilityCooldownExecutionDelegate, TSubclassOf<UFireflyAbility>, AbilityType, float, TotoalDuration);
-/** 技能冷却的剩余时间 */
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FAbilityCooldownChangedDelegate, TSubclassOf<UFireflyAbility>, AbilityType, float, NewTimeRemaining, float, TotalDuration);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FFireflyAbilityCooldownExecutionDelegate, TSubclassOf<UFireflyAbility>, AbilityType, float, TotoalDuration);
+/** 技能冷却的剩余时间被更新的代理声明 */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FFireflyAbilityCooldownRemainingChangedDelegate, TSubclassOf<UFireflyAbility>, AbilityType, float, NewTimeRemaining, float, TotalDuration);
 
 /** 属性数值变更的代理声明 */
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FAttributeValueChangeDelegate, TEnumAsByte<EFireflyAttributeType>, AttributeType, float, OldValue, float, Newvalue);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FFireflyAttributeValueChangeDelegate, TEnumAsByte<EFireflyAttributeType>, AttributeType, float, OldValue, float, Newvalue);
 
 /** 效果执行开始的代理声明 */
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FEffectStartExecutingDelegate, TSubclassOf<UFireflyEffect>, EffectType, float, TotoalDuration);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FFireflyEffectStartExecutingDelegate, TSubclassOf<UFireflyEffect>, EffectType, float, TotoalDuration);
 /** 效果执行结束的代理声明 */
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FEffectEndExecutingDelegate, TSubclassOf<UFireflyEffect>, EffectType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFireflyEffectEndExecutingDelegate, TSubclassOf<UFireflyEffect>, EffectType);
+/** 效果的剩余持续时间被更新的代理声明 */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FFireflyEffectTimeRemainingChangedDelegate, TSubclassOf<UFireflyEffect>, EffectType, float, NewTimeRemaining, float, TotalDuration);
+/** 效果的堆叠数被更新的代理声明 */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FFireflyEffectStackingChangedDelegate, TSubclassOf<UFireflyEffect>, EffectType, int32, NewStackCount, int32, OldStackCount);
 
 /** Tag存在周期的代理声明 */
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGameplayTagExecutionDelegate, FGameplayTagContainer, TagsUpdated);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFireflyGameplayTagExecutionDelegate, FGameplayTagContainer, TagsUpdated);
 
 /** 技能系统管理器的组件 */
 UCLASS(ClassGroup = (FireflyAbilitySystem), meta = (BlueprintSpawnableComponent))
@@ -164,6 +168,10 @@ public:
 	UFUNCTION()
 	virtual void OnAbilityEndActivation(UFireflyAbility* AbilityJustEnded);
 
+	/** 更改某个技能的当前冷却剩余时间，必须在拥有权限端执行，否则无效 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
+	void SetAbilityCooldownRemaining(TSubclassOf<UFireflyAbility> AbilityType, float NewTimeRemaining);
+
 protected:
 	/** 所有激活中的运行中的技能 */
 	UPROPERTY()
@@ -172,23 +180,27 @@ protected:
 public:
 	/** 技能激活时触发的代理 */
 	UPROPERTY(BlueprintAssignable, Category = "FireflyAbilitySystem|Ability")
-	FAbilityExecutionDelegate OnAbilityActivated;
+	FFireflyAbilityExecutionDelegate OnAbilityActivated;
 
 	/** 技能结束时触发的代理 */
 	UPROPERTY(BlueprintAssignable, Category = "FireflyAbilitySystem|Ability")
-	FAbilityExecutionDelegate OnAbilityEnded;
+	FFireflyAbilityExecutionDelegate OnAbilityEnded;
 
 	/** 技能取消时触发的代理 */
 	UPROPERTY(BlueprintAssignable, Category = "FireflyAbilitySystem|Ability")
-	FAbilityExecutionDelegate OnAbilityCanceled;
+	FFireflyAbilityExecutionDelegate OnAbilityCanceled;
 
 	/** 当技能的消耗执行成功时触发的代理 */
-	UPROPERTY(BlueprintAssignable)
-	FAbilityExecutionDelegate OnAbilityCostCommitted;
+	UPROPERTY(BlueprintAssignable, Category = "FireflyAbilitySystem|Ability")
+	FFireflyAbilityExecutionDelegate OnAbilityCostCommitted;
 
 	/** 当技能的冷却执行成功时触发的代理 */
-	UPROPERTY(BlueprintAssignable)
-	FAbilityCooldownExecutionDelegate OnAbilityCooldownCommitted;
+	UPROPERTY(BlueprintAssignable, Category = "FireflyAbilitySystem|Ability")
+	FFireflyAbilityCooldownExecutionDelegate OnAbilityCooldownCommitted;
+
+	/** 当技能的冷却剩余时间改变时触发的代理 */
+	UPROPERTY(BlueprintAssignable, Category = "FireflyAbilitySystem|Ability")
+	FFireflyAbilityCooldownRemainingChangedDelegate OnAbilityCooldownRemainingChanged;
 
 #pragma endregion
 
@@ -302,11 +314,11 @@ protected:
 public:
 	/** 属性的当前值更新时触发的代理 */
 	UPROPERTY(BlueprintAssignable, Category = "FireflyAbilitySystem|Attribute")
-	FAttributeValueChangeDelegate OnAttributeValueChanged;
+	FFireflyAttributeValueChangeDelegate OnAttributeValueChanged;
 
 	/** 属性的基础值更新时触发的代理 */
 	UPROPERTY(BlueprintAssignable, Category = "FireflyAbilitySystem|Attribute")
-	FAttributeValueChangeDelegate OnAttributeBaseValueChanged;
+	FFireflyAttributeValueChangeDelegate OnAttributeBaseValueChanged;
 
 #pragma endregion
 
@@ -335,16 +347,19 @@ public:
 
 #pragma region Effect_Application
 
-protected:
+public:
 	/** 在该管理器中获取特定类型的被应用的激活中的所有效果 */
 	UFUNCTION()
 	TArray<UFireflyEffect*> GetActiveEffectsByClass(TSubclassOf<UFireflyEffect> EffectType) const;
 
+	/** 在该管理器中获取带有特定资产Tags的被应用的激活中的所有效果 */
+	UFUNCTION()
+	TArray<UFireflyEffect*> GetActiveEffectsByTag(FGameplayTagContainer EffectAssetTags) const;
+
 	/** 获取管理器当前会阻挡激活的技能资产Tags */
 	UFUNCTION()
 	FGameplayTagContainer GetBlockEffectTags() const;
-	
-public:
+
 	/** 为自身应用一个效果实例，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
 	void ApplyEffectToOwner(AActor* Instigator, UFireflyEffect* EffectInstance, int32 StackToApply = 1);
@@ -394,6 +409,15 @@ protected:
 	UPROPERTY()
 	TMap<FGameplayTag, int32> BlockEffectTags;
 
+public:
+	/** 当不为Instant的效果被应用时触发的代理 */
+	UPROPERTY(BlueprintAssignable, Category = "FireflyAbilitySystem|Effect")
+	FFireflyEffectStartExecutingDelegate OnActiveEffectApplied;
+
+	/** 当不为Instant的效果被移除时触发的代理 */
+	UPROPERTY(BlueprintAssignable, Category = "FireflyAbilitySystem|Effect")
+	FFireflyEffectEndExecutingDelegate OnActiveEffectRemoved;
+
 #pragma endregion
 
 
@@ -404,6 +428,15 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Effect")
 	bool GetSingleActiveEffectTimeDuration(TSubclassOf<UFireflyEffect> EffectType, float& TimeRemaining, float& TotalDuration) const;
 
+	/** 设置某种效果的剩余作用时间，若该种效果在管理器中同时存在多个，默认取第一个，必须在拥有权限端执行，否则无效 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
+	void SetSingleActiveEffectTimeRemaining(TSubclassOf<UFireflyEffect> EffectType, float NewTimeRemaining);
+
+public:
+	/** 某个效果的剩余持续时间更新时触发的代理 */
+	UPROPERTY(BlueprintAssignable)
+	FFireflyEffectTimeRemainingChangedDelegate OnEffectTimeRemainingChanged;
+
 #pragma endregion
 
 
@@ -413,6 +446,11 @@ public:
 	/** 获取某种效果的当前堆叠数，若该种效果在管理器中同时存在多个，默认取第一个 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Effect")
 	bool GetSingleActiveEffectStackingCount(TSubclassOf<UFireflyEffect> EffectType, int32& StackingCount) const;
+
+public:
+	/** 当不为Instant的效果的堆叠数发生变化时触发的代理 */
+	UPROPERTY(BlueprintAssignable, Category = "FireflyAbilitySystem|Effect")
+	FFireflyEffectStackingChangedDelegate OnEffectStackingChanged;
 
 #pragma endregion
 
@@ -448,7 +486,7 @@ protected:
 public:
 	/** 管理器的TagCountContainer更新时触发的代理 */
 	UPROPERTY(BlueprintAssignable, Category = "FireflyAbilitySystem|Tag")
-	FGameplayTagExecutionDelegate OnTagContainerUpdated;
+	FFireflyGameplayTagExecutionDelegate OnTagContainerUpdated;
 
 #pragma endregion
 };
