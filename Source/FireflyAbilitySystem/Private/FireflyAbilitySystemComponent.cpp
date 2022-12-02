@@ -194,26 +194,21 @@ void UFireflyAbilitySystemComponent::RemoveAbilityOnEnded(TSubclassOf<UFireflyAb
 	}
 }
 
-void UFireflyAbilitySystemComponent::Server_TryActivateAbility_Implementation(UFireflyAbility* AbilityToActivate,
-																			  bool bNeedValidation)
+void UFireflyAbilitySystemComponent::ActivateAbilityInternal(UFireflyAbility* Ability)
 {
-	if (bNeedValidation)
-	{
-		if (!AbilityToActivate->CanActivateAbility())
-		{
-			AbilityToActivate->Client_CancelAbility();
-			return;
-		}
+	Ability->ActivateAbility();
+	ActivatingAbilities.Emplace(Ability);
+}
 
-		if (AbilityToActivate->TagsForAbilityAsset.HasAnyExact(GetBlockAbilityTags()))
-		{
-			AbilityToActivate->Client_CancelAbility();
-			return;
-		}
+void UFireflyAbilitySystemComponent::Server_TryActivateAbility_Implementation(UFireflyAbility* Ability)
+{
+	if (!Ability->CanActivateAbility() || !Ability->TagsForAbilityAsset.HasAnyExact(GetBlockAbilityTags()))
+	{
+		Ability->Client_CancelAbility();
+		return;
 	}
 
-	AbilityToActivate->ActivateAbility();
-	ActivatingAbilities.Emplace(AbilityToActivate);
+	ActivateAbilityInternal(Ability);
 }
 
 UFireflyAbility* UFireflyAbilitySystemComponent::TryActivateAbilityByClass(
@@ -242,13 +237,11 @@ UFireflyAbility* UFireflyAbilitySystemComponent::TryActivateAbilityByClass(
 
 	if (GetOwnerRole() == ROLE_Authority)
 	{
-		Server_TryActivateAbility(Ability, false);
+		ActivateAbilityInternal(Ability);
 	}
 	if (GetOwnerRole() == ROLE_AutonomousProxy)
-	{
-		Ability->ActivateAbility();
-		ActivatingAbilities.Emplace(Ability);
-		Server_TryActivateAbility(Ability, true);
+	{		
+		Server_TryActivateAbility(Ability);
 	}
 
 	return Ability;

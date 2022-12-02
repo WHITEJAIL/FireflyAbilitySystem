@@ -76,6 +76,10 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability", Meta = (DisplayName = "Actiavate Ability"))
 	void ReceiveActivateAbility();
 
+	/** 结束技能，内部执行 */
+	UFUNCTION()
+	virtual void EndAbilityInternal();
+
 	/** 结束技能 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
 	virtual void EndAbility();
@@ -87,6 +91,10 @@ protected:
 	/** 服务端通知本地客户端结束技能 */
 	UFUNCTION(Client, Reliable)
 	void Client_EndAbility();
+
+	/** 取消技能，内部执行 */
+	UFUNCTION()
+	virtual void CancelAbilityInternal();
 
 	/** 取消技能 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
@@ -257,7 +265,11 @@ protected:
 protected:
 	/** 输入事件：开始 */
 	UFUNCTION()
-	virtual void OnAbilityInputStarted();
+	void OnAbilityInputStarted();
+
+	/** 输入事件内部执行：开始*/
+	UFUNCTION()
+	virtual void OnAbilityInputStartedInternal();
 
 	/** 本地客户端通知服务端执行输入事件：开始 */
 	UFUNCTION(Server, Reliable)
@@ -265,11 +277,15 @@ protected:
 
 	/** 蓝图输入事件：开始 */
 	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability", Meta = (DisplayName = "On Ability Input Started"))
-		void ReceiveOnAbilityInputStarted();
+	void ReceiveOnAbilityInputStarted();
 
 	/** 输入事件：执行中 */
 	UFUNCTION()
-	virtual void OnAbilityInputOngoing();
+	void OnAbilityInputOngoing();
+
+	/** 输入事件内部执行：执行中*/
+	UFUNCTION()
+	virtual void OnAbilityInputOngoingInternal();
 
 	/** 本地客户端通知服务端执行输入事件：执行中 */
 	UFUNCTION(Server, Reliable)
@@ -281,7 +297,11 @@ protected:
 
 	/** 输入事件：取消 */
 	UFUNCTION()
-	virtual void OnAbilityInputCanceled();
+	void OnAbilityInputCanceled();
+
+	/** 输入事件内部执行：取消*/
+	UFUNCTION()
+	virtual void OnAbilityInputCanceledInternal();
 
 	/** 本地客户端通知服务端执行输入事件：取消 */
 	UFUNCTION(Server, Reliable)
@@ -293,7 +313,11 @@ protected:
 
 	/** 输入事件：触发 */
 	UFUNCTION()
-	virtual void OnAbilityInputTriggered();
+	void OnAbilityInputTriggered();
+
+	/** 输入事件内部执行：触发 */
+	UFUNCTION()
+	virtual void OnAbilityInputTriggeredInternal();
 
 	/** 本地客户端通知服务端执行输入事件：触发 */
 	UFUNCTION(Server, Reliable)
@@ -305,7 +329,11 @@ protected:
 
 	/** 输入事件：完成 */
 	UFUNCTION()
-	virtual void OnAbilityInputCompleted();
+	void OnAbilityInputCompleted();
+
+	/** 输入事件内部执行：完成 */
+	UFUNCTION()
+	virtual void OnAbilityInputCompletedInternal();
 
 	/** 本地客户端通知服务端执行输入事件：完成 */
 	UFUNCTION(Server, Reliable)
@@ -327,20 +355,51 @@ protected:
 
 protected:
 	/** 获取拥有者的动画实例 */
-	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability", Meta = (DisplayName = "On Ability Input Completed"))
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = true))
 	UAnimInstance* GetAnimInstanceOfOwner() const;
 
+	/** 让拥有者播放指定的蒙太奇，内部执行 */
+	UFUNCTION()
+	void PlayMontageForOwnerInternal(UAnimMontage* MontageToPlay, float PlayRate, FName Section);
+
 	/** 让拥有者播放指定的蒙太奇 */
-	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability", Meta = (DisplayName = "On Ability Input Completed"))
-	float PlayMontageForOwner(UAnimMontage* MontageToPlay, float PlayRate, FName Section);
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = true))
+	float PlayMontageForOwner(UAnimMontage* MontageToPlay, float PlayRate, FName Section, bool bStopOnAbilityEnded);
 
 	/** 本地通知服务端让拥有者播放指定的蒙太奇 */
 	UFUNCTION(Server, Reliable)
-	void Server_PlayMontageForOwner(UAnimMontage* MontageToPlay, float PlayRate, FName Section);
+	void Server_PlayMontageForOwner(UAnimMontage* MontageToPlay, float PlayRate, FName Section, bool bStopOnAbilityEnded);
 
 	/** 服务端广播通知让拥有者播放指定的蒙太奇 */
 	UFUNCTION(NetMulticast, Reliable)
 	void Multi_PlayMontageForOwner(UAnimMontage* MontageToPlay, float PlayRate, FName Section);
 
-#pragma endregion	
+	/** 拥者者播放的蒙太奇结束的事件 */
+	UFUNCTION()
+	void OnOwnerMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+	/** 蓝图端实现的拥者者播放的蒙太奇结束的事件 */
+	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability", Meta = (DisplayName = "On Owner Montage Ended"))
+	void ReceiveOnOwnerMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+	/** 拥者者播放的蒙太奇混合出的事件 */
+	UFUNCTION()
+	void OnOwnerMontageBlendOut(UAnimMontage* Montage, bool bInterrupted);
+
+	/** 蓝图端实现的拥者者播放的蒙太奇混合出的事件 */
+	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability", Meta = (DisplayName = "On Owner Montage Blend Out"))
+	void ReceiveOnOwnerMontageBlendOut(UAnimMontage* Montage, bool bInterrupted);
+
+	/** 广播强制停止某个蒙太奇的播放 */
+	UFUNCTION(NetMulticast, Reliable)
+	void Multi_StopMontagePlaying(UAnimMontage* MontageToStop);
+
+protected:
+	FOnMontageEnded OnMontageEnded;
+	FOnMontageBlendingOutStarted OnMontageBlendOut;
+
+	UPROPERTY()
+	UAnimMontage* MontageToStopOnAbilityEnded;
+
+#pragma endregion
 };

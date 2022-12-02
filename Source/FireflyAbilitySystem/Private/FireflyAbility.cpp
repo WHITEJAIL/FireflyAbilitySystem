@@ -121,7 +121,7 @@ void UFireflyAbility::ActivateAbility()
 	ReceiveActivateAbility();
 }
 
-void UFireflyAbility::EndAbility()
+void UFireflyAbility::EndAbilityInternal()
 {
 	if (!bIsActivating || !IsValid(GetOwnerManager()))
 	{
@@ -129,13 +129,26 @@ void UFireflyAbility::EndAbility()
 	}
 
 	UFireflyAbilitySystemComponent* Manager = GetOwnerManager();
-	
+
 	bIsActivating = false;
 	ExecuteAbilityTagRequirementToOwner(false);
 	Manager->OnAbilityEnded.Broadcast(GetClass());
 	Manager->OnAbilityEndActivation(this);
 	ReceiveEndAbility(false);
+	
+	if (bRemoveOnEndedExecution && GetOwnerRole() == ROLE_Authority)
+	{
+		GetOwnerManager()->RemoveAbility(GetClass());
+	}
 
+	if (IsValid(MontageToStopOnAbilityEnded) && GetOwnerRole() == ROLE_Authority)
+	{
+		Multi_StopMontagePlaying(MontageToStopOnAbilityEnded);
+	}
+}
+
+void UFireflyAbility::EndAbility()
+{
 	if (GetOwnerRole() == ROLE_Authority)
 	{
 		Client_EndAbility();
@@ -144,24 +157,19 @@ void UFireflyAbility::EndAbility()
 	{
 		Server_EndAbility();
 	}
-
-	if (bRemoveOnEndedExecution)
-	{
-		GetOwnerManager()->RemoveAbility(GetClass());
-	}
 }
 
 void UFireflyAbility::Server_EndAbility_Implementation()
 {
-	EndAbility();
+	EndAbilityInternal();
 }
 
 void UFireflyAbility::Client_EndAbility_Implementation()
 {
-	EndAbility();
+	EndAbilityInternal();
 }
 
-void UFireflyAbility::CancelAbility()
+void UFireflyAbility::CancelAbilityInternal()
 {
 	if (!bIsActivating || !IsValid(GetOwnerManager()))
 	{
@@ -176,7 +184,10 @@ void UFireflyAbility::CancelAbility()
 	Manager->OnAbilityCanceled.Broadcast(GetClass());
 	Manager->OnAbilityEndActivation(this);
 	ReceiveEndAbility(true);
+}
 
+void UFireflyAbility::CancelAbility()
+{
 	if (GetOwnerRole() == ROLE_Authority)
 	{
 		Client_CancelAbility();
@@ -189,12 +200,12 @@ void UFireflyAbility::CancelAbility()
 
 void UFireflyAbility::Server_CancelAbility_Implementation()
 {
-	CancelAbility();
+	CancelAbilityInternal();
 }
 
 void UFireflyAbility::Client_CancelAbility_Implementation()
 {
-	CancelAbility();
+	CancelAbilityInternal();
 }
 
 bool UFireflyAbility::CheckAbilityCost_Implementation() const
@@ -413,16 +424,18 @@ void UFireflyAbility::OnAbilityInputStarted()
 		return;
 	}
 
-	if (GetOwnerRole() == ROLE_AutonomousProxy)
-	{
-		Server_OnAbilityInputStarted();
-	}
+	Server_OnAbilityInputStarted();
+	OnAbilityInputStartedInternal();
+}
+
+void UFireflyAbility::OnAbilityInputStartedInternal()
+{
 	ReceiveOnAbilityInputStarted();
 }
 
 void UFireflyAbility::Server_OnAbilityInputStarted_Implementation()
 {
-	OnAbilityInputStarted();
+	OnAbilityInputStartedInternal();
 }
 
 void UFireflyAbility::OnAbilityInputOngoing()
@@ -432,16 +445,18 @@ void UFireflyAbility::OnAbilityInputOngoing()
 		return;
 	}
 
-	if (GetOwnerRole() == ROLE_AutonomousProxy)
-	{
-		Server_OnAbilityInputOngoing();
-	}
+	Server_OnAbilityInputOngoing();
+	OnAbilityInputOngoingInternal();
+}
+
+void UFireflyAbility::OnAbilityInputOngoingInternal()
+{
 	ReceiveOnAbilityInputOngoing();
 }
 
 void UFireflyAbility::Server_OnAbilityInputOngoing_Implementation()
 {
-	OnAbilityInputOngoing();
+	OnAbilityInputOngoingInternal();
 }
 
 void UFireflyAbility::OnAbilityInputCanceled()
@@ -451,16 +466,18 @@ void UFireflyAbility::OnAbilityInputCanceled()
 		return;
 	}
 
-	if (GetOwnerRole() == ROLE_AutonomousProxy)
-	{
-		Server_OnAbilityInputCanceled();
-	}
+	Server_OnAbilityInputCanceled();
+	OnAbilityInputCanceledInternal();
+}
+
+void UFireflyAbility::OnAbilityInputCanceledInternal()
+{
 	ReceiveOnAbilityInputCanceled();
 }
 
 void UFireflyAbility::Server_OnAbilityInputCanceled_Implementation()
 {
-	OnAbilityInputCanceled();
+	OnAbilityInputCanceledInternal();
 }
 
 void UFireflyAbility::OnAbilityInputTriggered()
@@ -472,11 +489,8 @@ void UFireflyAbility::OnAbilityInputTriggered()
 			return;
 		}
 
-		if (GetOwnerRole() == ROLE_AutonomousProxy)
-		{
-			Server_OnAbilityInputTriggered();
-		}
-		ReceiveOnAbilityInputTriggered();
+		Server_OnAbilityInputTriggered();
+		OnAbilityInputTriggeredInternal();
 
 		return;
 	}
@@ -486,16 +500,18 @@ void UFireflyAbility::OnAbilityInputTriggered()
 		return;
 	}
 
-	if (GetOwnerRole() == ROLE_AutonomousProxy)
-	{
-		Server_OnAbilityInputTriggered();
-	}
+	Server_OnAbilityInputTriggered();
+	OnAbilityInputTriggeredInternal();
+}
+
+void UFireflyAbility::OnAbilityInputTriggeredInternal()
+{
 	ReceiveOnAbilityInputTriggered();
 }
 
 void UFireflyAbility::Server_OnAbilityInputTriggered_Implementation()
 {
-	OnAbilityInputTriggered();
+	OnAbilityInputTriggeredInternal();
 }
 
 void UFireflyAbility::OnAbilityInputCompleted()
@@ -505,16 +521,18 @@ void UFireflyAbility::OnAbilityInputCompleted()
 		return;
 	}
 
-	if (GetOwnerRole() == ROLE_AutonomousProxy)
-	{
-		Server_OnAbilityInputCompleted();
-	}
+	Server_OnAbilityInputCompleted();
+	OnAbilityInputCompletedInternal();
+}
+
+void UFireflyAbility::OnAbilityInputCompletedInternal()
+{
 	ReceiveOnAbilityInputCompleted();
 }
 
 void UFireflyAbility::Server_OnAbilityInputCompleted_Implementation()
 {
-	OnAbilityInputCompleted();
+	OnAbilityInputCompletedInternal();
 }
 
 UAnimInstance* UFireflyAbility::GetAnimInstanceOfOwner() const
@@ -535,23 +553,75 @@ UAnimInstance* UFireflyAbility::GetAnimInstanceOfOwner() const
 	return OwnerSkeletalMesh->GetAnimInstance();
 }
 
-float UFireflyAbility::PlayMontageForOwner(UAnimMontage* MontageToPlay, float PlayRate, FName Section)
+void UFireflyAbility::PlayMontageForOwnerInternal(UAnimMontage* MontageToPlay, float PlayRate, FName Section)
 {
 	UAnimInstance* OwnerAnimInstance = GetAnimInstanceOfOwner();
 	if (!IsValid(OwnerAnimInstance))
 	{
+		return;
+	}
+
+	if (OwnerAnimInstance->Montage_IsPlaying(MontageToPlay)
+		&& OwnerAnimInstance->Montage_GetCurrentSection(MontageToPlay) == Section)
+	{
+		return;
+	}
+
+	OwnerAnimInstance->Montage_Play(MontageToPlay, PlayRate, EMontagePlayReturnType::Duration);
+	OwnerAnimInstance->Montage_JumpToSection(Section, MontageToPlay);
+
+	OnMontageEnded.BindUObject(this, &UFireflyAbility::OnOwnerMontageEnded);
+	OwnerAnimInstance->Montage_SetEndDelegate(OnMontageEnded, MontageToPlay);
+	OnMontageBlendOut.BindUObject(this, &UFireflyAbility::OnOwnerMontageBlendOut);
+	OwnerAnimInstance->Montage_SetBlendingOutDelegate(OnMontageBlendOut, MontageToPlay);
+}
+
+float UFireflyAbility::PlayMontageForOwner(UAnimMontage* MontageToPlay, float PlayRate, FName Section, bool bStopOnAbilityEnded)
+{
+	if (!bIsActivating || !IsValid(MontageToPlay))
+	{
 		return 0.f;
 	}
 
-	return OwnerAnimInstance->Montage_Play(MontageToPlay, PlayRate, EMontagePlayReturnType::Duration);
+	Server_PlayMontageForOwner(MontageToPlay, PlayRate, Section, bStopOnAbilityEnded);
+
+	return MontageToPlay->GetPlayLength() / (PlayRate * MontageToPlay->RateScale);
 }
 
 void UFireflyAbility::Server_PlayMontageForOwner_Implementation(UAnimMontage* MontageToPlay, float PlayRate,
-                                                                FName Section)
+	FName Section, bool bStopOnAbilityEnded)
 {
+	if (bStopOnAbilityEnded)
+	{
+		MontageToStopOnAbilityEnded = MontageToPlay;
+	}
+
+	Multi_PlayMontageForOwner(MontageToPlay, PlayRate, Section);
 }
 
 void UFireflyAbility::Multi_PlayMontageForOwner_Implementation(UAnimMontage* MontageToPlay, float PlayRate,
 	FName Section)
 {
+	PlayMontageForOwnerInternal(MontageToPlay, PlayRate, Section);
+}
+
+void UFireflyAbility::OnOwnerMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	OnMontageEnded.Unbind();
+}
+
+void UFireflyAbility::OnOwnerMontageBlendOut(UAnimMontage* Montage, bool bInterrupted)
+{
+	OnMontageBlendOut.Unbind();
+}
+
+void UFireflyAbility::Multi_StopMontagePlaying_Implementation(UAnimMontage* MontageToStop)
+{
+	UAnimInstance* OwnerAnimInstance = GetAnimInstanceOfOwner();
+	if (!IsValid(OwnerAnimInstance))
+	{
+		return;
+	}
+
+	OwnerAnimInstance->Montage_Stop(0.1f, MontageToStop);
 }

@@ -147,12 +147,16 @@ protected:
 #pragma region Ability_Execution
 
 protected:
-	/** 服务器激活技能，可能会验证技能是否真的可以执行 */
+	/** 尝试激活技能，内部执行 */
+	UFUNCTION()
+	void ActivateAbilityInternal(UFireflyAbility* Ability);
+
+	/** 服务端激活技能 */
 	UFUNCTION(Server, Reliable)
-	void Server_TryActivateAbility(UFireflyAbility* AbilityToActivate, bool bNeedValidation);
+	void Server_TryActivateAbility(UFireflyAbility* Ability);
 
 public:
-	/** 尝试通过类型激活并执行技能逻辑，该函数若在本地先行检测技能是否可激活，则服务端可能会进行二次验证 */
+	/** 尝试通过类型激活并执行技能逻辑，该函数会尝试在本地客户端激活技能，在服务端进行二次验证 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
 	virtual UFireflyAbility* TryActivateAbilityByClass(TSubclassOf<UFireflyAbility> AbilityToActivate);
 
