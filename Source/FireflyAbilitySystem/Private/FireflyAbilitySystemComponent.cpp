@@ -1292,6 +1292,72 @@ bool UFireflyAbilitySystemComponent::GetSingleActiveEffectStackingCount(TSubclas
 	return true;
 }
 
+UFireflyEffect* UFireflyAbilitySystemComponent::MakeDynamicEffect(TSubclassOf<UFireflyEffect> EffectType)
+{
+	return NewObject<UFireflyEffect>(this, EffectType);
+}
+
+UFireflyEffect* UFireflyAbilitySystemComponent::AssignDynamicEffectAssetTags(UFireflyEffect* EffectInstance,
+	FGameplayTagContainer NewEffectAssetTags)
+{
+	EffectInstance->TagsForEffectAsset.AppendTags(NewEffectAssetTags);
+
+	return EffectInstance;
+}
+
+UFireflyEffect* UFireflyAbilitySystemComponent::AssignDynamicEffectGrantTags(UFireflyEffect* EffectInstance,
+	FGameplayTagContainer NewEffectGrantTags)
+{
+	EffectInstance->TagsApplyToOwnerOnApplied.AppendTags(NewEffectGrantTags);
+
+	return EffectInstance;
+}
+
+UFireflyEffect* UFireflyAbilitySystemComponent::SetDynamicEffectDuration(UFireflyEffect* EffectInstance, float Duration)
+{
+	EffectInstance->Duration = Duration;
+
+	return EffectInstance;
+}
+
+UFireflyEffect* UFireflyAbilitySystemComponent::SetDynamicEffectPeriodicInterval(UFireflyEffect* EffectInstance,
+	float PeriodicInterval)
+{
+	EffectInstance->PeriodicInterval = PeriodicInterval;
+
+	return EffectInstance;
+}
+
+UFireflyEffect* UFireflyAbilitySystemComponent::AssignDynamicEffectModifiers(UFireflyEffect* EffectInstance,
+	FFireflyEffectModifierData Modifier)
+{
+	bool bHasModifierType = false;
+	for (auto EffectModifier : EffectInstance->Modifiers)
+	{
+		if (EffectModifier.TypeEqual(Modifier))
+		{
+			EffectModifier = Modifier;
+			bHasModifierType = true;
+			break;
+		}
+	}
+
+	if (!bHasModifierType)
+	{
+		EffectInstance->Modifiers.Emplace(Modifier);
+	}
+
+	return EffectInstance;
+}
+
+UFireflyEffect* UFireflyAbilitySystemComponent::AssignDynamicEffectSpecificProperties(UFireflyEffect* EffectInstance,
+	FFireflySpecificProperty NewSpecificProperty)
+{
+	EffectInstance->SpecificProperties.Emplace(NewSpecificProperty);
+
+	return EffectInstance;
+}
+
 void UFireflyAbilitySystemComponent::AppendEffectSpecificProperties(
 	TArray<FFireflySpecificProperty> InSpecificProperties)
 {

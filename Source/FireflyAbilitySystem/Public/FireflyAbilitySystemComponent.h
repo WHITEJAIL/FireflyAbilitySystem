@@ -459,6 +459,40 @@ public:
 #pragma endregion
 
 
+#pragma region Effect_Dynamic
+
+public:
+	/** 根据类型动态构建一个效果实例 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
+	UFireflyEffect* MakeDynamicEffect(TSubclassOf<UFireflyEffect> EffectType);
+
+	/** 为动态创建的效果实例添加资产Tags */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
+	UFireflyEffect* AssignDynamicEffectAssetTags(UFireflyEffect* EffectInstance, FGameplayTagContainer NewEffectAssetTags);
+
+	/** 为动态创建的效果实例添加赋予给Owner的Tags */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
+	UFireflyEffect* AssignDynamicEffectGrantTags(UFireflyEffect* EffectInstance, FGameplayTagContainer NewEffectGrantTags);
+
+	/** 为动态创建的效果实例设置持续时间 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
+	UFireflyEffect* SetDynamicEffectDuration(UFireflyEffect* EffectInstance, float Duration);
+
+	/** 为动态创建的效果实例设置周期性执行的间隔 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
+	UFireflyEffect* SetDynamicEffectPeriodicInterval(UFireflyEffect* EffectInstance, float PeriodicInterval);
+
+	/** 为动态创建的效果实例设置属性修改器 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
+	UFireflyEffect* AssignDynamicEffectModifiers(UFireflyEffect* EffectInstance, FFireflyEffectModifierData NewModifier);
+
+	/** 为动态创建的效果实例设置属性修改器 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
+	UFireflyEffect* AssignDynamicEffectSpecificProperties(UFireflyEffect* EffectInstance, FFireflySpecificProperty NewSpecificProperty);
+
+#pragma endregion
+
+
 #pragma region Effect_Modifier
 
 public:
@@ -480,6 +514,7 @@ protected:
 	TArray<FFireflySpecificProperty> SpecificProperties;
 
 #pragma endregion
+
 
 #pragma region TagManagement
 
