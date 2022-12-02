@@ -1091,7 +1091,7 @@ void UFireflyAbilitySystemComponent::ApplyEffectDynamicConstructorToOwner(AActor
 		return;
 	}
 
-	UFireflyEffect* Effect = NewObject<UFireflyEffect>(this);
+	UFireflyEffect* Effect = NewObject<UFireflyEffect>(this, IsValid(EffectSetup.EffectType) ? EffectSetup.EffectType : UFireflyEffect::StaticClass());
 	Effect->SetupEffectByDynamicConstructor(EffectSetup);
 	ApplyEffectToOwner(Instigator, Effect, StackToApply);
 }
@@ -1183,10 +1183,12 @@ void UFireflyAbilitySystemComponent::AddOrRemoveActiveEffect(UFireflyEffect* InE
 	if (bIsAdd)
 	{
 		ActiveEffects.Emplace(InEffect);
+		AppendEffectSpecificProperties(InEffect->SpecificProperties);
 	}
 	else
 	{
 		ActiveEffects.RemoveSingle(InEffect);
+		RemoveEffectSpecificProperties(InEffect->SpecificProperties);
 	}
 }
 
@@ -1288,6 +1290,24 @@ bool UFireflyAbilitySystemComponent::GetSingleActiveEffectStackingCount(TSubclas
 	StackingCount = Effects[0]->StackCount;
 
 	return true;
+}
+
+void UFireflyAbilitySystemComponent::AppendEffectSpecificProperties(
+	TArray<FFireflySpecificProperty> InSpecificProperties)
+{
+	for (auto SpecProperty : InSpecificProperties)
+	{
+		SpecificProperties.Emplace(SpecProperty);
+	}
+}
+
+void UFireflyAbilitySystemComponent::RemoveEffectSpecificProperties(
+	TArray<FFireflySpecificProperty> InSpecificProperties)
+{
+	for (auto SpecProperty : InSpecificProperties)
+	{
+		SpecificProperties.RemoveSingle(SpecProperty);
+	}
 }
 
 FGameplayTagContainer UFireflyAbilitySystemComponent::GetContainedTags() const

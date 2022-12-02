@@ -196,6 +196,10 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Effect", Meta = (DisplayName = "Apply Effect"))
 	void ReceiveApplyEffect();
 
+	/** 不为Instant的效果第一次被应用时执行的逻辑 */
+	UFUNCTION()
+	virtual void ApplyEffectFirstTime(UFireflyAbilitySystemComponent* Manager);
+
 	/** 效果的执行逻辑 */
 	UFUNCTION()
 	virtual void ExecuteEffect();
@@ -230,7 +234,7 @@ protected:
 
 protected:
 	/** 该效果携带的特殊属性 */
-	UPROPERTY(EditDefaultsOnly, Category = Modifier)
+	UPROPERTY(EditDefaultsOnly, Category = Instancing)
 	EFireflyEffectInstigatorApplicationPolicy InstigatorApplicationPolicy;
 
 	/** 效果执行的发起者 */

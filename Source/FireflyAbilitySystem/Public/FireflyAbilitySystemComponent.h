@@ -459,6 +459,28 @@ public:
 #pragma endregion
 
 
+#pragma region Effect_Modifier
+
+public:
+	/** 为管理器添加一些特殊属性 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
+	void AppendEffectSpecificProperties(TArray<FFireflySpecificProperty> InSpecificProperties);
+
+	/** 从管理器中移除一些特殊属性 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
+	void RemoveEffectSpecificProperties(TArray<FFireflySpecificProperty> InSpecificProperties);
+
+	/** 获取管理器当前携带的特殊属性集合 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Effect")
+	FORCEINLINE TArray<FFireflySpecificProperty> GetSpecificProperties() const { return SpecificProperties; }
+
+protected:
+	/** 被效果赋予的特殊属性集合 */
+	UPROPERTY()
+	TArray<FFireflySpecificProperty> SpecificProperties;
+
+#pragma endregion
+
 #pragma region TagManagement
 
 public:

@@ -262,11 +262,7 @@ void UFireflyEffect::ApplyEffect(AActor* InInstigator, AActor* InTarget, int32 S
 		/** 第一次执行效果逻辑 */
 		if (!GetWorld()->GetTimerManager().IsTimerActive(DurationTimer))
 		{
-			Manager->AddOrRemoveActiveEffect(this, true);
-			Manager->OnActiveEffectApplied.Broadcast(GetClass(), Duration);
-			Manager->OnTagContainerUpdated.AddDynamic(this, &UFireflyEffect::OnOwnerTagContainerUpdated);
-			ExecuteEffectTagRequirementToOwner(true);
-			ExecuteEffect();
+			ApplyEffectFirstTime(Manager);
 		}
 
 		/** 有新的应用被申请，尝试刷新持续时间，尝试重置周期性执行执行 */
@@ -282,11 +278,7 @@ void UFireflyEffect::ApplyEffect(AActor* InInstigator, AActor* InTarget, int32 S
 	/** 第一次执行有堆叠的效果逻辑 */
 	if (!GetWorld()->GetTimerManager().IsTimerActive(DurationTimer))
 	{
-		Manager->AddOrRemoveActiveEffect(this, true);
-		Manager->OnTagContainerUpdated.AddDynamic(this, &UFireflyEffect::OnOwnerTagContainerUpdated);
-		Manager->OnTagContainerUpdated.AddDynamic(this, &UFireflyEffect::OnOwnerTagContainerUpdated);
-		ExecuteEffectTagRequirementToOwner(true);
-		ExecuteEffect();
+		ApplyEffectFirstTime(Manager);
 	}
 
 	/** 尝试执行满堆叠时的逻辑，如果满堆叠时清理堆叠并结束执行，直接结束效果 */
@@ -298,6 +290,20 @@ void UFireflyEffect::ApplyEffect(AActor* InInstigator, AActor* InTarget, int32 S
 	/** 尝试刷新持续时间，尝试重置周期性执行执行 */
 	TryExecuteOrRefreshDuration();
 	TryExecuteOrResetPeriodicity();
+}
+
+void UFireflyEffect::ApplyEffectFirstTime(UFireflyAbilitySystemComponent* Manager)
+{
+	if (!IsValid(Manager))
+	{
+		return;
+	}
+
+	Manager->AddOrRemoveActiveEffect(this, true);
+	Manager->OnActiveEffectApplied.Broadcast(GetClass(), Duration);
+	Manager->OnTagContainerUpdated.AddDynamic(this, &UFireflyEffect::OnOwnerTagContainerUpdated);
+	ExecuteEffectTagRequirementToOwner(true);
+	ExecuteEffect();
 }
 
 void UFireflyEffect::ExecuteEffect()
