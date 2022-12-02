@@ -102,7 +102,7 @@ void UFireflyAbility::ActivateAbility()
 	{
 		for (auto Ability : GetOwnerManager()->GetActivatingAbilities())
 		{
-			if (RequiredActivatingAbilities.Contains(Ability->GetClass()))
+			if (AbilityClassesRequired.Contains(Ability->GetClass()))
 			{
 				Ability->CancelAbility();
 			}
@@ -144,6 +144,7 @@ void UFireflyAbility::EndAbilityInternal()
 	if (IsValid(MontageToStopOnAbilityEnded) && GetOwnerRole() == ROLE_Authority)
 	{
 		Multi_StopMontagePlaying(MontageToStopOnAbilityEnded);
+		MontageToStopOnAbilityEnded = nullptr;
 	}
 }
 
@@ -399,18 +400,18 @@ bool UFireflyAbility::CanActivateAbility() const
 
 	/** 技能管理器中是否存在该技能激活需要的前置激活中的技能 */
 	bool bHasRequiredActivatingAbility = true;
-	if (RequiredActivatingAbilities.Num())
+	if (AbilityClassesRequired.Num())
 	{
 		bHasRequiredActivatingAbility = false;
 		for (auto OtherAbility : Manager->GetActivatingAbilities())
 		{
-			if (RequiredActivatingAbilities.Contains(OtherAbility->GetClass()))
+			if (AbilityClassesRequired.Contains(OtherAbility->GetClass()))
 			{
 				bHasRequiredActivatingAbility = true;
 				break;
 			}
 		}
-	}	
+	}
 
 	return bBlueprintCanActivate
 		&& bOwnerHasRequiredTags

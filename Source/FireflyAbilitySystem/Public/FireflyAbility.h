@@ -225,9 +225,9 @@ protected:
 	void ExecuteAbilityTagRequirementToOwner(bool bIsActivated);
 
 protected:
-	/** 该技能的激活需要的正在执行的技能，数组中有一个技能正在激活，都可以让该技能激活 */
+	/** 该技能的激活需要的正在执行的技能的类型，数组中有一个技能正在激活，都可以让该技能激活 */
 	UPROPERTY(EditDefaultsOnly, Category = "ActivationRequirement|AbilityRequired")
-	TArray<TSubclassOf<UFireflyAbility>> RequiredActivatingAbilities;
+	TArray<TSubclassOf<UFireflyAbility>> AbilityClassesRequired;
 
 	/** 该技能的激活是否会取消其前置依赖技能的执行 */
 	UPROPERTY(EditDefaultsOnly, Category = "ActivationRequirement|AbilityRequired")
