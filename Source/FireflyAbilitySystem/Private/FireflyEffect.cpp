@@ -4,6 +4,7 @@
 #include "FireflyEffect.h"
 
 #include "FireflyAbilitySystemComponent.h"
+#include "FireflyEffectModifierCalculator.h"
 
 UFireflyEffect::UFireflyEffect(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -319,8 +320,22 @@ void UFireflyEffect::ExecuteEffect()
 		// 如果效果的持续时间策略为Instant，或者效果在持续期间周期性执行
 		for (auto Modifier : Modifiers)
 		{
+			float ModValueToUse = Modifier.ModValue;
+			if (IsValid(Modifier.CalculatorClass))
+			{
+				/** 尝试使用计算器 */
+				if (!IsValid(Modifier.CalculatorInstance))
+				{
+					Modifier.CalculatorInstance = NewObject<UFireflyEffectModifierCalculator>(this, Modifier.CalculatorClass);
+				}
+				if (IsValid(Modifier.CalculatorInstance))
+				{
+					ModValueToUse = Modifier.CalculatorInstance->CalculateModifierValue(this);
+				}
+			}
+
 			Manager->ApplyModifierToAttributeInstant(Modifier.AttributeType,
-				Modifier.ModOperator, this, Modifier.ModValue);
+				Modifier.ModOperator, this, ModValueToUse);
 		}
 	}
 	else
@@ -333,8 +348,22 @@ void UFireflyEffect::ExecuteEffect()
 		// 如果效果在持续期间不周期性执行
 		for (auto Modifier : Modifiers)
 		{
+			float ModValueToUse = Modifier.ModValue;
+			if (IsValid(Modifier.CalculatorClass))
+			{
+				/** 尝试使用计算器 */
+				if (!IsValid(Modifier.CalculatorInstance))
+				{
+					Modifier.CalculatorInstance = NewObject<UFireflyEffectModifierCalculator>(this, Modifier.CalculatorClass);
+				}
+				if (IsValid(Modifier.CalculatorInstance))
+				{
+					ModValueToUse = Modifier.CalculatorInstance->CalculateModifierValue(this);
+				}
+			}
+
 			Manager->ApplyModifierToAttribute(Modifier.AttributeType, Modifier.ModOperator,
-				this, Modifier.ModValue, StackCount);
+				this, ModValueToUse, StackCount);
 		}
 	}	
 

@@ -9,6 +9,7 @@
 
 class UFireflyAttribute;
 class UFireflyEffect;
+class UFireflyEffectModifierCalculator;
 
 #pragma region Attribute
 
@@ -273,23 +274,36 @@ struct FFireflyEffectModifierData
 	GENERATED_BODY()
 
 public:
-	/** 修改的属性类型 */
+	/** 修改器针对的属性类型 */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
 	TEnumAsByte<EFireflyAttributeType> AttributeType = EFireflyAttributeType::AttributeType_Default;
 
-	/** 修改的操作符 */
+	/** 修改器执行的操作符 */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
 	EFireflyAttributeModOperator ModOperator = EFireflyAttributeModOperator::None;
 
-	/** 修改的操作值 */
+	/** 修改器的操作值 */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
 	float ModValue = 0.f;
+
+	/** 修改器计算操作值使用的计算器 */
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
+	TSubclassOf<UFireflyEffectModifierCalculator> CalculatorClass;
+
+	/** 修改器起作用时生成的计算器实例 */
+	UPROPERTY()
+	UFireflyEffectModifierCalculator* CalculatorInstance = nullptr;
 
 	FFireflyEffectModifierData() {}
 
 	FORCEINLINE bool operator==(const FFireflyEffectModifierData& Other) const
 	{
-		return AttributeType == Other.AttributeType && ModOperator == Other.ModOperator && ModValue == Other.ModValue;
+		bool bModValueEqual = ModValue == Other.ModValue;
+		if (CalculatorInstance != nullptr && Other.CalculatorInstance != nullptr)
+		{
+			bModValueEqual = CalculatorInstance == Other.CalculatorInstance;
+		}
+		return AttributeType == Other.AttributeType && ModOperator == Other.ModOperator && bModValueEqual;
 	}
 
 	FORCEINLINE bool TypeEqual(const FFireflyEffectModifierData& Other) const
@@ -319,28 +333,6 @@ public:
 	{
 		return PropertyTag.MatchesTagExact(Other.PropertyTag) && PropertyValue == Other.PropertyValue;
 	}
-};
-
-/** 基于某个效果的类型动态构建效果的桥接数据 */
-USTRUCT(BlueprintType)
-struct FFireflyEffectDynamicHandle
-{
-	GENERATED_BODY()
-
-public:
-	/** 构建效果基于的类 */
-	UPROPERTY(BlueprintReadWrite)
-	TSubclassOf<UFireflyEffect> EffectType = nullptr;
-
-	/** 构建效果要分配的属性修改器，需要原始的属性类中定义了下述的属性修改器 */
-	UPROPERTY(BlueprintReadWrite)
-	TArray<FFireflyEffectModifierData> AssignableEffectModifiers = TArray<FFireflyEffectModifierData>{};
-
-	/** 构建效果要添加的特殊属性 */
-	UPROPERTY(BlueprintReadWrite)
-	TArray<FFireflySpecificProperty> SpecificPropertiesToAdd = TArray<FFireflySpecificProperty>{};
-
-	FFireflyEffectDynamicHandle() {}
 };
 
 /** 效果的动态构建器 */
