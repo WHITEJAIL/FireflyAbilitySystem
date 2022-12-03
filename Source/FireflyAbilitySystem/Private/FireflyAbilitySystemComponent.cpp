@@ -5,6 +5,7 @@
 
 #include "EnhancedInputComponent.h"
 #include "FireflyAbility.h"
+#include "FireflyAbilitySystemLibrary.h"
 #include "FireflyAttribute.h"
 #include "FireflyEffect.h"
 #include "Engine/ActorChannel.h"
@@ -131,7 +132,32 @@ UFireflyAbility* UFireflyAbilitySystemComponent::GetGrantedAbilityByClass(
 	return OutAbility;
 }
 
-void UFireflyAbilitySystemComponent::GrantAbility(TSubclassOf<UFireflyAbility> AbilityToGrant)
+void UFireflyAbilitySystemComponent::GrantAbilityByID(FName AbilityID)
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	TSubclassOf<UFireflyAbility> AbilityToGrant = UFireflyAbilitySystemLibrary::GetAbilityClassFromDataTable(AbilityID);
+	if (!IsValid(AbilityToGrant))
+	{
+		return;
+	}
+
+	if (IsValid(GetGrantedAbilityByClass(AbilityToGrant)))
+	{
+		return;
+	}
+
+	FName NewAbilityName = FName(AbilityToGrant->GetName() + FString("_") + GetOwner()->GetName());
+	UFireflyAbility* NewAbility = NewObject<UFireflyAbility>(this, AbilityToGrant, NewAbilityName);
+	NewAbility->AbilityID = AbilityID;
+	NewAbility->OnAbilityGranted();
+	GrantedAbilities.Emplace(NewAbility);
+}
+
+void UFireflyAbilitySystemComponent::GrantAbilityByClass(TSubclassOf<UFireflyAbility> AbilityToGrant)
 {
 	if (!IsValid(AbilityToGrant) || !HasAuthority())
 	{
@@ -149,9 +175,15 @@ void UFireflyAbilitySystemComponent::GrantAbility(TSubclassOf<UFireflyAbility> A
 	GrantedAbilities.Emplace(NewAbility);
 }
 
-void UFireflyAbilitySystemComponent::RemoveAbility(TSubclassOf<UFireflyAbility> AbilityToRemove)
+void UFireflyAbilitySystemComponent::RemoveAbilityByID(FName AbilityID, bool bRemoveOnEnded)
 {
-	if (!IsValid(AbilityToRemove) || !HasAuthority())
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	TSubclassOf<UFireflyAbility> AbilityToRemove = UFireflyAbilitySystemLibrary::GetAbilityClassFromDataTable(AbilityID);
+	if (!IsValid(AbilityToRemove))
 	{
 		return;
 	}
@@ -164,13 +196,20 @@ void UFireflyAbilitySystemComponent::RemoveAbility(TSubclassOf<UFireflyAbility> 
 
 	if (Ability->bIsActivating)
 	{
+		if (bRemoveOnEnded)
+		{
+			Ability->bRemoveOnEndedExecution = true;
+
+			return;
+		}
+
 		Ability->CancelAbility();
 	}
 	GrantedAbilities.RemoveSingle(Ability);
 	Ability->MarkAsGarbage();
 }
 
-void UFireflyAbilitySystemComponent::RemoveAbilityOnEnded(TSubclassOf<UFireflyAbility> AbilityToRemove)
+void UFireflyAbilitySystemComponent::RemoveAbilityByClass(TSubclassOf<UFireflyAbility> AbilityToRemove, bool bRemoveOnEnded)
 {
 	if (!IsValid(AbilityToRemove) || !HasAuthority())
 	{
@@ -185,13 +224,17 @@ void UFireflyAbilitySystemComponent::RemoveAbilityOnEnded(TSubclassOf<UFireflyAb
 
 	if (Ability->bIsActivating)
 	{
-		Ability->bRemoveOnEndedExecution = true;
+		if (bRemoveOnEnded)
+		{
+			Ability->bRemoveOnEndedExecution = true;
+
+			return;
+		}
+
+		Ability->CancelAbility();		
 	}
-	else
-	{
-		GrantedAbilities.RemoveSingle(Ability);
-		Ability->MarkAsGarbage();
-	}
+	GrantedAbilities.RemoveSingle(Ability);
+	Ability->MarkAsGarbage();
 }
 
 void UFireflyAbilitySystemComponent::ActivateAbilityInternal(UFireflyAbility* Ability)
@@ -209,6 +252,17 @@ void UFireflyAbilitySystemComponent::Server_TryActivateAbility_Implementation(UF
 	}
 
 	ActivateAbilityInternal(Ability);
+}
+
+UFireflyAbility* UFireflyAbilitySystemComponent::TryActivateAbilityByID(FName AbilityID)
+{
+	TSubclassOf<UFireflyAbility> AbilityToActivate = UFireflyAbilitySystemLibrary::GetAbilityClassFromDataTable(AbilityID);
+	if (!IsValid(AbilityToActivate))
+	{
+		return nullptr;
+	}
+
+	return TryActivateAbilityByClass(AbilityToActivate);
 }
 
 UFireflyAbility* UFireflyAbilitySystemComponent::TryActivateAbilityByClass(
@@ -290,7 +344,7 @@ void UFireflyAbilitySystemComponent::SetAbilityCooldownRemaining(TSubclassOf<UFi
 
 	CooldownEffects[0]->SetTimeRemainingOfDuration(NewTimeRemaining);
 
-	OnAbilityCooldownRemainingChanged.Broadcast(AbilityType, NewTimeRemaining, CooldownEffects[0]->Duration);
+	OnAbilityCooldownRemainingChanged.Broadcast(Ability->AbilityID, AbilityType, NewTimeRemaining, CooldownEffects[0]->Duration);
 }
 
 FGameplayTagContainer UFireflyAbilitySystemComponent::GetBlockAbilityTags() const
@@ -1270,7 +1324,7 @@ void UFireflyAbilitySystemComponent::SetSingleActiveEffectTimeRemaining(TSubclas
 
 	Effects[0]->SetTimeRemainingOfDuration(NewTimeRemaining);
 
-	OnEffectTimeRemainingChanged.Broadcast(EffectType, NewTimeRemaining, Effects[0]->Duration);
+	OnEffectTimeRemainingChanged.Broadcast(Effects[0]->EffectID, EffectType, NewTimeRemaining, Effects[0]->Duration);
 }
 
 bool UFireflyAbilitySystemComponent::GetSingleActiveEffectStackingCount(TSubclassOf<UFireflyEffect> EffectType,

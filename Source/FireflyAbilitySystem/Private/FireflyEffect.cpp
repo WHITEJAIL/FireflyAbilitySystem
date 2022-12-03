@@ -180,7 +180,7 @@ void UFireflyEffect::AddEffectStack(int32 StackCountToAdd)
 	}
 	
 	ReceiveAddEffectStack(StackCountToAdd);
-	GetOwnerManager()->OnEffectStackingChanged.Broadcast(GetClass(), StackCount, OldStackCount);
+	GetOwnerManager()->OnEffectStackingChanged.Broadcast(EffectID, GetClass(), StackCount, OldStackCount);
 }
 
 bool UFireflyEffect::ReduceEffectStack(int32 StackCountToReduce)
@@ -195,7 +195,7 @@ bool UFireflyEffect::ReduceEffectStack(int32 StackCountToReduce)
 	StackCount = FMath::Clamp<int32>(StackCount - StackCountToReduce, 0, OldStackCount);
 
 	ReceiveReduceEffectStack(StackCountToReduce);
-	GetOwnerManager()->OnEffectStackingChanged.Broadcast(GetClass(), StackCount, OldStackCount);
+	GetOwnerManager()->OnEffectStackingChanged.Broadcast(EffectID, GetClass(), StackCount, OldStackCount);
 
 	if (StackCount == 0)
 	{
@@ -301,7 +301,7 @@ void UFireflyEffect::ApplyEffectFirstTime(UFireflyAbilitySystemComponent* Manage
 	}
 
 	Manager->AddOrRemoveActiveEffect(this, true);
-	Manager->OnActiveEffectApplied.Broadcast(GetClass(), Duration);
+	Manager->OnActiveEffectApplied.Broadcast(EffectID, GetClass(), Duration);
 	Manager->OnTagContainerUpdated.AddDynamic(this, &UFireflyEffect::OnOwnerTagContainerUpdated);
 	ExecuteEffectTagRequirementToOwner(true);
 	ExecuteEffect();
@@ -425,7 +425,7 @@ void UFireflyEffect::RemoveEffect()
 		ReduceEffectStack(StackCount);
 	}
 
-	Manager->OnActiveEffectRemoved.Broadcast(GetClass());
+	Manager->OnActiveEffectRemoved.Broadcast(EffectID, GetClass());
 	/** 停止监听管理器的TagContainer更新 */
 	Manager->OnTagContainerUpdated.RemoveDynamic(this, &UFireflyEffect::OnOwnerTagContainerUpdated);
 

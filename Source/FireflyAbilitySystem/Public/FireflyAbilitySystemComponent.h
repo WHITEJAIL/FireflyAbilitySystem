@@ -58,23 +58,23 @@ public:
 };
 
 /** 技能执行周期的代理声明 */
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFireflyAbilityExecutionDelegate, TSubclassOf<UFireflyAbility>, AbilityType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FFireflyAbilityExecutionDelegate, FName, AbilityID, TSubclassOf<UFireflyAbility>, AbilityType);
 /** 技能执行冷却的代理声明 */
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FFireflyAbilityCooldownExecutionDelegate, TSubclassOf<UFireflyAbility>, AbilityType, float, TotoalDuration);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FFireflyAbilityCooldownExecutionDelegate, FName, AbilityID, TSubclassOf<UFireflyAbility>, AbilityType, float, TotoalDuration);
 /** 技能冷却的剩余时间被更新的代理声明 */
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FFireflyAbilityCooldownRemainingChangedDelegate, TSubclassOf<UFireflyAbility>, AbilityType, float, NewTimeRemaining, float, TotalDuration);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FFireflyAbilityCooldownRemainingChangedDelegate, FName, AbilityID, TSubclassOf<UFireflyAbility>, AbilityType, float, NewTimeRemaining, float, TotalDuration);
 
 /** 属性数值变更的代理声明 */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FFireflyAttributeValueChangeDelegate, TEnumAsByte<EFireflyAttributeType>, AttributeType, float, OldValue, float, Newvalue);
 
 /** 效果执行开始的代理声明 */
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FFireflyEffectStartExecutingDelegate, TSubclassOf<UFireflyEffect>, EffectType, float, TotoalDuration);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FFireflyEffectStartExecutingDelegate, FName, EffectID, TSubclassOf<UFireflyEffect>, EffectType, float, TotoalDuration);
 /** 效果执行结束的代理声明 */
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFireflyEffectEndExecutingDelegate, TSubclassOf<UFireflyEffect>, EffectType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FFireflyEffectEndExecutingDelegate, FName, EffectID, TSubclassOf<UFireflyEffect>, EffectType);
 /** 效果的剩余持续时间被更新的代理声明 */
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FFireflyEffectTimeRemainingChangedDelegate, TSubclassOf<UFireflyEffect>, EffectType, float, NewTimeRemaining, float, TotalDuration);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FFireflyEffectTimeRemainingChangedDelegate, FName, EffectID, TSubclassOf<UFireflyEffect>, EffectType, float, NewTimeRemaining, float, TotalDuration);
 /** 效果的堆叠数被更新的代理声明 */
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FFireflyEffectStackingChangedDelegate, TSubclassOf<UFireflyEffect>, EffectType, int32, NewStackCount, int32, OldStackCount);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FFireflyEffectStackingChangedDelegate, FName, EffectID, TSubclassOf<UFireflyEffect>, EffectType, int32, NewStackCount, int32, OldStackCount);
 
 /** Tag存在周期的代理声明 */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFireflyGameplayTagExecutionDelegate, FGameplayTagContainer, TagsUpdated);
@@ -124,17 +124,21 @@ protected:
 	FORCEINLINE UFireflyAbility* GetGrantedAbilityByClass(TSubclassOf<UFireflyAbility> AbilityType) const;
 
 public:
-	/** 为技能管理器赋予一个技能，必须在拥有权限端执行，否则无效 */
+	/** 根据ID为技能管理器赋予一个技能，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
-	virtual void GrantAbility(TSubclassOf<UFireflyAbility> AbilityToGrant);
+	virtual void GrantAbilityByID(FName AbilityID);
 
-	/** 从技能管理器中移除一个技能，必须在拥有权限端执行，否则无效 */
+	/** 根据类型为技能管理器赋予一个技能，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
-	virtual void RemoveAbility(TSubclassOf<UFireflyAbility> AbilityToRemove);
+	virtual void GrantAbilityByClass(TSubclassOf<UFireflyAbility> AbilityToGrant);
 
-	/** 从技能管理器中移除一个技能，必须在拥有权限端执行，否则无效 */
+	/** 根据ID从技能管理器移除一个技能，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
-	virtual void RemoveAbilityOnEnded(TSubclassOf<UFireflyAbility> AbilityToRemove);
+	virtual void RemoveAbilityByID(FName AbilityID, bool bRemoveOnEnded);
+
+	/** 根据类型从技能管理器移除一个技能，必须在拥有权限端执行，否则无效 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
+	virtual void RemoveAbilityByClass(TSubclassOf<UFireflyAbility> AbilityToRemove, bool bRemoveOnEnded);
 
 protected:
 	/** 技能管理器被赋予的技能 */
@@ -156,6 +160,10 @@ protected:
 	void Server_TryActivateAbility(UFireflyAbility* Ability);
 
 public:
+	/** 尝试通过ID激活并执行技能逻辑，该函数会尝试在本地客户端激活技能，在服务端进行二次验证 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
+	virtual UFireflyAbility* TryActivateAbilityByID(FName AbilityID);
+
 	/** 尝试通过类型激活并执行技能逻辑，该函数会尝试在本地客户端激活技能，在服务端进行二次验证 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
 	virtual UFireflyAbility* TryActivateAbilityByClass(TSubclassOf<UFireflyAbility> AbilityToActivate);

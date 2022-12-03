@@ -45,7 +45,12 @@ protected:
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
 	FORCEINLINE UFireflyAbilitySystemComponent* GetOwnerManager() const;
 
+protected:
 	friend UFireflyAbilitySystemComponent;
+
+	/** 技能的唯一ID标识 */
+	UPROPERTY()
+	FName AbilityID;
 
 #pragma endregion
 

@@ -47,6 +47,10 @@ protected:
 protected:
 	friend UFireflyAbilitySystemComponent;
 
+	/** 效果的唯一标识ID */
+	UPROPERTY()
+	FName EffectID;
+
 #pragma endregion
 
 

@@ -34,10 +34,7 @@ class FIREFLYABILITYSYSTEM_API UFireflyAbilitySystemSettings : public UDeveloper
 {
 	GENERATED_UCLASS_BODY()
 
-public:
-	// PhysicalMaterial Surface Types
-	UPROPERTY(Config, EditAnywhere, Category = AttributeTypes)
-	TArray<FFireflyAttributeTypeName> AttributeTypes;
+#pragma region Basic
 
 public:
 	static UFireflyAbilitySystemSettings* Get();
@@ -57,5 +54,25 @@ public:
 	/** Load Attribute Type data from INI file **/
 	/** this changes displayname meta data. That means we won't need it outside of editor*/
 	void LoadAttributeType();
-#endif	
+#endif
+
+#pragma endregion
+
+
+#pragma region Settings
+
+public:
+	// 技能系统数据驱动使用的数据表：技能数据表
+	UPROPERTY(Config, EditAnywhere, Category = DataDriven)
+	TSoftObjectPtr<UDataTable> AbilityTable;
+
+	// 技能系统数据驱动使用的数据表：效果数据表
+	UPROPERTY(Config, EditAnywhere, Category = DataDriven)
+	TSoftObjectPtr<UDataTable> EffectTable;
+
+	// 技能系统使用的属性类型
+	UPROPERTY(Config, EditAnywhere, Category = AttributeTypes)
+	TArray<FFireflyAttributeTypeName> AttributeTypes;
+
+#pragma endregion
 };

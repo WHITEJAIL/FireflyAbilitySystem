@@ -7,7 +7,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "FireflyAbilitySystemLibrary.generated.h"
 
-class UFireflyEffectManagerComponent;
+class UFireflyAbility;
 class UFireflyEffect;
 
 /**
@@ -17,6 +17,28 @@ UCLASS()
 class FIREFLYABILITYSYSTEM_API UFireflyAbilitySystemLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
+
+#pragma region DataDriven
+
+public:
+	/** 获取全局的技能数据表 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|DataDriven")
+	static UDataTable* GetAbilityDataTable();
+
+	/** 根据ID从全局技能数据表里获取一个技能的类型 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|DataDriven")
+	static TSubclassOf<UFireflyAbility> GetAbilityClassFromDataTable(FName AbilityID);
+
+	/** 获取全局的效果数据表 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|DataDriven")
+	static UDataTable* GetEffectDataTable();
+
+	/** 根据ID从全局效果数据表里获取一个效果的类型 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|DataDriven")
+	static TSubclassOf<UFireflyEffect> GetEffectClassFromDataTable(FName EffectID);
+
+#pragma endregion
+
 
 #pragma region Attribute
 

@@ -117,7 +117,7 @@ void UFireflyAbility::ActivateAbility()
 
 	bIsActivating = true;
 	ExecuteAbilityTagRequirementToOwner(true);	
-	Manager->OnAbilityActivated.Broadcast(GetClass());
+	Manager->OnAbilityActivated.Broadcast(AbilityID, GetClass());
 	ReceiveActivateAbility();
 }
 
@@ -132,13 +132,13 @@ void UFireflyAbility::EndAbilityInternal()
 
 	bIsActivating = false;
 	ExecuteAbilityTagRequirementToOwner(false);
-	Manager->OnAbilityEnded.Broadcast(GetClass());
+	Manager->OnAbilityEnded.Broadcast(AbilityID, GetClass());
 	Manager->OnAbilityEndActivation(this);
 	ReceiveEndAbility(false);
 	
 	if (bRemoveOnEndedExecution && GetOwnerRole() == ROLE_Authority)
 	{
-		GetOwnerManager()->RemoveAbility(GetClass());
+		GetOwnerManager()->RemoveAbilityByClass(GetClass(), false);
 	}
 
 	if (IsValid(MontageToStopOnAbilityEnded) && GetOwnerRole() == ROLE_Authority)
@@ -181,8 +181,8 @@ void UFireflyAbility::CancelAbilityInternal()
 
 	bIsActivating = false;
 	ExecuteAbilityTagRequirementToOwner(false);
-	Manager->OnAbilityEnded.Broadcast(GetClass());
-	Manager->OnAbilityCanceled.Broadcast(GetClass());
+	Manager->OnAbilityEnded.Broadcast(AbilityID, GetClass());
+	Manager->OnAbilityCanceled.Broadcast(AbilityID, GetClass());
 	Manager->OnAbilityEndActivation(this);
 	ReceiveEndAbility(true);
 }
@@ -239,7 +239,7 @@ void UFireflyAbility::ApplyAbilityCost()
 	CostSetup.Modifiers = CostSettings;
 	GetOwnerManager()->ApplyEffectDynamicConstructorToOwner(nullptr, CostSetup);
 
-	GetOwnerManager()->OnAbilityCostCommitted.Broadcast(GetClass());
+	GetOwnerManager()->OnAbilityCostCommitted.Broadcast(AbilityID, GetClass());
 }
 
 bool UFireflyAbility::CheckAbilityCooldown_Implementation() const
@@ -267,7 +267,7 @@ void UFireflyAbility::ApplyAbilityCooldown()
 	CostSetup.TagsForEffectAsset = CooldownTags;
 	GetOwnerManager()->ApplyEffectDynamicConstructorToOwner(nullptr, CostSetup);
 
-	GetOwnerManager()->OnAbilityCooldownCommitted.Broadcast(GetClass(), CooldownTime);
+	GetOwnerManager()->OnAbilityCooldownCommitted.Broadcast(AbilityID, GetClass(), CooldownTime);
 }
 
 void UFireflyAbility::CommitAbilityCost()
