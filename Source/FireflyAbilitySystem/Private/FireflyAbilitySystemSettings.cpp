@@ -2,7 +2,6 @@
 
 
 #include "FireflyAbilitySystemSettings.h"
-#include "FireflyAbilitySystemTypes.h"
 
 UFireflyAbilitySystemSettings::UFireflyAbilitySystemSettings(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)

@@ -144,7 +144,6 @@ enum EFireflyAttributeType
 	AttributeType124 UMETA(Hidden),
 	AttributeType125 UMETA(Hidden),
 	AttributeType126 UMETA(Hidden),
-	AttributeType127 UMETA(Hidden),
 	AttributeType_Max UMETA(Hidden)
 };
 

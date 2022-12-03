@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FireflyAbilitySystemTypes.h"
 #include "Engine/DeveloperSettings.h"
 #include "FireflyAbilitySystemSettings.generated.h"
 
@@ -20,7 +21,7 @@ struct FFireflyAttributeTypeName
 	UPROPERTY()
 	FName Name;
 
-	FFireflyAttributeTypeName()	: Type(SurfaceType_Max) {}
+	FFireflyAttributeTypeName()	: Type(AttributeType_Max) {}
 
 	FFireflyAttributeTypeName(EFireflyAttributeType InType, const FName& InName) : Type(InType), Name(InName) {}
 };

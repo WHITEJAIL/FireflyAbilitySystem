@@ -303,7 +303,7 @@ void FFireflyAbilitySystemSettingsDetails::CustomizeDetails(IDetailLayoutBuilder
 			.Font(IDetailLayoutBuilder::GetDetailFont())
 		.ToolTip(AttributeTypeTooltip)
 		.AutoWrapText(true)
-		.Text(LOCTEXT("AttributeType_Menu_Description", " You can have up to 62 custom surface types for your project. \nOnce you name each type, they will show up as attribute type in the blueprint editor."))
+		.Text(LOCTEXT("AttributeType_Menu_Description", " You can have up to 126 custom surface types for your project. \nOnce you name each type, they will show up as attribute type in the blueprint editor."))
 		];
 
 
