@@ -360,6 +360,10 @@ public:
 #pragma region Effect_Application
 
 public:
+	/** 在该管理器中获取特定ID的被应用的激活中的所有效果 */
+	UFUNCTION()
+	TArray<UFireflyEffect*> GetActiveEffectsByID(FName EffectID) const;
+
 	/** 在该管理器中获取特定类型的被应用的激活中的所有效果 */
 	UFUNCTION()
 	TArray<UFireflyEffect*> GetActiveEffectsByClass(TSubclassOf<UFireflyEffect> EffectType) const;
@@ -372,13 +376,21 @@ public:
 	UFUNCTION()
 	FGameplayTagContainer GetBlockEffectTags() const;
 
-	/** 为自身应用一个效果实例，必须在拥有权限端执行，否则无效 */
+	/** 为自身应用一个效果实例或应用效果的固定堆叠数，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
 	void ApplyEffectToOwner(AActor* Instigator, UFireflyEffect* EffectInstance, int32 StackToApply = 1);
 
-	/** 为目标应用一个效果实例，必须在拥有权限端执行，否则无效 */
+	/** 为目标应用一个效果实例或应用效果的固定堆叠数，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
 	void ApplyEffectToTarget(AActor* Target, UFireflyEffect* EffectInstance, int32 StackToApply = 1);
+
+	/** 为自身应用效果或应用效果的固定堆叠数，必须在拥有权限端执行，否则无效 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
+	void ApplyEffectToOwnerByID(AActor* Instigator, FName EffectID, int32 StackToApply = 1);
+
+	/** 为目标应用效果或应用效果的固定堆叠数，必须在拥有权限端执行，否则无效 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
+	void ApplyEffectToTargetByID(AActor* Target, FName EffectID, int32 StackToApply = 1);
 
 	/** 为自身应用效果或应用效果的固定堆叠数，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
@@ -395,6 +407,10 @@ public:
 	/** 为目标应用一个根据动态构造器实现的效果，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
 	void ApplyEffectDynamicConstructorToTarget(AActor* Target, FFireflyEffectDynamicConstructor EffectSetup, int32 StackToApply = 1);
+
+	/** 一处自身特定的所有效果的固定堆叠数, StackToRemove = -1时，移除所有效果的所有堆叠，必须在拥有权限端执行，否则无效 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
+	void RemoveActiveEffectByID(FName EffectID, int32 StackToRemove = -1);
 
 	/** 移除自身特定的所有效果的固定堆叠数, StackToRemove = -1时，移除所有效果的所有堆叠，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
@@ -438,7 +454,11 @@ public:
 public:
 	/** 获取某种效果的剩余作用时间和总持续时间，若该种效果在管理器中同时存在多个，默认取第一个 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Effect")
-	bool GetSingleActiveEffectTimeDuration(TSubclassOf<UFireflyEffect> EffectType, float& TimeRemaining, float& TotalDuration) const;
+	bool GetSingleActiveEffectTimeDurationByID(FName EffectID, float& TimeRemaining, float& TotalDuration) const;
+
+	/** 获取某种效果的剩余作用时间和总持续时间，若该种效果在管理器中同时存在多个，默认取第一个 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Effect")
+	bool GetSingleActiveEffectTimeDurationByClass(TSubclassOf<UFireflyEffect> EffectType, float& TimeRemaining, float& TotalDuration) const;
 
 	/** 设置某种效果的剩余作用时间，若该种效果在管理器中同时存在多个，默认取第一个，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
@@ -457,7 +477,11 @@ public:
 public:
 	/** 获取某种效果的当前堆叠数，若该种效果在管理器中同时存在多个，默认取第一个 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Effect")
-	bool GetSingleActiveEffectStackingCount(TSubclassOf<UFireflyEffect> EffectType, int32& StackingCount) const;
+	bool GetSingleActiveEffectStackingCountByID(FName EffectID, int32& StackingCount) const;
+
+	/** 获取某种效果的当前堆叠数，若该种效果在管理器中同时存在多个，默认取第一个 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Effect")
+	bool GetSingleActiveEffectStackingCountByClass(TSubclassOf<UFireflyEffect> EffectType, int32& StackingCount) const;
 
 public:
 	/** 当不为Instant的效果的堆叠数发生变化时触发的代理 */
@@ -470,9 +494,13 @@ public:
 #pragma region Effect_Dynamic
 
 public:
+	/** 根据ID动态构建一个效果实例 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
+	UFireflyEffect* MakeDynamicEffectByID(FName EffectID);
+
 	/** 根据类型动态构建一个效果实例 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
-	UFireflyEffect* MakeDynamicEffect(TSubclassOf<UFireflyEffect> EffectType);
+	UFireflyEffect* MakeDynamicEffectByClass(TSubclassOf<UFireflyEffect> EffectType);
 
 	/** 为动态创建的效果实例添加资产Tags */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")

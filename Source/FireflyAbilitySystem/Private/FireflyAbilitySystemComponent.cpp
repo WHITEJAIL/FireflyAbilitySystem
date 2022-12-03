@@ -979,6 +979,20 @@ void UFireflyAbilitySystemComponent::ApplyModifierToAttributeInstant(EFireflyAtt
 	AttributeToMod->UpdateBaseValue(ModOperator, ModValue);
 }
 
+TArray<UFireflyEffect*> UFireflyAbilitySystemComponent::GetActiveEffectsByID(FName EffectID) const
+{
+	TArray<UFireflyEffect*>  Effects;
+	for (UFireflyEffect* Effect : ActiveEffects)
+	{
+		if (Effect->EffectID == EffectID)
+		{
+			Effects.Emplace(Effect);
+		}
+	}
+
+	return Effects;
+}
+
 TArray<UFireflyEffect*> UFireflyAbilitySystemComponent::GetActiveEffectsByClass(
 	TSubclassOf<UFireflyEffect> EffectType) const
 {
@@ -1102,8 +1116,48 @@ void UFireflyAbilitySystemComponent::ApplyEffectToTarget(AActor* Target, UFirefl
 	TargetEffectMgr->ApplyEffectToOwner(GetOwner(), EffectInstance, StackToApply);
 }
 
+void UFireflyAbilitySystemComponent::ApplyEffectToOwnerByID(AActor* Instigator, FName EffectID, int32 StackToApply)
+{
+	TSubclassOf<UFireflyEffect> EffectClass = UFireflyAbilitySystemLibrary::GetEffectClassFromDataTable(EffectID);
+	if (!IsValid(EffectClass) || StackToApply <= 0 || !HasAuthority())
+	{
+		return;
+	}
+
+	if (!IsValid(Instigator))
+	{
+		Instigator = GetOwner();
+	}
+
+	UFireflyEffect* NewEffect = NewObject<UFireflyEffect>(this, EffectClass);
+	ApplyEffectToOwner(Instigator, NewEffect, StackToApply);
+}
+
+void UFireflyAbilitySystemComponent::ApplyEffectToTargetByID(AActor* Target, FName EffectID, int32 StackToApply)
+{
+	if (!IsValid(Target) || StackToApply <= 0 || !HasAuthority())
+	{
+		return;
+	}
+
+	TSubclassOf<UFireflyEffect> EffectClass = UFireflyAbilitySystemLibrary::GetEffectClassFromDataTable(EffectID);
+	if (!IsValid(EffectClass))
+	{
+		return;
+	}
+
+	UFireflyAbilitySystemComponent* TargetEffectMgr = nullptr;
+	if (!IsValid(Target->GetComponentByClass(UFireflyAbilitySystemComponent::StaticClass())))
+	{
+		return;
+	}
+
+	TargetEffectMgr = Cast<UFireflyAbilitySystemComponent>(Target->GetComponentByClass(UFireflyAbilitySystemComponent::StaticClass()));
+	TargetEffectMgr->ApplyEffectToOwnerByID(GetOwner(), EffectID, StackToApply);
+}
+
 void UFireflyAbilitySystemComponent::ApplyEffectToOwnerByClass(AActor* Instigator, TSubclassOf<UFireflyEffect> EffectType,
-                                                        int32 StackToApply)
+                                                               int32 StackToApply)
 {
 	if (!IsValid(EffectType) || StackToApply <= 0 || !HasAuthority())
 	{
@@ -1168,8 +1222,43 @@ void UFireflyAbilitySystemComponent::ApplyEffectDynamicConstructorToTarget(AActo
 	TargetEffectMgr->ApplyEffectDynamicConstructorToOwner(GetOwner(), EffectSetup, StackToApply);
 }
 
+void UFireflyAbilitySystemComponent::RemoveActiveEffectByID(FName EffectID, int32 StackToRemove)
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	TArray<UFireflyEffect*> EffectsToRemove = TArray<UFireflyEffect*>{};
+	for (auto Effect : ActiveEffects)
+	{
+		if (Effect->EffectID == EffectID)
+		{
+			EffectsToRemove.Add(Effect);
+		}
+	}
+
+	if (StackToRemove == -1)
+	{
+		for (auto Effect : EffectsToRemove)
+		{
+			ActiveEffects.RemoveSingle(Effect);
+			Effect->RemoveEffect();
+		}
+	}
+
+	for (auto Effect : EffectsToRemove)
+	{
+		if (Effect->ReduceEffectStack(StackToRemove))
+		{
+			ActiveEffects.RemoveSingle(Effect);
+			Effect->RemoveEffect();
+		}
+	}
+}
+
 void UFireflyAbilitySystemComponent::RemoveActiveEffectByClass(TSubclassOf<UFireflyEffect> EffectType,
-                                                                 int32 StackToRemove)
+                                                               int32 StackToRemove)
 {
 	if (!IsValid(EffectType) || !HasAuthority())
 	{
@@ -1288,8 +1377,20 @@ void UFireflyAbilitySystemComponent::UpdateBlockAndRemoveEffectTags(FGameplayTag
 	}
 }
 
-bool UFireflyAbilitySystemComponent::GetSingleActiveEffectTimeDuration(TSubclassOf<UFireflyEffect> EffectType,
-	float& TimeRemaining, float& TotalDuration) const
+bool UFireflyAbilitySystemComponent::GetSingleActiveEffectTimeDurationByID(FName EffectID, float& TimeRemaining,
+	float& TotalDuration) const
+{
+	TSubclassOf<UFireflyEffect> EffectClass = UFireflyAbilitySystemLibrary::GetEffectClassFromDataTable(EffectID);
+	if (!IsValid(EffectClass))
+	{
+		return false;
+	}
+
+	return GetSingleActiveEffectTimeDurationByClass(EffectClass, TimeRemaining, TotalDuration);
+}
+
+bool UFireflyAbilitySystemComponent::GetSingleActiveEffectTimeDurationByClass(TSubclassOf<UFireflyEffect> EffectType,
+                                                                              float& TimeRemaining, float& TotalDuration) const
 {
 	if (!IsValid(EffectType))
 	{
@@ -1327,8 +1428,19 @@ void UFireflyAbilitySystemComponent::SetSingleActiveEffectTimeRemaining(TSubclas
 	OnEffectTimeRemainingChanged.Broadcast(Effects[0]->EffectID, EffectType, NewTimeRemaining, Effects[0]->Duration);
 }
 
-bool UFireflyAbilitySystemComponent::GetSingleActiveEffectStackingCount(TSubclassOf<UFireflyEffect> EffectType,
-                                                                        int32& StackingCount) const
+bool UFireflyAbilitySystemComponent::GetSingleActiveEffectStackingCountByID(FName EffectID, int32& StackingCount) const
+{
+	TSubclassOf<UFireflyEffect> EffectClass = UFireflyAbilitySystemLibrary::GetEffectClassFromDataTable(EffectID);
+	if (!IsValid(EffectClass))
+	{
+		return false;
+	}
+
+	return GetSingleActiveEffectStackingCountByClass(EffectClass, StackingCount);
+}
+
+bool UFireflyAbilitySystemComponent::GetSingleActiveEffectStackingCountByClass(TSubclassOf<UFireflyEffect> EffectType,
+                                                                               int32& StackingCount) const
 {
 	if (!IsValid(EffectType))
 	{
@@ -1346,7 +1458,21 @@ bool UFireflyAbilitySystemComponent::GetSingleActiveEffectStackingCount(TSubclas
 	return true;
 }
 
-UFireflyEffect* UFireflyAbilitySystemComponent::MakeDynamicEffect(TSubclassOf<UFireflyEffect> EffectType)
+UFireflyEffect* UFireflyAbilitySystemComponent::MakeDynamicEffectByID(FName EffectID)
+{
+	TSubclassOf<UFireflyEffect> EffectClass = UFireflyAbilitySystemLibrary::GetEffectClassFromDataTable(EffectID);
+	if (!IsValid(EffectClass))
+	{
+		return nullptr;
+	}
+
+	UFireflyEffect* Effect = NewObject<UFireflyEffect>(this, EffectClass);
+	Effect->EffectID = EffectID;
+
+	return Effect;
+}
+
+UFireflyEffect* UFireflyAbilitySystemComponent::MakeDynamicEffectByClass(TSubclassOf<UFireflyEffect> EffectType)
 {
 	return NewObject<UFireflyEffect>(this, EffectType);
 }
