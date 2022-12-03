@@ -116,15 +116,15 @@ public:
 			}
 		}
 
-		bool bCreatedItem[SurfaceType_Max];
+		bool bCreatedItem[AttributeType_Max];
 		FGenericPlatformMemory::Memzero(bCreatedItem, sizeof(bCreatedItem));
 
 		AttributeTypeList.Empty();
 
 		// I'm listing all of these because it is easier for users to understand how does this work. 
 		// I can't just link behind of scene because internally it will only save the enum
-		// for example if you name SurfaceType5 to be Water and later changed to Sand, everything that used
-		// SurfaceType5 will changed to Sand
+		// for example if you name AttributeType5 to be Water and later changed to Sand, everything that used
+		// AttributeType5 will changed to Sand
 		// I think what might be better is to show what options they have, and it's for them to choose how to name
 
 		// add the first one by default
@@ -140,7 +140,7 @@ public:
 			AttributeTypeList.Add(MakeShareable(new FFireflyAttributeTypeListItem(MakeShareable(new FFireflyAttributeTypeName(*Iter)))));
 		}
 
-		for (int32 Index = (int32)SurfaceType1; Index < SurfaceType_Max; ++Index)
+		for (int32 Index = (int32)AttributeType001; Index < AttributeType_Max; ++Index)
 		{
 			if (bCreatedItem[Index] == false)
 			{
@@ -163,7 +163,7 @@ public:
 
 		AttributeTypeList.Sort(FCompareAttributeType());
 
-		FireflyAbilitySystemSettings->LoadSurfaceType();
+		FireflyAbilitySystemSettings->LoadAttributeType();
 
 		RegenerateChildren.ExecuteIfBound();
 	}
@@ -255,7 +255,7 @@ private:
 			}
 
 			FireflyAbilitySystemSettings->TryUpdateDefaultConfigFile();
-			FireflyAbilitySystemSettings->LoadSurfaceType();
+			FireflyAbilitySystemSettings->LoadAttributeType();
 
 			AttributeTypesProperty->NotifyPostChange(EPropertyChangeType::ValueSet);
 		}
@@ -303,7 +303,7 @@ void FFireflyAbilitySystemSettingsDetails::CustomizeDetails(IDetailLayoutBuilder
 			.Font(IDetailLayoutBuilder::GetDetailFont())
 		.ToolTip(AttributeTypeTooltip)
 		.AutoWrapText(true)
-		.Text(LOCTEXT("AttributeType_Menu_Description", " You can have up to 126 custom surface types for your project. \nOnce you name each type, they will show up as attribute type in the blueprint editor."))
+		.Text(LOCTEXT("AttributeType_Menu_Description", " You can have up to 126 custom attribute types for your project. \nOnce you name each type, they will show up as attribute type in the blueprint editor."))
 		];
 
 

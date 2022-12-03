@@ -17,11 +17,11 @@ void UFireflyAbilitySystemSettings::PostInitProperties()
 {
 	Super::PostInitProperties();
 #if WITH_EDITOR
-	LoadSurfaceType();
+	LoadAttributeType();
 #endif
 }
 
-void UFireflyAbilitySystemSettings::LoadSurfaceType()
+void UFireflyAbilitySystemSettings::LoadAttributeType()
 {
 	// read "AttributeType" defines and set meta data for the enum
 	// find the enum
