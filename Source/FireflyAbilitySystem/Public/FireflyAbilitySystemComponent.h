@@ -5,12 +5,13 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "FireflyAbilitySystemTypes.h"
+#include "FireflyAbility.h"
+#include "FireflyEffect.h"
+#include "FireflyAttribute.h"
 #include "FireflyAbilitySystemComponent.generated.h"
 
 class UInputAction;
 class UEnhancedInputComponent;
-class UFireflyAbility;
-class UFireflyAttribute;
 
 /** 输入和技能绑定的数据 */
 USTRUCT()
@@ -21,7 +22,7 @@ struct FFireflyAbilitiesBoundToInput
 public:
 	/** 输入绑定的所有技能 */
 	UPROPERTY()
-	TArray<TSubclassOf<UFireflyAbility>> Abilities;
+	TArray<TSubclassOf<UFireflyAbility>> Abilities = TArray<TSubclassOf<UFireflyAbility>>{};
 
 	/** 输入事件句柄：开始 */
 	UPROPERTY()
@@ -43,8 +44,7 @@ public:
 	UPROPERTY()
 	uint32 HandleCompleted = -1;
 
-	FFireflyAbilitiesBoundToInput() : Abilities(TArray<TSubclassOf<UFireflyAbility>>{})
-	{}
+	FFireflyAbilitiesBoundToInput()	{}
 
 	FORCEINLINE bool operator==(const FFireflyAbilitiesBoundToInput& Other)
 	{
@@ -80,7 +80,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FFireflyEffectStackingChangedDeleg
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFireflyGameplayTagExecutionDelegate, FGameplayTagContainer, TagsUpdated);
 
 /** 技能系统管理器的组件 */
-UCLASS(ClassGroup = (FireflyAbilitySystem), meta = (BlueprintSpawnableComponent))
+UCLASS( ClassGroup = (FireflyAbilitySystem), HideCategories = (Object, LOD, Lighting, Transform, Sockets, TextureStreaming), Meta = (BlueprintSpawnableComponent) )
 class FIREFLYABILITYSYSTEM_API UFireflyAbilitySystemComponent : public UActorComponent
 {
 	GENERATED_UCLASS_BODY()
@@ -290,9 +290,6 @@ protected:
 #pragma region Attribute_Basic
 
 protected:
-	/** 构造并返回一个属性实例的名称 */
-	FString GetAttributeTypeName(EFireflyAttributeType AttributeType) const;
-
 	/** 根据属性类型获取属性实例 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute")
 	UFireflyAttribute* GetAttributeByType(EFireflyAttributeType AttributeType) const;	
@@ -308,7 +305,11 @@ public:
 
 	/** 通过构造器设置构造属性并添加到属性修改器中 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
-	void ConstructAttribute(FFireflyAttributeConstructor AttributeConstructor);
+	void ConstructAttributeByConstructor(FFireflyAttributeConstructor AttributeConstructor);
+
+	/** 通过属性类型构造属性并添加到属性修改器中 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
+	void ConstructAttributeByClass(TSubclassOf<UFireflyAttribute> AttributeClass, float InitValue);
 
 	/** 通过属性类型构造属性并添加到属性修改器中 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")

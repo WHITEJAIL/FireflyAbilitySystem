@@ -87,6 +87,10 @@ UFireflyAbilitySystemComponent* UFireflyAbility::GetOwnerManager() const
 
 void UFireflyAbility::OnAbilityGranted_Implementation()
 {
+	if (bActivateOnGranted)
+	{
+		GetOwnerManager()->TryActivateAbilityByClass(GetClass());
+	}
 }
 
 void UFireflyAbility::ActivateAbility()

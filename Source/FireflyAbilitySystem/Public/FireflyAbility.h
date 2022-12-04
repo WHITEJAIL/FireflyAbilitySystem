@@ -122,6 +122,10 @@ protected:
 	UPROPERTY()
 	bool bIsActivating = false;
 
+	/** 该技能是否在被赋予后立即执行 */
+	UPROPERTY(EditDefaultsOnly, Category = Execution)
+	bool bActivateOnGranted = false;
+
 #pragma endregion
 
 

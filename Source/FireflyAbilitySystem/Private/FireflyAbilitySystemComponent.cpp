@@ -4,10 +4,7 @@
 #include "FireflyAbilitySystemComponent.h"
 
 #include "EnhancedInputComponent.h"
-#include "FireflyAbility.h"
 #include "FireflyAbilitySystemLibrary.h"
-#include "FireflyAttribute.h"
-#include "FireflyEffect.h"
 #include "Engine/ActorChannel.h"
 #include "Net/UnrealNetwork.h"
 
@@ -673,14 +670,6 @@ void UFireflyAbilitySystemComponent::OnAbilityInputActionCompleted(UInputAction*
 	}
 }
 
-FString UFireflyAbilitySystemComponent::GetAttributeTypeName(EFireflyAttributeType AttributeType) const
-{
-	const UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("EFireflyAttributeType"), true);
-	if (!EnumPtr) return FString("Invalid");
-
-	return EnumPtr != nullptr ? EnumPtr->GetDisplayNameTextByValue(AttributeType).ToString() : FString("Invalid");
-}
-
 UFireflyAttribute* UFireflyAbilitySystemComponent::GetAttributeByType(EFireflyAttributeType AttributeType) const
 {
 	UFireflyAttribute* OutAttribute = nullptr;
@@ -726,14 +715,14 @@ float UFireflyAbilitySystemComponent::GetAttributeBaseValue(EFireflyAttributeTyp
 	return OutBaseValue;
 }
 
-void UFireflyAbilitySystemComponent::ConstructAttribute(FFireflyAttributeConstructor AttributeConstructor)
+void UFireflyAbilitySystemComponent::ConstructAttributeByConstructor(FFireflyAttributeConstructor AttributeConstructor)
 {
 	if (!HasAuthority())
 	{
 		return;
 	}
 
-	FString NewAttributeName = *GetAttributeTypeName(AttributeConstructor.AttributeType) + FString("_") + (TEXT("%s"), GetOwner()->GetName());
+	FString NewAttributeName = UFireflyAbilitySystemLibrary::GetAttributeTypeName(AttributeConstructor.AttributeType) + FString("_") + (TEXT("%s"), GetOwner()->GetName());
 
 	UFireflyAttribute* NewAttribute = NewObject<UFireflyAttribute>(this, *NewAttributeName);
 	NewAttribute->AttributeType = AttributeConstructor.AttributeType;
@@ -746,6 +735,24 @@ void UFireflyAbilitySystemComponent::ConstructAttribute(FFireflyAttributeConstru
 	AttributeContainer.Emplace(NewAttribute);
 }
 
+void UFireflyAbilitySystemComponent::ConstructAttributeByClass(TSubclassOf<UFireflyAttribute> AttributeClass,
+	float InitValue)
+{
+	if (!IsValid(AttributeClass) || !HasAuthority())
+	{
+		return;
+	}
+
+	EFireflyAttributeType AttributeType = Cast<UFireflyAttribute>(AttributeClass->GetDefaultObject())->AttributeType;
+	FString NewAttributeName = UFireflyAbilitySystemLibrary::GetAttributeTypeName(AttributeType) + FString("_") + (TEXT("%s"), GetOwner()->GetName());
+
+	UFireflyAttribute* NewAttribute = NewObject<UFireflyAttribute>(this, AttributeClass, *NewAttributeName);
+	NewAttribute->AttributeType = AttributeType;
+	NewAttribute->Initialize(InitValue);
+
+	AttributeContainer.Emplace(NewAttribute);
+}
+
 void UFireflyAbilitySystemComponent::ConstructAttributeByType(EFireflyAttributeType AttributeType, float InitValue)
 {
 	if (!HasAuthority())
@@ -753,7 +760,7 @@ void UFireflyAbilitySystemComponent::ConstructAttributeByType(EFireflyAttributeT
 		return;
 	}
 
-	FString NewAttributeName = *GetAttributeTypeName(AttributeType) + FString("_") + (TEXT("%s"), GetOwner()->GetName());
+	FString NewAttributeName = UFireflyAbilitySystemLibrary::GetAttributeTypeName(AttributeType) + FString("_") + (TEXT("%s"), GetOwner()->GetName());
 
 	UFireflyAttribute* NewAttribute = NewObject<UFireflyAttribute>(this, *NewAttributeName);
 	NewAttribute->AttributeType = AttributeType;

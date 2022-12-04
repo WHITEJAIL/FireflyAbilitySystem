@@ -7,6 +7,7 @@
 #include "Engine/DataTable.h"
 #include "FireflyAbilitySystemTypes.generated.h"
 
+class UFireflyAbility;
 class UFireflyAttribute;
 class UFireflyEffect;
 class UFireflyEffectModifierCalculator;
@@ -343,7 +344,7 @@ struct FFireflyEffectDynamicConstructor
 public:
 	/** 效果的类型 */
 	UPROPERTY(BlueprintReadWrite, Category = Basic)
-	TSubclassOf<UFireflyEffect> EffectType;
+	TSubclassOf<UFireflyEffect> EffectType = nullptr;
 
 	/** 效果的持续性策略 */
 	UPROPERTY(BlueprintReadWrite, Category = Duration)
@@ -436,12 +437,42 @@ public:
 	/** 该效果的激活应用期望管理器不含如下Tags */
 	UPROPERTY(BlueprintReadWrite, Category = Tags)
 	FGameplayTagContainer TagsBlockApplicationOnOwnerHas = FGameplayTagContainer::EmptyContainer;
-	
+
+	FFireflyEffectDynamicConstructor() {}
 };
 
 #pragma endregion
 
 
 #pragma region Ability
+
+#pragma endregion
+
+
+#pragma region DataDriven
+
+/** 技能的数据表，项目如果期望用数据驱动技能系统运行，要让技能的数据表结构继承 */
+USTRUCT(BlueprintType)
+struct FFireflyAbilityTableRow : public FTableRowBase
+{
+	GENERATED_BODY()
+
+public:
+	/** 技能类 */
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
+	TSoftClassPtr<UFireflyAbility> AbilityClass = nullptr;
+};
+
+/** 效果的数据表，项目如果期望用数据驱动技能系统运行，要让效果的数据表结构继承 */
+USTRUCT(BlueprintType)
+struct FFireflyEffectTableRow : public FTableRowBase
+{
+	GENERATED_BODY()
+
+public:
+	/** 效果类 */
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
+	TSoftClassPtr<UFireflyEffect> EffectClass = nullptr;
+};
 
 #pragma endregion

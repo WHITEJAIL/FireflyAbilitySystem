@@ -3,8 +3,8 @@
 
 #include "FireflyAbilitySystemLibrary.h"
 
-#include "FireflyAbilitySystemSettings.h"
 #include "FireflyAbility.h"
+#include "FireflyAbilitySystemSettings.h"
 
 UDataTable* UFireflyAbilitySystemLibrary::GetAbilityDataTable()
 {
@@ -19,28 +19,14 @@ TSubclassOf<UFireflyAbility> UFireflyAbilitySystemLibrary::GetAbilityClassFromDa
 		return nullptr;
 	}
 
-	FTableRowBase* AbilityRow = AbilityTable->FindRow<FTableRowBase>(AbilityID, FString("Find Ability Row"));
-
-	TSubclassOf<UFireflyAbility> OutAbilityClass = nullptr;
-	for (TFieldIterator<FProperty> It(AbilityRow->StaticStruct(), EFieldIteratorFlags::IncludeSuper); It; ++It)
+	FFireflyAbilityTableRow* AbilityTableRow = AbilityTable->FindRow<FFireflyAbilityTableRow>(AbilityID, FString("Find Ability Row"));
+	if (!AbilityTableRow)
 	{
-		FProperty* Property = *It;
-		if (const FSoftClassProperty* AbilityClassProp = CastField<FSoftClassProperty>(Property))
-		{
-			const TSoftClassPtr<UObject>* AbilityClassPtr = reinterpret_cast<const TSoftClassPtr<UObject>*>(Property);
-			OutAbilityClass = &*AbilityClassPtr->LoadSynchronous();
-
-			break;
-		}
-		FClassProperty* ClassProperty = CastField<FClassProperty>(Property);
-		if (ClassProperty)
-		{
-			OutAbilityClass = ClassProperty->ContainerPtrToValuePtr<UClass>(AbilityRow);
-
-			break;
-		}
+		return nullptr;
 	}
-
+	AbilityTableRow->AbilityClass.IsValid();
+	TSubclassOf<UFireflyAbility> OutAbilityClass = AbilityTableRow->AbilityClass.LoadSynchronous();
+	
 	return OutAbilityClass;
 }
 
@@ -57,28 +43,24 @@ TSubclassOf<UFireflyEffect> UFireflyAbilitySystemLibrary::GetEffectClassFromData
 		return nullptr;
 	}
 
-	FTableRowBase* EffectRow = EffectTable->FindRow<FTableRowBase>(EffectID, FString("Find Effect Row"));
-
-	TSubclassOf<UFireflyEffect> OutEffectClass = nullptr;
-	for (TFieldIterator<FProperty> It(EffectRow->StaticStruct(), EFieldIteratorFlags::IncludeSuper); It; ++It)
+	FFireflyEffectTableRow* EffectTableRow = EffectTable->FindRow<FFireflyEffectTableRow>(EffectID, FString("Find Effect Row"));
+	if (!EffectTableRow)
 	{
-		FProperty* Property = *It;
-		if (const FSoftClassProperty* EffectClassProp = CastField<FSoftClassProperty>(Property))
-		{
-			const TSoftClassPtr<UObject>* EffectClassPtr = reinterpret_cast<const TSoftClassPtr<UObject>*>(Property);
-			OutEffectClass = &*EffectClassPtr->LoadSynchronous();
-
-			break;
-		}
-		
-		FClassProperty* ClassProperty = CastField<FClassProperty>(Property);
-		if (ClassProperty)
-		{
-			OutEffectClass = ClassProperty->ContainerPtrToValuePtr<UClass>(EffectRow);
-
-			break;
-		}		
+		return nullptr;
 	}
+	EffectTableRow->EffectClass.IsValid();
+	TSubclassOf<UFireflyEffect> OutEffectClass = EffectTableRow->EffectClass.LoadSynchronous();
 
 	return OutEffectClass;
+}
+
+FString UFireflyAbilitySystemLibrary::GetAttributeTypeName(EFireflyAttributeType AttributeType)
+{
+	const UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("EFireflyAttributeType"), true);
+	if (!EnumPtr)
+	{
+		return FString("Invalid");
+	}
+
+	return EnumPtr->GetDisplayNameTextByValue(AttributeType).ToString();
 }

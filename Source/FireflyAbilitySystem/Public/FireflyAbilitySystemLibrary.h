@@ -7,9 +7,6 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "FireflyAbilitySystemLibrary.generated.h"
 
-class UFireflyAbility;
-class UFireflyEffect;
-
 /**
  * 技能系统的通用函数库
  */
@@ -41,6 +38,10 @@ public:
 
 
 #pragma region Attribute
+
+public:
+	/** 构造并返回一个属性实例的名称 */
+	static FString GetAttributeTypeName(EFireflyAttributeType AttributeType);
 
 #pragma endregion
 
