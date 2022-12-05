@@ -119,6 +119,10 @@ protected:
 #pragma region Ability_Granting
 
 protected:
+	/** 根据ID获取一个该管理器中的技能实例 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability")
+	FORCEINLINE UFireflyAbility* GetGrantedAbilityByID(FName AbilityID) const;
+
 	/** 根据类型获取一个该管理器中的技能实例 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability")
 	FORCEINLINE UFireflyAbility* GetGrantedAbilityByClass(TSubclassOf<UFireflyAbility> AbilityType) const;
@@ -130,7 +134,7 @@ public:
 
 	/** 根据类型为技能管理器赋予一个技能，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
-	virtual void GrantAbilityByClass(TSubclassOf<UFireflyAbility> AbilityToGrant);
+	virtual void GrantAbilityByClass(TSubclassOf<UFireflyAbility> AbilityToGrant, FName AbilityID = NAME_None);
 
 	/** 根据ID从技能管理器移除一个技能，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
@@ -247,7 +251,7 @@ protected:
 public:
 	/** 将技能与输入绑定，绑定操作应该在本地客户端执行，技能需要存在于技能管理器中，输入也应当有效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
-	void BindAbilityToInput(TSubclassOf<UFireflyAbility> AbilityToBind, UInputAction* InputToBind);
+	void BindAbilityToInput(TSubclassOf<UFireflyAbility> AbilityToBind, UInputAction* InputToBind, bool bForceBind);
 
 	/** 将技能与输入解绑，解绑操作应该在本地客户端执行，技能需要存在于技能管理器中，输入也应当有效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
@@ -395,11 +399,11 @@ public:
 
 	/** 为自身应用效果或应用效果的固定堆叠数，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
-	void ApplyEffectToOwnerByClass(AActor* Instigator, TSubclassOf<UFireflyEffect> EffectType, int32 StackToApply = 1);
+	void ApplyEffectToOwnerByClass(AActor* Instigator, TSubclassOf<UFireflyEffect> EffectType, FName EffectID = NAME_None, int32 StackToApply = 1);
 
 	/** 为目标应用效果或应用效果的固定堆叠数，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
-	void ApplyEffectToTargetByClass(AActor* Target, TSubclassOf<UFireflyEffect> EffectType, int32 StackToApply = 1);
+	void ApplyEffectToTargetByClass(AActor* Target, TSubclassOf<UFireflyEffect> EffectType, FName EffectID = NAME_None, int32 StackToApply = 1);
 
 	/** 为目标应用一个根据动态构造器实现的效果，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
@@ -501,7 +505,7 @@ public:
 
 	/** 根据类型动态构建一个效果实例 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
-	UFireflyEffect* MakeDynamicEffectByClass(TSubclassOf<UFireflyEffect> EffectType);
+	UFireflyEffect* MakeDynamicEffectByClass(TSubclassOf<UFireflyEffect> EffectType, FName EffectID = NAME_None);
 
 	/** 为动态创建的效果实例添加资产Tags */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect")
