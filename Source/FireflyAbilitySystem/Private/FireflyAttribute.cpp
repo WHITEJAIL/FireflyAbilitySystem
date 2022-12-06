@@ -84,7 +84,7 @@ void UFireflyAttribute::Initialize(float InitValue)
 	GetOwnerManager()->OnAttributeValueChanged.Broadcast(AttributeType, OldValue, CurrentValue);
 
 	OldValue = CurrentValue;
-	CurrentValue = InitValue;
+	UpdateCurrentValue();
 	GetOwnerManager()->OnAttributeBaseValueChanged.Broadcast(AttributeType, OldValue, CurrentValue);
 }
 
