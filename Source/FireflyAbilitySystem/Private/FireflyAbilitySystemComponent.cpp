@@ -689,6 +689,27 @@ UFireflyAttribute* UFireflyAbilitySystemComponent::GetAttributeByType(EFireflyAt
 	return OutAttribute;
 }
 
+UFireflyAttribute* UFireflyAbilitySystemComponent::GetAttributeByName(FName AttributeName) const
+{
+	const UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("EFireflyAttributeType"), true);
+	if (!EnumPtr)
+	{
+		return nullptr;
+	}
+
+	UFireflyAttribute* OutAttribute = nullptr;
+	for (auto Attribute : AttributeContainer)
+	{
+		if (EnumPtr->GetDisplayNameTextByValue(Attribute->AttributeType).ToString() == AttributeName.ToString())
+		{
+			OutAttribute = Attribute;
+			break;
+		}
+	}
+
+	return OutAttribute;
+}
+
 float UFireflyAbilitySystemComponent::GetAttributeValue(EFireflyAttributeType AttributeType) const
 {
 	float OutValue = 0.f;
@@ -773,7 +794,7 @@ void UFireflyAbilitySystemComponent::ConstructAttributeByType(EFireflyAttributeT
 	AttributeContainer.Emplace(NewAttribute);
 }
 
-void UFireflyAbilitySystemComponent::InitializeAttribute(EFireflyAttributeType AttributeType, float NewInitValue)
+void UFireflyAbilitySystemComponent::InitializeAttributeByType(EFireflyAttributeType AttributeType, float NewInitValue)
 {
 	if (!HasAuthority())
 	{
@@ -786,8 +807,23 @@ void UFireflyAbilitySystemComponent::InitializeAttribute(EFireflyAttributeType A
 		return;
 	}
 
-	AttributeToInit->BaseValue = NewInitValue;
-	AttributeToInit->CurrentValue = NewInitValue;
+	AttributeToInit->Initialize(NewInitValue);
+}
+
+void UFireflyAbilitySystemComponent::InitializeAttributeByName(FName AttributeName, float NewInitValue)
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	UFireflyAttribute* AttributeToInit = GetAttributeByName(AttributeName);
+	if (!IsValid(AttributeToInit))
+	{
+		return;
+	}
+
+	AttributeToInit->Initialize(NewInitValue);
 }
 
 void UFireflyAbilitySystemComponent::ApplyModifierToAttribute(EFireflyAttributeType AttributeType,

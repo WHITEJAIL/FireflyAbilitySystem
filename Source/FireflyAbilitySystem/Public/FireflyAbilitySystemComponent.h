@@ -296,7 +296,11 @@ protected:
 protected:
 	/** 根据属性类型获取属性实例 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute")
-	UFireflyAttribute* GetAttributeByType(EFireflyAttributeType AttributeType) const;	
+	UFireflyAttribute* GetAttributeByType(EFireflyAttributeType AttributeType) const;
+
+	/** 根据属性名获得属性实例 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute")
+	UFireflyAttribute* GetAttributeByName(FName AttributeName) const;
 
 public:
 	/** 通过属性标签获取一个属性的当前值 */
@@ -319,9 +323,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
 	void ConstructAttributeByType(EFireflyAttributeType AttributeType, float InitValue);
 
-	/** 初始化属性值 */
+	/** 根据类型初始化属性值 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
-	void InitializeAttribute(EFireflyAttributeType AttributeType, float NewInitValue);
+	void InitializeAttributeByType(EFireflyAttributeType AttributeType, float NewInitValue);
+
+	/** 根据名称初始化属性值 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
+	void InitializeAttributeByName(FName AttributeName, float NewInitValue);
 
 protected:
 	/** 属性容器 */

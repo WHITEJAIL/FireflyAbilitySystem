@@ -40,7 +40,7 @@ public:
 #pragma region Attribute
 
 public:
-	/** 构造并返回一个属性实例的名称 */
+	/** 返回一个属性实例的名称 */
 	static FString GetAttributeTypeName(EFireflyAttributeType AttributeType);
 
 #pragma endregion
