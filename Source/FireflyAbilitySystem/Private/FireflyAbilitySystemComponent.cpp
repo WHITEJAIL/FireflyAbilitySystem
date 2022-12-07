@@ -128,6 +128,20 @@ UFireflyAbility* UFireflyAbilitySystemComponent::GetGrantedAbilityByID(FName Abi
 	return OutAbility;
 }
 
+TArray<UFireflyAbility*> UFireflyAbilitySystemComponent::GetGrantedAbilityByTag(FGameplayTag AbilityTag) const
+{
+	TArray<UFireflyAbility*> OutAbilities = TArray<UFireflyAbility*>{};
+	for (auto Ability : GrantedAbilities)
+	{
+		if (Ability->TagsForAbilityAsset.HasTagExact(AbilityTag))
+		{
+			OutAbilities.Add(Ability);
+		}
+	}
+
+	return OutAbilities;
+}
+
 UFireflyAbility* UFireflyAbilitySystemComponent::GetGrantedAbilityByClass(
 	TSubclassOf<UFireflyAbility> AbilityType) const
 {
@@ -424,14 +438,9 @@ UEnhancedInputComponent* UFireflyAbilitySystemComponent::GetEnhancedInputCompone
 }
 
 void UFireflyAbilitySystemComponent::BindAbilityToInput(TSubclassOf<UFireflyAbility> AbilityToBind,
-	UInputAction* InputToBind, bool bForceBind)
+	UInputAction* InputToBind)
 {
-	if (!IsValid(InputToBind) || !IsValid(AbilityToBind))
-	{
-		return;
-	}
-
-	if (!IsLocallyControlled())
+	if (!IsValid(InputToBind) || !IsLocallyControlled())
 	{
 		return;
 	}
@@ -442,27 +451,26 @@ void UFireflyAbilitySystemComponent::BindAbilityToInput(TSubclassOf<UFireflyAbil
 		return;
 	}
 
-	if (!IsValid(GetGrantedAbilityByClass(AbilityToBind)) && !bForceBind)
+	FFireflyAbilitiesBoundToInput* AbilitiesBoundToInput = AbilitiesInputBound.Find(InputToBind);
+	if (!AbilitiesBoundToInput)
 	{
-		return;
-	}
-
-	FFireflyAbilitiesBoundToInput& AbilitiesBoundToInput = AbilitiesInputBound.FindOrAdd(InputToBind);
-	if (AbilitiesBoundToInput.Abilities.Num() == 0)
-	{
-		AbilitiesBoundToInput.HandleStarted = EnhancedInput->BindAction(InputToBind, ETriggerEvent::Started, this,
+		AbilitiesBoundToInput = new FFireflyAbilitiesBoundToInput();
+		AbilitiesBoundToInput->HandleStarted = EnhancedInput->BindAction(InputToBind, ETriggerEvent::Started, this,
 			&UFireflyAbilitySystemComponent::OnAbilityInputActionStarted, InputToBind).GetHandle();
-		AbilitiesBoundToInput.HandleOngoing = EnhancedInput->BindAction(InputToBind, ETriggerEvent::Ongoing, this,
+		AbilitiesBoundToInput->HandleOngoing = EnhancedInput->BindAction(InputToBind, ETriggerEvent::Ongoing, this,
 			&UFireflyAbilitySystemComponent::OnAbilityInputActionOngoing, InputToBind).GetHandle();
-		AbilitiesBoundToInput.HandleCanceled = EnhancedInput->BindAction(InputToBind, ETriggerEvent::Canceled, this,
+		AbilitiesBoundToInput->HandleCanceled = EnhancedInput->BindAction(InputToBind, ETriggerEvent::Canceled, this,
 			&UFireflyAbilitySystemComponent::OnAbilityInputActionCanceled, InputToBind).GetHandle();
-		AbilitiesBoundToInput.HandleTriggered = EnhancedInput->BindAction(InputToBind, ETriggerEvent::Triggered, this,
+		AbilitiesBoundToInput->HandleTriggered = EnhancedInput->BindAction(InputToBind, ETriggerEvent::Triggered, this,
 			&UFireflyAbilitySystemComponent::OnAbilityInputActionTriggered, InputToBind).GetHandle();
-		AbilitiesBoundToInput.HandleCompleted = EnhancedInput->BindAction(InputToBind, ETriggerEvent::Completed, this,
+		AbilitiesBoundToInput->HandleCompleted = EnhancedInput->BindAction(InputToBind, ETriggerEvent::Completed, this,
 			&UFireflyAbilitySystemComponent::OnAbilityInputActionCompleted, InputToBind).GetHandle();
 	}
 
-	AbilitiesBoundToInput.Abilities.AddUnique(AbilityToBind);
+	if (IsValid(AbilityToBind))
+	{
+		AbilitiesBoundToInput->Abilities.AddUnique(AbilityToBind);
+	}	
 }
 
 void UFireflyAbilitySystemComponent::UnbindAbilityWithInput(TSubclassOf<UFireflyAbility> AbilityToUnbind,
