@@ -119,11 +119,15 @@ protected:
 #pragma region Ability_Granting
 
 protected:
-	/** 根据ID获取一个该管理器中的技能实例 */
+	/** 根据ID获取一个该管理器中的相关技能实例 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability")
 	FORCEINLINE UFireflyAbility* GetGrantedAbilityByID(FName AbilityID) const;
 
-	/** 根据类型获取一个该管理器中的技能实例 */
+	/** 根据Tag获取所有该管理器中的相关技能实例 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability")
+	FORCEINLINE TArray<UFireflyAbility*> GetGrantedAbilityByTag(FGameplayTag AbilityTag) const;
+
+	/** 根据类型获取一个该管理器中的相关技能实例 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability")
 	FORCEINLINE UFireflyAbility* GetGrantedAbilityByClass(TSubclassOf<UFireflyAbility> AbilityType) const;
 
@@ -249,9 +253,9 @@ protected:
 	FORCEINLINE UEnhancedInputComponent* GetEnhancedInputComponentFromOwner() const;
 
 public:
-	/** 将技能与输入绑定，绑定操作应该在本地客户端执行，技能需要存在于技能管理器中，输入也应当有效 */
+	/** 将技能与输入绑定，绑定操作应该在本地客户端执行，输入必须有效，如技能未在管理器中，则先给输入创建绑定 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
-	void BindAbilityToInput(TSubclassOf<UFireflyAbility> AbilityToBind, UInputAction* InputToBind, bool bForceBind);
+	void BindAbilityToInput(TSubclassOf<UFireflyAbility> AbilityToBind, UInputAction* InputToBind);
 
 	/** 将技能与输入解绑，解绑操作应该在本地客户端执行，技能需要存在于技能管理器中，输入也应当有效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
