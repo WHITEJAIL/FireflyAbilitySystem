@@ -185,10 +185,6 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
 	TEnumAsByte<EFireflyAttributeType> AttributeType = AttributeType_Default;
 
-	/** 属性的初始值 */
-	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
-	float AttributeInitValue = 0.f;
-
 	/** 属性是否拥有夹值 */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
 	bool bAttributeHasRange = false;

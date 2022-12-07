@@ -758,18 +758,21 @@ void UFireflyAbilitySystemComponent::ConstructAttributeByConstructor(FFireflyAtt
 	FString NewAttributeName = UFireflyAbilitySystemLibrary::GetAttributeTypeName(AttributeConstructor.AttributeType) + FString("_") + (TEXT("%s"), GetOwner()->GetName());
 
 	UFireflyAttribute* NewAttribute = NewObject<UFireflyAttribute>(this, *NewAttributeName);
+	if (!IsValid(NewAttribute))
+	{
+		return;
+	}
 	NewAttribute->AttributeType = AttributeConstructor.AttributeType;
-	NewAttribute->Initialize(AttributeConstructor.AttributeInitValue);
 	NewAttribute->bAttributeHasRange = AttributeConstructor.bAttributeHasRange;
 	NewAttribute->RangeMinValue = AttributeConstructor.RangeMinValue;
 	NewAttribute->RangeMaxValue = AttributeConstructor.RangeMaxValue;
 	NewAttribute->RangeMaxValueType = AttributeConstructor.RangeMaxValueType;
+	NewAttribute->InitializeAttributeInstance();
 
 	AttributeContainer.Emplace(NewAttribute);
 }
 
-void UFireflyAbilitySystemComponent::ConstructAttributeByClass(TSubclassOf<UFireflyAttribute> AttributeClass,
-	float InitValue)
+void UFireflyAbilitySystemComponent::ConstructAttributeByClass(TSubclassOf<UFireflyAttribute> AttributeClass)
 {
 	if (!IsValid(AttributeClass) || !HasAuthority())
 	{
@@ -780,13 +783,17 @@ void UFireflyAbilitySystemComponent::ConstructAttributeByClass(TSubclassOf<UFire
 	FString NewAttributeName = UFireflyAbilitySystemLibrary::GetAttributeTypeName(AttributeType) + FString("_") + (TEXT("%s"), GetOwner()->GetName());
 
 	UFireflyAttribute* NewAttribute = NewObject<UFireflyAttribute>(this, AttributeClass, *NewAttributeName);
+	if (!IsValid(NewAttribute))
+	{
+		return;
+	}
 	NewAttribute->AttributeType = AttributeType;
-	NewAttribute->Initialize(InitValue);
+	NewAttribute->InitializeAttributeInstance();
 
 	AttributeContainer.Emplace(NewAttribute);
 }
 
-void UFireflyAbilitySystemComponent::ConstructAttributeByType(EFireflyAttributeType AttributeType, float InitValue)
+void UFireflyAbilitySystemComponent::ConstructAttributeByType(EFireflyAttributeType AttributeType)
 {
 	if (!HasAuthority())
 	{
@@ -796,8 +803,12 @@ void UFireflyAbilitySystemComponent::ConstructAttributeByType(EFireflyAttributeT
 	FString NewAttributeName = UFireflyAbilitySystemLibrary::GetAttributeTypeName(AttributeType) + FString("_") + (TEXT("%s"), GetOwner()->GetName());
 
 	UFireflyAttribute* NewAttribute = NewObject<UFireflyAttribute>(this, *NewAttributeName);
+	if (!IsValid(NewAttribute))
+	{
+		return;
+	}
 	NewAttribute->AttributeType = AttributeType;
-	NewAttribute->Initialize(InitValue);
+	NewAttribute->InitializeAttributeInstance();
 
 	AttributeContainer.Emplace(NewAttribute);
 }
@@ -815,7 +826,7 @@ void UFireflyAbilitySystemComponent::InitializeAttributeByType(EFireflyAttribute
 		return;
 	}
 
-	AttributeToInit->Initialize(NewInitValue);
+	AttributeToInit->InitializeAttributeValue(NewInitValue);
 }
 
 void UFireflyAbilitySystemComponent::InitializeAttributeByName(FName AttributeName, float NewInitValue)
@@ -831,13 +842,13 @@ void UFireflyAbilitySystemComponent::InitializeAttributeByName(FName AttributeNa
 		return;
 	}
 
-	AttributeToInit->Initialize(NewInitValue);
+	AttributeToInit->InitializeAttributeValue(NewInitValue);
 }
 
 void UFireflyAbilitySystemComponent::ApplyModifierToAttribute(EFireflyAttributeType AttributeType,
-                                                              EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, int32 StackToApply)
+	EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, int32 StackToApply)
 {
-	if (!HasAuthority())
+	if (!HasAuthority() || !IsValid(ModSource))
 	{
 		return;
 	}
@@ -910,7 +921,7 @@ void UFireflyAbilitySystemComponent::ApplyModifierToAttribute(EFireflyAttributeT
 void UFireflyAbilitySystemComponent::RemoveModifierFromAttribute(EFireflyAttributeType AttributeType,
 	EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue)
 {
-	if (!HasAuthority())
+	if (!HasAuthority() || !IsValid(ModSource))
 	{
 		return;
 	}
@@ -1018,9 +1029,9 @@ bool UFireflyAbilitySystemComponent::CanApplyModifierInstant(EFireflyAttributeTy
 }
 
 void UFireflyAbilitySystemComponent::ApplyModifierToAttributeInstant(EFireflyAttributeType AttributeType,
-                                                                     EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue)
+	EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue)
 {
-	if (!HasAuthority())
+	if (!HasAuthority() || !IsValid(ModSource))
 	{
 		return;
 	}
@@ -1032,6 +1043,81 @@ void UFireflyAbilitySystemComponent::ApplyModifierToAttributeInstant(EFireflyAtt
 	}
 
 	AttributeToMod->UpdateBaseValue(ModOperator, ModValue);
+	AttributeToMod->UpdateCurrentValue();
+}
+
+void UFireflyAbilitySystemComponent::ApplyModifierToAttributeSelf(EFireflyAttributeType AttributeType,
+	EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, int32 StackToApply)
+{
+	if (!HasAuthority() || !IsValid(ModSource))
+	{
+		return;
+	}
+
+	UFireflyAttribute* AttributeToMod = GetAttributeByType(AttributeType);
+	if (!IsValid(AttributeToMod) || AttributeToMod != ModSource)
+	{
+		return;
+	}
+
+#define FIREFLY_ATTRIBUTE_SELF_MODIFIER_APPLY(ModOperatorName) \
+	{ \
+		bool bContainsModifier = false; \
+		for (FFireflyAttributeModifier& Modifier : AttributeToMod->##ModOperatorName##Mods) \
+		{ \
+			if (Modifier.ModSource == ModSource) \
+			{ \
+				bContainsModifier = false; \
+				Modifier.ModValue = ModValue; \
+				Modifier.StackCount = StackToApply; \
+				break; \
+			} \
+		} \
+		if (!bContainsModifier) \
+		{ \
+			AttributeToMod->##ModOperatorName##Mods.AddUnique(FFireflyAttributeModifier(ModSource, ModValue, StackToApply)); \
+		} \
+	}
+
+	switch (ModOperator)
+	{
+	case EFireflyAttributeModOperator::None:
+		{
+			break;
+		}
+	case EFireflyAttributeModOperator::Plus:
+		{
+			FIREFLY_ATTRIBUTE_SELF_MODIFIER_APPLY(Plus);
+			break;
+		}
+	case EFireflyAttributeModOperator::Minus:
+		{
+			FIREFLY_ATTRIBUTE_SELF_MODIFIER_APPLY(Minus);
+			break;
+		}
+	case EFireflyAttributeModOperator::Multiply:
+		{
+			FIREFLY_ATTRIBUTE_SELF_MODIFIER_APPLY(Multiply);
+			break;
+		}
+	case EFireflyAttributeModOperator::Divide:
+		{
+			FIREFLY_ATTRIBUTE_SELF_MODIFIER_APPLY(Divide);
+			break;
+		}
+	case EFireflyAttributeModOperator::InnerOverride:
+		{
+			FIREFLY_ATTRIBUTE_SELF_MODIFIER_APPLY(InnerOverride);
+			break;
+		}
+	case EFireflyAttributeModOperator::OuterOverride:
+		{
+			FIREFLY_ATTRIBUTE_SELF_MODIFIER_APPLY(OuterOverride);
+			break;
+		}
+	}
+
+	AttributeToMod->UpdateCurrentValue();
 }
 
 TArray<UFireflyEffect*> UFireflyAbilitySystemComponent::GetActiveEffectsByID(FName EffectID) const

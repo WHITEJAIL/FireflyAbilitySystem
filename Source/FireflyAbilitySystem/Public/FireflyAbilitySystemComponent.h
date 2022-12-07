@@ -65,7 +65,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FFireflyAbilityCooldownExecutionD
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FFireflyAbilityCooldownRemainingChangedDelegate, FName, AbilityID, TSubclassOf<UFireflyAbility>, AbilityType, float, NewTimeRemaining, float, TotalDuration);
 
 /** 属性数值变更的代理声明 */
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FFireflyAttributeValueChangeDelegate, TEnumAsByte<EFireflyAttributeType>, AttributeType, float, OldValue, float, Newvalue);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FFireflyAttributeValueChangeDelegate, TEnumAsByte<EFireflyAttributeType>, AttributeType, float, NewValue, float, OldValue);
 
 /** 效果执行开始的代理声明 */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FFireflyEffectStartExecutingDelegate, FName, EffectID, TSubclassOf<UFireflyEffect>, EffectType, float, TotoalDuration);
@@ -321,11 +321,11 @@ public:
 
 	/** 通过属性类型构造属性并添加到属性修改器中 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
-	void ConstructAttributeByClass(TSubclassOf<UFireflyAttribute> AttributeClass, float InitValue);
+	void ConstructAttributeByClass(TSubclassOf<UFireflyAttribute> AttributeClass);
 
 	/** 通过属性类型构造属性并添加到属性修改器中 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
-	void ConstructAttributeByType(EFireflyAttributeType AttributeType, float InitValue);
+	void ConstructAttributeByType(EFireflyAttributeType AttributeType);
 
 	/** 根据类型初始化属性值 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
@@ -370,6 +370,10 @@ public:
 	/** 应用一个修改器永久修改某个属性的基础值，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
 	void ApplyModifierToAttributeInstant(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue);
+
+	/** 应用一个修改器到某个属性的当前值中，该修改器必须来自于属性本身，必须在拥有权限端执行，否则无效 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
+	void ApplyModifierToAttributeSelf(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, int32 StackToApply);
 
 #pragma endregion
 

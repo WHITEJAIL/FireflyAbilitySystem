@@ -45,6 +45,21 @@ int32 UFireflyAttribute::GetFunctionCallspace(UFunction* Function, FFrame* Stack
 	return (GetOuter() ? GetOuter()->GetFunctionCallspace(Function, Stack) : FunctionCallspace::Local);
 }
 
+void UFireflyAttribute::InitializeAttributeInstance()
+{
+	 ReceiveInitializeAttributeInstance();
+}
+
+TEnumAsByte<EFireflyAttributeType> UFireflyAttribute::GetAttributeType() const
+{
+	return AttributeType;
+}
+
+TEnumAsByte<EFireflyAttributeType> UFireflyAttribute::GetRangeMaxValueType() const
+{
+	return RangeMaxValueType;
+}
+
 float UFireflyAttribute::GetCurrentValue() const
 {
 	return CurrentValue;
@@ -75,17 +90,24 @@ UFireflyAbilitySystemComponent* UFireflyAttribute::GetOwnerManager() const
 	return Cast<UFireflyAbilitySystemComponent>(GetOuter());
 }
 
-void UFireflyAttribute::Initialize(float InitValue)
+void UFireflyAttribute::InitializeAttributeValue(float InitValue)
 {
 	float OldValue = 0.f;
 
 	OldValue = BaseValue;
 	BaseValue = InitValue;
-	GetOwnerManager()->OnAttributeValueChanged.Broadcast(AttributeType, OldValue, CurrentValue);
+	if (BaseValue != OldValue)
+	{
+		GetOwnerManager()->OnAttributeBaseValueChanged.Broadcast(AttributeType, BaseValue, OldValue);
+	}
 
 	OldValue = CurrentValue;
 	UpdateCurrentValue();
-	GetOwnerManager()->OnAttributeBaseValueChanged.Broadcast(AttributeType, OldValue, CurrentValue);
+	if (CurrentValue == OldValue)
+	{
+		return;
+	}
+	GetOwnerManager()->OnAttributeValueChanged.Broadcast(AttributeType, CurrentValue, OldValue);
 }
 
 void UFireflyAttribute::UpdateCurrentValue_Implementation()
@@ -100,7 +122,10 @@ void UFireflyAttribute::UpdateCurrentValue_Implementation()
 	if (OuterOverrideMods.IsValidIndex(0))
 	{
 		CurrentValue = OuterOverrideMods[0].ModValue;
-		GetOwnerManager()->OnAttributeValueChanged.Broadcast(AttributeType, OldValue, CurrentValue);
+		if (CurrentValue != OldValue)
+		{
+			GetOwnerManager()->OnAttributeValueChanged.Broadcast(AttributeType, CurrentValue, OldValue);
+		}
 		return;
 	}
 
@@ -118,9 +143,18 @@ void UFireflyAttribute::UpdateCurrentValue_Implementation()
 		float FinalRangeMax = RangeMaxValueType != AttributeType_Default ?
 			GetOwnerManager()->GetAttributeValue(RangeMaxValueType) : RangeMaxValue;
 		CurrentValue = FMath::Clamp<float>(CurrentValue, RangeMinValue, FinalRangeMax);
-	}	
+	}
+	else if (bAttributeMustNotLessThanSelection)
+	{
+		CurrentValue = CurrentValue < LessBaseValue ? LessBaseValue : CurrentValue;
+	}
 
-	GetOwnerManager()->OnAttributeValueChanged.Broadcast(AttributeType, OldValue, CurrentValue);
+	if (CurrentValue == OldValue)
+	{
+		return;
+	}
+
+	GetOwnerManager()->OnAttributeValueChanged.Broadcast(AttributeType, CurrentValue, OldValue);
 }
 
 void UFireflyAttribute::UpdateBaseValue_Implementation(EFireflyAttributeModOperator ModOperator, float ModValue)
@@ -171,9 +205,18 @@ void UFireflyAttribute::UpdateBaseValue_Implementation(EFireflyAttributeModOpera
 		float FinalRangeMax = RangeMaxValueType != EFireflyAttributeType::AttributeType_Default ?
 			GetOwnerManager()->GetAttributeValue(RangeMaxValueType) : RangeMaxValue;
 		BaseValue = FMath::Clamp<float>(BaseValue, RangeMinValue, FinalRangeMax);
-	}	
+	}
+	else if (bAttributeMustNotLessThanSelection)
+	{
+		BaseValue = BaseValue < LessBaseValue ? LessBaseValue : BaseValue;
+	}
 
-	GetOwnerManager()->OnAttributeBaseValueChanged.Broadcast(AttributeType, OldValue, BaseValue);
+	if (BaseValue == OldValue)
+	{
+		return;
+	}
+
+	GetOwnerManager()->OnAttributeBaseValueChanged.Broadcast(AttributeType, BaseValue, OldValue);
 }
 
 bool UFireflyAttribute::IsValueInAttributeRange(float InValue)

@@ -62,6 +62,22 @@ public:
 #pragma region Basic
 
 protected:
+	/** 初始化属性实例，当属性被构建并添加到技能管理器时触发 */
+	UFUNCTION()
+	virtual void InitializeAttributeInstance();
+
+	/** 蓝图端实现的初始化属性实例，当属性被构建并添加到技能管理器时触发 */
+	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Attribute", Meta = (DisplayName = "InitializeAttributeInstance"))
+	void ReceiveInitializeAttributeInstance();
+
+	/** 获取属性的类型 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute", Meta = (BlueprintProtected = "true"))
+	FORCEINLINE TEnumAsByte<EFireflyAttributeType> GetAttributeType() const;
+
+	/** 获取属性的范围最大值属性类型，基于另一个属性的当前值 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute", Meta = (BlueprintProtected = "true"))
+	FORCEINLINE TEnumAsByte<EFireflyAttributeType> GetRangeMaxValueType() const;
+
 	/** 获取属性的当前值 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute", Meta = (BlueprintProtected = "true"))
 	FORCEINLINE float GetCurrentValue() const;
@@ -79,7 +95,7 @@ protected:
 	FORCEINLINE UFireflyAbilitySystemComponent* GetOwnerManager() const;
 
 	/** 初始化属性 */
-	void Initialize(float InitValue);
+	void InitializeAttributeValue(float InitValue);
 
 protected:
 	/** 属性名 */
@@ -94,20 +110,28 @@ protected:
 	UPROPERTY()
 	float CurrentValue = 0.f;
 
+	/** 属性不需要夹值，但属性不能小于给定的值 */
+	UPROPERTY(EditDefaultsOnly, Category = "FireflyAbilitySystem|Attribute")
+	bool bAttributeMustNotLessThanSelection = true;
+
+	/** bAttributeMustMoreNotLessThanSelection为true时，属性不会小于该值 */
+	UPROPERTY(EditDefaultsOnly, Category = "FireflyAbilitySystem|Attribute", Meta = (EditCondition = "bAttributeMustNotLessThanSelection"))
+	float LessBaseValue = 0.f;
+
 	/** 属性是否需要夹值 */
 	UPROPERTY(EditDefaultsOnly, Category = "FireflyAbilitySystem|Attribute")
 	bool bAttributeHasRange = false;
 
 	/** 属性的范围最小值 */
-	UPROPERTY(EditDefaultsOnly, Category = "FireflyAbilitySystem|Attribute")
+	UPROPERTY(EditDefaultsOnly, Category = "FireflyAbilitySystem|Attribute", Meta = (EditCondition = "bAttributeHasRange"))
 	float RangeMinValue = 0.f;
 
 	/** 属性的范围最大值 */
-	UPROPERTY(EditDefaultsOnly, Category = "FireflyAbilitySystem|Attribute")
+	UPROPERTY(EditDefaultsOnly, Category = "FireflyAbilitySystem|Attribute", Meta = (EditCondition = "bAttributeHasRange"))
 	float RangeMaxValue = 0.f;
 
 	/** 属性的范围最大值属性类型，基于另一个属性的当前值 */
-	UPROPERTY(EditDefaultsOnly, Category = "FireflyAbilitySystem|Attribute")
+	UPROPERTY(EditDefaultsOnly, Category = "FireflyAbilitySystem|Attribute", Meta = (EditCondition = "bAttributeHasRange"))
 	TEnumAsByte<EFireflyAttributeType> RangeMaxValueType = AttributeType_Default;
 
 	friend UFireflyAbilitySystemComponent;
