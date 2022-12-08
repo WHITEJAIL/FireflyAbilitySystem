@@ -3,53 +3,47 @@
 
 #include "FireflyAbilitySystemLibrary.h"
 
+#include "DataRegistrySubsystem.h"
 #include "FireflyAbility.h"
-#include "FireflyAbilitySystemSettings.h"
 
-UDataTable* UFireflyAbilitySystemLibrary::GetAbilityDataTable()
+TSubclassOf<UFireflyAbility> UFireflyAbilitySystemLibrary::GetAbilityClassFromCache(FName AbilityID)
 {
-	return UFireflyAbilitySystemSettings::Get()->AbilityTable.LoadSynchronous();
-}
-
-TSubclassOf<UFireflyAbility> UFireflyAbilitySystemLibrary::GetAbilityClassFromDataTable(FName AbilityID)
-{
-	UDataTable* AbilityTable = GetAbilityDataTable();
-	if (!IsValid(AbilityTable))
+	UDataRegistrySubsystem* SubsystemDR = UDataRegistrySubsystem::Get();
+	if (!IsValid(SubsystemDR))
 	{
 		return nullptr;
 	}
 
-	FFireflyAbilityTableRow* AbilityTableRow = AbilityTable->FindRow<FFireflyAbilityTableRow>(AbilityID, FString("Find Ability Row"));
-	if (!AbilityTableRow)
+	const FFireflyAbilityTableRow* AbilityRow = SubsystemDR->GetCachedItem<FFireflyAbilityTableRow>(
+		FDataRegistryId(FName("DR_FireflyAbilities"), AbilityID));
+	if (!AbilityRow)
 	{
 		return nullptr;
 	}
-	AbilityTableRow->AbilityClass.IsValid();
-	TSubclassOf<UFireflyAbility> OutAbilityClass = AbilityTableRow->AbilityClass.LoadSynchronous();
+
+	AbilityRow->AbilityClass.IsValid();
+	TSubclassOf<UFireflyAbility> OutAbilityClass = AbilityRow->AbilityClass.LoadSynchronous();
 	
 	return OutAbilityClass;
 }
 
-UDataTable* UFireflyAbilitySystemLibrary::GetEffectDataTable()
+TSubclassOf<UFireflyEffect> UFireflyAbilitySystemLibrary::GetEffectClassFromCache(FName EffectID)
 {
-	return UFireflyAbilitySystemSettings::Get()->EffectTable.LoadSynchronous();
-}
-
-TSubclassOf<UFireflyEffect> UFireflyAbilitySystemLibrary::GetEffectClassFromDataTable(FName EffectID)
-{
-	UDataTable* EffectTable = GetEffectDataTable();
-	if (!IsValid(EffectTable))
+	UDataRegistrySubsystem* SubsystemDR = UDataRegistrySubsystem::Get();
+	if (!IsValid(SubsystemDR))
 	{
 		return nullptr;
 	}
 
-	FFireflyEffectTableRow* EffectTableRow = EffectTable->FindRow<FFireflyEffectTableRow>(EffectID, FString("Find Effect Row"));
-	if (!EffectTableRow)
+	const FFireflyEffectTableRow* EffectRow = SubsystemDR->GetCachedItem<FFireflyEffectTableRow>(
+		FDataRegistryId(FName("DR_FireflyEffects"), EffectID));
+	if (!EffectRow)
 	{
 		return nullptr;
 	}
-	EffectTableRow->EffectClass.IsValid();
-	TSubclassOf<UFireflyEffect> OutEffectClass = EffectTableRow->EffectClass.LoadSynchronous();
+
+	EffectRow->EffectClass.IsValid();
+	TSubclassOf<UFireflyEffect> OutEffectClass = EffectRow->EffectClass.LoadSynchronous();
 
 	return OutEffectClass;
 }

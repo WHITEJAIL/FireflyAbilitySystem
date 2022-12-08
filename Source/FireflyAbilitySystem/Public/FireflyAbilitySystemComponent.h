@@ -134,11 +134,11 @@ protected:
 public:
 	/** 根据ID为技能管理器赋予一个技能，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
-	virtual void GrantAbilityByID(FName AbilityID);
+	virtual bool GrantAbilityByID(FName AbilityID);
 
 	/** 根据类型为技能管理器赋予一个技能，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
-	virtual void GrantAbilityByClass(TSubclassOf<UFireflyAbility> AbilityToGrant, FName AbilityID = NAME_None);
+	virtual bool GrantAbilityByClass(TSubclassOf<UFireflyAbility> AbilityToGrant, FName AbilityID = NAME_None);
 
 	/** 根据ID从技能管理器移除一个技能，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
