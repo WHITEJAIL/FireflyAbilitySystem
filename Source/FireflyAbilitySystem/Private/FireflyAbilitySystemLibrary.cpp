@@ -21,10 +21,7 @@ TSubclassOf<UFireflyAbility> UFireflyAbilitySystemLibrary::GetAbilityClassFromCa
 		return nullptr;
 	}
 
-	AbilityRow->AbilityClass.IsValid();
-	TSubclassOf<UFireflyAbility> OutAbilityClass = AbilityRow->AbilityClass.LoadSynchronous();
-	
-	return OutAbilityClass;
+	return AbilityRow->AbilityClass.LoadSynchronous();
 }
 
 TSubclassOf<UFireflyEffect> UFireflyAbilitySystemLibrary::GetEffectClassFromCache(FName EffectID)
@@ -42,10 +39,7 @@ TSubclassOf<UFireflyEffect> UFireflyAbilitySystemLibrary::GetEffectClassFromCach
 		return nullptr;
 	}
 
-	EffectRow->EffectClass.IsValid();
-	TSubclassOf<UFireflyEffect> OutEffectClass = EffectRow->EffectClass.LoadSynchronous();
-
-	return OutEffectClass;
+	return EffectRow->EffectClass.LoadSynchronous();
 }
 
 FString UFireflyAbilitySystemLibrary::GetAttributeTypeName(EFireflyAttributeType AttributeType)

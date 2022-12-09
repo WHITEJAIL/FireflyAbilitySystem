@@ -38,6 +38,10 @@
 		{
 			"Name": "AnimationWarping",
 			"Enabled": true
+		},
+		{
+			"Name": "DataRegistry",
+			"Enabled": true
 		}
 	]
 }
