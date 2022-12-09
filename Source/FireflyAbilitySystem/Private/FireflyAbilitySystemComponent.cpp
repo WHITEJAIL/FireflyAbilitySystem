@@ -515,16 +515,6 @@ void UFireflyAbilitySystemComponent::UnbindAbilityWithInput(TSubclassOf<UFirefly
 	}
 
 	AbilitiesBoundToInput->Abilities.RemoveSingleSwap(AbilityToUnbind);
-	if (AbilitiesBoundToInput->Abilities.Num() == 0)
-	{
-		EnhancedInput->RemoveBindingByHandle(AbilitiesBoundToInput->HandleStarted);
-		EnhancedInput->RemoveBindingByHandle(AbilitiesBoundToInput->HandleOngoing);
-		EnhancedInput->RemoveBindingByHandle(AbilitiesBoundToInput->HandleCanceled);
-		EnhancedInput->RemoveBindingByHandle(AbilitiesBoundToInput->HandleTriggered);
-		EnhancedInput->RemoveBindingByHandle(AbilitiesBoundToInput->HandleCompleted);
-
-		AbilitiesInputBound.Remove(InputToUnbind);
-	}
 }
 
 void UFireflyAbilitySystemComponent::OnAbilityInputActionStarted(UInputAction* Input)
