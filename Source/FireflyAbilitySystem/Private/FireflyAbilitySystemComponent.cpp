@@ -158,22 +158,22 @@ UFireflyAbility* UFireflyAbilitySystemComponent::GetGrantedAbilityByClass(
 	return OutAbility;
 }
 
-void UFireflyAbilitySystemComponent::GrantAbilityByID(FName AbilityID)
+bool UFireflyAbilitySystemComponent::GrantAbilityByID(FName AbilityID)
 {
 	if (!HasAuthority())
 	{
-		return;
+		return false;
 	}
 
-	TSubclassOf<UFireflyAbility> AbilityToGrant = UFireflyAbilitySystemLibrary::GetAbilityClassFromDataTable(AbilityID);
+	TSubclassOf<UFireflyAbility> AbilityToGrant = UFireflyAbilitySystemLibrary::GetAbilityClassFromCache(AbilityID);
 	if (!IsValid(AbilityToGrant))
 	{
-		return;
+		return false;
 	}
 
 	if (IsValid(GetGrantedAbilityByClass(AbilityToGrant)))
 	{
-		return;
+		return false;
 	}
 
 	FName NewAbilityName = FName(AbilityToGrant->GetName() + FString("_") + GetOwner()->GetName());
@@ -181,18 +181,20 @@ void UFireflyAbilitySystemComponent::GrantAbilityByID(FName AbilityID)
 	NewAbility->AbilityID = AbilityID;
 	NewAbility->OnAbilityGranted();
 	GrantedAbilities.Emplace(NewAbility);
+
+	return true;
 }
 
-void UFireflyAbilitySystemComponent::GrantAbilityByClass(TSubclassOf<UFireflyAbility> AbilityToGrant, FName AbilityID)
+bool UFireflyAbilitySystemComponent::GrantAbilityByClass(TSubclassOf<UFireflyAbility> AbilityToGrant, FName AbilityID)
 {
 	if (!IsValid(AbilityToGrant) || !HasAuthority())
 	{
-		return;
+		return false;
 	}
 
 	if (IsValid(GetGrantedAbilityByClass(AbilityToGrant)))
 	{
-		return;
+		return false;
 	}
 
 	FName NewAbilityName = FName(AbilityToGrant->GetName() + FString("_") + GetOwner()->GetName());
@@ -200,6 +202,8 @@ void UFireflyAbilitySystemComponent::GrantAbilityByClass(TSubclassOf<UFireflyAbi
 	NewAbility->AbilityID = AbilityID;
 	NewAbility->OnAbilityGranted();
 	GrantedAbilities.Emplace(NewAbility);
+
+	return true;
 }
 
 void UFireflyAbilitySystemComponent::RemoveAbilityByID(FName AbilityID, bool bRemoveOnEnded)
@@ -1249,7 +1253,7 @@ void UFireflyAbilitySystemComponent::ApplyEffectToTarget(AActor* Target, UFirefl
 
 void UFireflyAbilitySystemComponent::ApplyEffectToOwnerByID(AActor* Instigator, FName EffectID, int32 StackToApply)
 {
-	TSubclassOf<UFireflyEffect> EffectClass = UFireflyAbilitySystemLibrary::GetEffectClassFromDataTable(EffectID);
+	TSubclassOf<UFireflyEffect> EffectClass = UFireflyAbilitySystemLibrary::GetEffectClassFromCache(EffectID);
 	if (!IsValid(EffectClass) || StackToApply <= 0 || !HasAuthority())
 	{
 		return;
@@ -1271,7 +1275,7 @@ void UFireflyAbilitySystemComponent::ApplyEffectToTargetByID(AActor* Target, FNa
 		return;
 	}
 
-	TSubclassOf<UFireflyEffect> EffectClass = UFireflyAbilitySystemLibrary::GetEffectClassFromDataTable(EffectID);
+	TSubclassOf<UFireflyEffect> EffectClass = UFireflyAbilitySystemLibrary::GetEffectClassFromCache(EffectID);
 	if (!IsValid(EffectClass))
 	{
 		return;
@@ -1597,7 +1601,7 @@ bool UFireflyAbilitySystemComponent::GetSingleActiveEffectStackingCountByClass(T
 
 UFireflyEffect* UFireflyAbilitySystemComponent::MakeDynamicEffectByID(FName EffectID)
 {
-	TSubclassOf<UFireflyEffect> EffectClass = UFireflyAbilitySystemLibrary::GetEffectClassFromDataTable(EffectID);
+	TSubclassOf<UFireflyEffect> EffectClass = UFireflyAbilitySystemLibrary::GetEffectClassFromCache(EffectID);
 	if (!IsValid(EffectClass))
 	{
 		return nullptr;
