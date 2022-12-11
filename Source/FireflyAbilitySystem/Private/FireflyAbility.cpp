@@ -254,7 +254,7 @@ bool UFireflyAbility::CheckAbilityCooldown_Implementation() const
 		return false;
 	}
 
-	return Manager->GetActiveEffectsByTag(CooldownTags).Num() > 0;
+	return Manager->GetActiveEffectsByTag(CooldownTags).Num() <= 0;
 }
 
 void UFireflyAbility::ApplyAbilityCooldown()
@@ -612,11 +612,13 @@ void UFireflyAbility::Multi_PlayMontageForOwner_Implementation(UAnimMontage* Mon
 
 void UFireflyAbility::OnOwnerMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
+	ReceiveOnOwnerMontageEnded(Montage, bInterrupted);
 	OnMontageEnded.Unbind();
 }
 
 void UFireflyAbility::OnOwnerMontageBlendOut(UAnimMontage* Montage, bool bInterrupted)
 {
+	ReceiveOnOwnerMontageBlendOut(Montage, bInterrupted);
 	OnMontageBlendOut.Unbind();
 }
 

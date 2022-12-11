@@ -15,7 +15,7 @@ class FIREFLYABILITYSYSTEM_API UFireflyEffect : public UObject
 {
 	GENERATED_UCLASS_BODY()
 
-#pragma region Override
+#pragma region Override // 基类重载
 
 public:
 	virtual UWorld* GetWorld() const override;
@@ -29,7 +29,7 @@ public:
 #pragma endregion
 
 
-#pragma region Basic
+#pragma region Basic // 基础
 
 protected:
 	/** 获取效果所属的管理器的拥有者 */
@@ -54,7 +54,7 @@ protected:
 #pragma endregion
 
 
-#pragma region Duration
+#pragma region Duration // 持续时间
 
 protected:
 	/** 设置正在执行的效果的剩余持续时间 */
@@ -85,7 +85,7 @@ protected:
 #pragma endregion
 
 
-#pragma region Periodicity
+#pragma region Periodicity // 周期性跳动执行
 
 protected:
 	/** 尝试执行或重置周期性逻辑 */
@@ -108,7 +108,7 @@ protected:
 #pragma endregion
 
 
-#pragma region Stacking
+#pragma region Stacking // 堆叠管理
 
 protected:
 	/** 增加该效果的堆叠数 */
@@ -175,7 +175,7 @@ protected:
 #pragma endregion
 
 
-#pragma region Modifiers
+#pragma region Modifiers // 属性修改器
 
 protected:
 	/** 该效果携带的属性修改器 */
@@ -189,7 +189,7 @@ protected:
 #pragma endregion
 
 
-#pragma region Application
+#pragma region Application // 应用管理
 
 protected:
 	/** 效果被应用时的逻辑 */
@@ -252,7 +252,7 @@ protected:
 #pragma endregion
 
 
-#pragma region TagRequirement
+#pragma region TagRequirement // 应用条件
 
 protected:
 	/** 当拥有者的管理器的TagContainer更新时触发的代理 */

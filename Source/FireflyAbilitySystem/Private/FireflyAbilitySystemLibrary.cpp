@@ -5,6 +5,18 @@
 
 #include "DataRegistrySubsystem.h"
 #include "FireflyAbility.h"
+#include "FireflyAbilitySystemComponent.h"
+
+UFireflyAbilitySystemComponent* UFireflyAbilitySystemLibrary::GetFireflyAbilitySystem(AActor* Actor)
+{
+	if (!IsValid(Actor->GetComponentByClass(UFireflyAbilitySystemComponent::StaticClass())))
+	{
+		return nullptr;
+	}
+
+	return CastChecked<UFireflyAbilitySystemComponent>(Actor->GetComponentByClass(
+		UFireflyAbilitySystemComponent::StaticClass()));
+}
 
 TSubclassOf<UFireflyAbility> UFireflyAbilitySystemLibrary::GetAbilityClassFromCache(FName AbilityID)
 {
@@ -51,4 +63,23 @@ FString UFireflyAbilitySystemLibrary::GetAttributeTypeName(EFireflyAttributeType
 	}
 
 	return EnumPtr->GetDisplayNameTextByValue(AttributeType).ToString();
+}
+
+void UFireflyAbilitySystemLibrary::SendNotifyEventToActor(AActor* TargetActor, FGameplayTag EventTag,
+	FFireflyMessageEventData EventData)
+{
+	if (!IsValid(TargetActor) || !EventTag.IsValid())
+	{
+		return;
+	}
+
+	EventData.EventTag = EventTag;
+
+	UFireflyAbilitySystemComponent* FireflyCore = GetFireflyAbilitySystem(TargetActor);
+	if (!IsValid(FireflyCore))
+	{
+		return;
+	}
+
+	FireflyCore->HandleMessageEvent(EventTag, &EventData);
 }

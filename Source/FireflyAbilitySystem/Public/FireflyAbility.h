@@ -16,7 +16,7 @@ class FIREFLYABILITYSYSTEM_API UFireflyAbility : public UObject
 {
 	GENERATED_UCLASS_BODY()
 
-#pragma region Override
+#pragma region Override // 基类函数重载
 
 public:
 	virtual UWorld* GetWorld() const override;
@@ -30,7 +30,7 @@ public:
 #pragma endregion
 
 
-#pragma region Basic
+#pragma region Basic // 基础函数
 	
 protected:
 	/** 获取技能所属的管理器的拥有者 */
@@ -55,7 +55,7 @@ protected:
 #pragma endregion
 
 
-#pragma region Granting
+#pragma region Granting // 技能赋予
 
 protected:
 	/**当技能被赋予时执行的函数，可以理解为技能的运行时构造函数*/
@@ -70,7 +70,7 @@ protected:
 #pragma endregion
 
 
-#pragma region Execution
+#pragma region Execution // 技能执行
 
 protected:
 	/** 激活技能 */
@@ -129,7 +129,7 @@ protected:
 #pragma endregion
 
 
-#pragma region CostAndCooldown
+#pragma region CostAndCooldown // 消耗和冷却
 
 protected:
 	/** 检测技能的消耗是否可执行 */
@@ -216,7 +216,7 @@ protected:
 #pragma endregion
 
 
-#pragma region Requirement
+#pragma region Requirement // 技能激活条件
 
 protected:
 	/** 是否可激活技能 */
@@ -269,7 +269,7 @@ protected:
 #pragma endregion
 
 
-#pragma region InputBinding
+#pragma region InputBinding // 输入绑定
 
 protected:
 	/** 输入事件：开始 */
@@ -360,7 +360,7 @@ protected:
 #pragma endregion
 
 
-#pragma region MontagePlay
+#pragma region MontagePlay // 蒙太奇播放
 
 protected:
 	/** 获取拥有者的动画实例 */

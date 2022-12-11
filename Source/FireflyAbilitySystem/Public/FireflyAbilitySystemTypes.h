@@ -12,7 +12,7 @@ class UFireflyAttribute;
 class UFireflyEffect;
 class UFireflyEffectModifierCalculator;
 
-#pragma region Attribute
+#pragma region Attribute // 属性
 
 /** 个人技能系统的属性枚举，在项目设置中定义DisplayName */
 UENUM(BlueprintType)
@@ -205,7 +205,7 @@ public:
 #pragma endregion
 
 
-#pragma region Effect
+#pragma region Effect // 效果
 
 /** 效果的持续性策略 */
 UENUM()
@@ -440,12 +440,12 @@ public:
 #pragma endregion
 
 
-#pragma region Ability
+#pragma region Ability // 技能
 
 #pragma endregion
 
 
-#pragma region DataDriven
+#pragma region DataDriven // 数据驱动
 
 /** 技能的数据表，项目如果期望用数据驱动技能系统运行，要让技能的数据表结构继承 */
 USTRUCT(BlueprintType)
@@ -469,6 +469,43 @@ public:
 	/** 效果类 */
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
 	TSoftClassPtr<UFireflyEffect> EffectClass = nullptr;
+};
+
+#pragma endregion
+
+
+#pragma region MessageEvent // 消息事件
+
+/** 通知事件携带的数据 */
+USTRUCT(BlueprintType)
+struct FFireflyMessageEventData
+{
+	GENERATED_BODY()
+
+public:
+	/** 触发该事件的标签 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FGameplayTag EventTag;
+
+	/** 该事件的发起者 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	const AActor* Instigator;
+
+	/** 该事件的接收者 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	const AActor* Target;
+
+	/** 该事件携带的对象实例 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<UObject*> OptionalObjects;
+
+	/** 该事件携带的数据信息 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<float> EventMagnitudes;
+
+	/** 该事件携带的字符信息 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FString> EventStrings;
 };
 
 #pragma endregion

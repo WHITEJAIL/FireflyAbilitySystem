@@ -714,17 +714,15 @@ UFireflyAttribute* UFireflyAbilitySystemComponent::GetAttributeByName(FName Attr
 
 float UFireflyAbilitySystemComponent::GetAttributeValue(EFireflyAttributeType AttributeType) const
 {
-	float OutValue = 0.f;
-	for (auto Attribute : AttributeContainer)
+	for (const auto Attribute : AttributeContainer)
 	{
 		if (Attribute->AttributeType == AttributeType)
 		{
-			OutValue = Attribute->GetCurrentValue();
-			break;
+			return Attribute->GetCurrentValue();
 		}
 	}
 
-	return OutValue;
+	return 0.f;
 }
 
 float UFireflyAbilitySystemComponent::GetAttributeBaseValue(EFireflyAttributeType AttributeType) const
@@ -1785,4 +1783,15 @@ void UFireflyAbilitySystemComponent::RemoveTagsFromManager(FGameplayTagContainer
 		}
 		OnTagContainerUpdated.Broadcast(GetContainedTags());
 	}
+}
+
+void UFireflyAbilitySystemComponent::HandleMessageEvent(FGameplayTag EventTag,
+	const FFireflyMessageEventData* EventData)
+{
+	if (!EventTag.IsValid())
+	{
+		return;
+	}
+
+	OnReceiveMessageEvent.Broadcast(EventTag, *EventData);
 }

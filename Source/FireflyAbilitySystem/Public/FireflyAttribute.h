@@ -45,7 +45,7 @@ class FIREFLYABILITYSYSTEM_API UFireflyAttribute : public UObject
 {
 	GENERATED_UCLASS_BODY()
 
-#pragma region Override
+#pragma region Override // 基类重载
 
 public:
 	virtual UWorld* GetWorld() const override;
@@ -59,7 +59,7 @@ public:
 #pragma endregion
 
 
-#pragma region Basic
+#pragma region Basic // 基础
 
 protected:
 	/** 初始化属性实例，当属性被构建并添加到技能管理器时触发 */
@@ -139,7 +139,7 @@ protected:
 #pragma endregion
 
 
-#pragma region Modifier
+#pragma region Modifier // 修改器
 
 protected:
 	/** 更新属性的当前值 */
@@ -152,7 +152,7 @@ protected:
 
 	/** 检测某个值是否在该属性的夹值范围中 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute", Meta = (BlueprintProtected = "true"))
-	bool IsValueInAttributeRange(float InValue);
+	bool IsValueInAttributeRange(float InValue) const;
 
 	/** 获取属性的加法修改器的合值 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute", Meta = (BlueprintProtected = "true"))

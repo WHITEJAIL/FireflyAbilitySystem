@@ -79,13 +79,16 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FFireflyEffectStackingChangedDeleg
 /** Tag存在周期的代理声明 */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFireflyGameplayTagExecutionDelegate, FGameplayTagContainer, TagsUpdated);
 
+/** 处理消息事件的代理声明 */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FFireflyMessageEventDelegate, FGameplayTag, EventTag, FFireflyMessageEventData, EventData);
+
 /** 技能系统管理器的组件 */
 UCLASS( ClassGroup = (FireflyAbilitySystem), HideCategories = (Object, LOD, Lighting, Transform, Sockets, TextureStreaming), Meta = (BlueprintSpawnableComponent) )
 class FIREFLYABILITYSYSTEM_API UFireflyAbilitySystemComponent : public UActorComponent
 {
 	GENERATED_UCLASS_BODY()
 
-#pragma region Override
+#pragma region Override // 基类重载
 
 protected:
 	// Called when the game starts
@@ -102,7 +105,7 @@ public:
 #pragma endregion
 
 
-#pragma region Basic
+#pragma region Basic // 基础
 
 protected:
 	/** 管理器的拥有者是否拥有权威权限 */
@@ -116,7 +119,7 @@ protected:
 #pragma endregion
 
 
-#pragma region Ability_Granting
+#pragma region Ability_Granting // 技能赋予
 
 protected:
 	/** 根据ID获取一个该管理器中的相关技能实例 */
@@ -156,7 +159,7 @@ protected:
 #pragma endregion
 
 
-#pragma region Ability_Execution
+#pragma region Ability_Execution // 技能执行
 
 protected:
 	/** 尝试激活技能，内部执行 */
@@ -225,7 +228,7 @@ public:
 #pragma endregion
 
 
-#pragma region Ability_Requirement
+#pragma region Ability_Requirement // 技能释放条件
 
 protected:
 	/** 获取管理器当前会阻挡激活的技能资产Tags */
@@ -245,7 +248,7 @@ protected:
 #pragma endregion
 
 
-#pragma region Ability_InputBinding
+#pragma region Ability_InputBinding // 技能输入绑定
 
 protected:
 	/** 从组件拥有者身上获取增强输入组件 */
@@ -269,7 +272,7 @@ protected:
 #pragma endregion
 
 
-#pragma region Ability_InputEvent
+#pragma region Ability_InputEvent // 技能输入事件
 
 protected:
 	/** 组件管理的输入事件触发：开始 */
@@ -295,7 +298,7 @@ protected:
 #pragma endregion
 
 
-#pragma region Attribute_Basic
+#pragma region Attribute_Basic // 属性基础
 
 protected:
 	/** 根据属性类型获取属性实例 */
@@ -352,7 +355,7 @@ public:
 #pragma endregion
 
 
-#pragma region Attribute_Modifier
+#pragma region Attribute_Modifier // 属性修改器
 
 public:
 	/** 应用一个修改器到某个属性的当前值中，必须在拥有权限端执行，否则无效 */
@@ -378,7 +381,7 @@ public:
 #pragma endregion
 
 
-#pragma region Effect_Application
+#pragma region Effect_Application // 效果应用
 
 public:
 	/** 在该管理器中获取特定ID的被应用的激活中的所有效果 */
@@ -470,7 +473,7 @@ public:
 #pragma endregion
 
 
-#pragma region Effect_Duration
+#pragma region Effect_Duration // 效果持续时间
 
 public:
 	/** 获取某种效果的剩余作用时间和总持续时间，若该种效果在管理器中同时存在多个，默认取第一个 */
@@ -493,7 +496,7 @@ public:
 #pragma endregion
 
 
-#pragma region Effect_Stacking
+#pragma region Effect_Stacking // 效果堆叠
 
 public:
 	/** 获取某种效果的当前堆叠数，若该种效果在管理器中同时存在多个，默认取第一个 */
@@ -512,7 +515,7 @@ public:
 #pragma endregion
 
 
-#pragma region Effect_Dynamic
+#pragma region Effect_Dynamic // 动态效果
 
 public:
 	/** 根据ID动态构建一个效果实例 */
@@ -550,7 +553,7 @@ public:
 #pragma endregion
 
 
-#pragma region Effect_Modifier
+#pragma region Effect_Modifier // 效果修改器
 
 public:
 	/** 为管理器添加一些特殊属性 */
@@ -573,7 +576,7 @@ protected:
 #pragma endregion
 
 
-#pragma region TagManagement
+#pragma region TagManagement // 标签管理
 
 public:
 	/** 获取拥有的所有Tag */
@@ -605,6 +608,19 @@ public:
 	/** 管理器的TagCountContainer更新时触发的代理 */
 	UPROPERTY(BlueprintAssignable, Category = "FireflyAbilitySystem|Tag")
 	FFireflyGameplayTagExecutionDelegate OnTagContainerUpdated;
+
+#pragma endregion
+
+
+#pragma region MessageEvent // 消息事件
+
+public:
+	/** 处理通知事件 */
+	virtual void HandleMessageEvent(FGameplayTag EventTag, const FFireflyMessageEventData* EventData);
+
+public:
+	UPROPERTY(BlueprintAssignable)
+	FFireflyMessageEventDelegate OnReceiveMessageEvent;
 
 #pragma endregion
 };

@@ -219,14 +219,14 @@ void UFireflyAttribute::UpdateBaseValue_Implementation(EFireflyAttributeModOpera
 	GetOwnerManager()->OnAttributeBaseValueChanged.Broadcast(AttributeType, BaseValue, OldValue);
 }
 
-bool UFireflyAttribute::IsValueInAttributeRange(float InValue)
+bool UFireflyAttribute::IsValueInAttributeRange(float InValue) const
 {
-	if (bAttributeHasRange)
+	if (!bAttributeHasRange)
 	{
 		return true;
 	}
 
-	float FinalRangeMax = RangeMaxValueType != EFireflyAttributeType::AttributeType_Default ?
+	const float FinalRangeMax = RangeMaxValue == 0.f ?
 		GetOwnerManager()->GetAttributeValue(RangeMaxValueType) : RangeMaxValue;
 
 	return InValue >= RangeMinValue && InValue <= FinalRangeMax;

@@ -13,7 +13,17 @@ class FIREFLYABILITYSYSTEM_API UFireflyAbilitySystemLibrary : public UBlueprintF
 {
 	GENERATED_BODY()
 
-#pragma region DataDriven
+#pragma region Basic // 基础
+
+public:
+	/** 获取某个Actor的Firefly技能系统 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|DataDriven")
+	static class UFireflyAbilitySystemComponent* GetFireflyAbilitySystem(AActor* Actor);
+
+#pragma endregion
+
+
+#pragma region DataDriven // 数据驱动
 
 public:
 	/** 根据ID从全局技能数据表里获取一个技能的类型 */
@@ -27,7 +37,7 @@ public:
 #pragma endregion
 
 
-#pragma region Attribute
+#pragma region Attribute // 属性
 
 public:
 	/** 返回一个属性实例的名称 */
@@ -36,12 +46,22 @@ public:
 #pragma endregion
 
 
-#pragma region Ability
+#pragma region Ability // 技能
 
 #pragma endregion
 
 
-#pragma region Effect
+#pragma region Effect // 效果
+
+#pragma endregion
+
+
+#pragma region MessageEvent // 消息事件
+
+public:
+	/** 向Actor发送一个技能系统的消息事件 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|NotifyEvent")
+	static void SendNotifyEventToActor(AActor* TargetActor, FGameplayTag EventTag, FFireflyMessageEventData EventData);
 
 #pragma endregion
 };
