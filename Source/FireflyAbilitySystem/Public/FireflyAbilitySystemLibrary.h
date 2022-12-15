@@ -43,6 +43,14 @@ public:
 	/** 返回一个属性实例的名称 */
 	static FString GetAttributeTypeName(EFireflyAttributeType AttributeType);
 
+	/** 获取Actor的某个属性的当前值，如果不存在，返回0 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute")
+	static float GetAttributeValue(AActor* Actor, EFireflyAttributeType AttributeType);
+
+	/** 获取Actor的某个属性的基础值，如果不存在，返回0 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute")
+	static float GetAttributeBaseValue(AActor* Actor, EFireflyAttributeType AttributeType);
+
 #pragma endregion
 
 

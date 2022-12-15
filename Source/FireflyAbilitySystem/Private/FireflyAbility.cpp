@@ -248,6 +248,11 @@ void UFireflyAbility::ApplyAbilityCost()
 
 bool UFireflyAbility::CheckAbilityCooldown_Implementation() const
 {
+	if (!CooldownTags.IsValid())
+	{
+		return true;
+	}
+
 	UFireflyAbilitySystemComponent* Manager = GetOwnerManager();
 	if (!IsValid(Manager))
 	{

@@ -65,8 +65,30 @@ FString UFireflyAbilitySystemLibrary::GetAttributeTypeName(EFireflyAttributeType
 	return EnumPtr->GetDisplayNameTextByValue(AttributeType).ToString();
 }
 
+float UFireflyAbilitySystemLibrary::GetAttributeValue(AActor* Actor, EFireflyAttributeType AttributeType)
+{
+	const UFireflyAbilitySystemComponent* FireflyAbilitySystem = GetFireflyAbilitySystem(Actor);
+	if (!IsValid(FireflyAbilitySystem))
+	{
+		return 0.f;
+	}
+
+	return FireflyAbilitySystem->GetAttributeValue(AttributeType);
+}
+
+float UFireflyAbilitySystemLibrary::GetAttributeBaseValue(AActor* Actor, EFireflyAttributeType AttributeType)
+{
+	const UFireflyAbilitySystemComponent* FireflyAbilitySystem = GetFireflyAbilitySystem(Actor);
+	if (!IsValid(FireflyAbilitySystem))
+	{
+		return 0.f;
+	}
+
+	return FireflyAbilitySystem->GetAttributeBaseValue(AttributeType);
+}
+
 void UFireflyAbilitySystemLibrary::SendNotifyEventToActor(AActor* TargetActor, FGameplayTag EventTag,
-	FFireflyMessageEventData EventData)
+                                                          FFireflyMessageEventData EventData)
 {
 	if (!IsValid(TargetActor) || !EventTag.IsValid())
 	{

@@ -1144,6 +1144,11 @@ TArray<UFireflyEffect*> UFireflyAbilitySystemComponent::GetActiveEffectsByClass(
 TArray<UFireflyEffect*> UFireflyAbilitySystemComponent::GetActiveEffectsByTag(
 	FGameplayTagContainer EffectAssetTags) const
 {
+	if (!EffectAssetTags.IsValid())
+	{
+		return TArray<UFireflyEffect*>{};
+	}
+
 	TArray<UFireflyEffect*> OutEffects = TArray<UFireflyEffect*>{};
 	for (auto Effect : ActiveEffects)
 	{
