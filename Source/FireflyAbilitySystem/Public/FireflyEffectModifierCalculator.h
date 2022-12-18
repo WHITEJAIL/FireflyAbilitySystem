@@ -1,26 +1,29 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FireflyAbilitySystemTypes.h"
 #include "UObject/NoExportTypes.h"
 #include "FireflyEffectModifierCalculator.generated.h"
 
-class UFireflyEffect;
-
-/** Ğ§¹ûĞŞ¸ÄÆ÷µÄÊıÖµ¼ÆËãÆ÷ */
+/** æ•ˆæœä¿®æ”¹å™¨çš„æ•°å€¼è®¡ç®—å™¨ */
 UCLASS( Blueprintable )
 class FIREFLYABILITYSYSTEM_API UFireflyEffectModifierCalculator : public UObject
 {
 	GENERATED_UCLASS_BODY()
 
 public:
-	/** Ö´ĞĞ¸Ã¼ÆËãÆ÷ */
+	virtual UWorld* GetWorld() const override;
+
+	UFireflyEffect* GetEffect() const;
+
+	/** æ‰§è¡Œè¯¥è®¡ç®—å™¨ */
 	UFUNCTION(BlueprintNativeEvent, Category = "FireflyAbilitySystem")
-	float CalculateModifierValue(UFireflyEffect* EffectInstance);
+	float CalculateModifierValue(UFireflyEffect* EffectInstance, EFireflyAttributeType AttributeType, float OldModValue);
 
 protected:
-	/** ÊÇ·ñÃ¿´Î¼ÆËã¶¼»ñÈ¡InstigatorºÍTargetµÄ×îĞÂÊıÖµ */
+	/** æ˜¯å¦æ¯æ¬¡è®¡ç®—éƒ½è·å–Instigatorå’ŒTargetçš„æœ€æ–°æ•°å€¼ */
 	UPROPERTY()
 	bool bUpdateUsingAttribute = true;
 	

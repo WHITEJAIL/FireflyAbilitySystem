@@ -177,6 +177,15 @@ protected:
 
 #pragma region Modifiers // 属性修改器
 
+public:
+	/** 获取效果的所有属性修改器 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Effect")
+	TArray<FFireflyEffectModifierData> GetEffectModifiers() const { return Modifiers; }
+
+
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Effect")
+	TArray<FFireflySpecificProperty> GetEffectSpecProperties() const { return SpecificProperties; }
+
 protected:
 	/** 该效果携带的属性修改器 */
 	UPROPERTY(EditDefaultsOnly, Category = Modifier)
@@ -228,12 +237,13 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Effect", Meta = (DisplayName = "Remove Effect"))
 	void ReceiveRemoveEffect();
 
+public:
 	/** 获取效果的所有发起者 */
-	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Effect", Meta = (BlueprintProtected = "true"))
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Effect")
 	FORCEINLINE TArray<AActor*> GetInstigators() const { return Instigators; }
 
 	/** 获取效果的接收者（应该和OwnerActor相同） */
-	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Effect", Meta = (BlueprintProtected = "true"))
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Effect")
 	FORCEINLINE AActor* GetTarget() const { return Target; }
 
 protected:

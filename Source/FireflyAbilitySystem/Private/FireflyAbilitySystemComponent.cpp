@@ -837,6 +837,11 @@ void UFireflyAbilitySystemComponent::InitializeAttributeByName(FName AttributeNa
 	AttributeToInit->InitializeAttributeValue(NewInitValue);
 }
 
+void UFireflyAbilitySystemComponent::PostModiferApplied(EFireflyAttributeType AttributeType,
+	EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, int32 StackToApply)
+{
+}
+
 void UFireflyAbilitySystemComponent::ApplyModifierToAttribute(EFireflyAttributeType AttributeType,
 	EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, int32 StackToApply)
 {
@@ -908,6 +913,8 @@ void UFireflyAbilitySystemComponent::ApplyModifierToAttribute(EFireflyAttributeT
 	}
 
 	AttributeToMod->UpdateCurrentValue();
+
+	PostModiferApplied(AttributeType, ModOperator, ModSource, ModValue, StackToApply);
 }
 
 void UFireflyAbilitySystemComponent::RemoveModifierFromAttribute(EFireflyAttributeType AttributeType,
@@ -1036,6 +1043,8 @@ void UFireflyAbilitySystemComponent::ApplyModifierToAttributeInstant(EFireflyAtt
 
 	AttributeToMod->UpdateBaseValue(ModOperator, ModValue);
 	AttributeToMod->UpdateCurrentValue();
+
+	PostModiferApplied(AttributeType, ModOperator, ModSource, ModValue, 1);
 }
 
 void UFireflyAbilitySystemComponent::ApplyModifierToAttributeSelf(EFireflyAttributeType AttributeType,
@@ -1110,6 +1119,8 @@ void UFireflyAbilitySystemComponent::ApplyModifierToAttributeSelf(EFireflyAttrib
 	}
 
 	AttributeToMod->UpdateCurrentValue();
+
+	PostModiferApplied(AttributeType, ModOperator, ModSource, ModValue, StackToApply);
 }
 
 TArray<UFireflyEffect*> UFireflyAbilitySystemComponent::GetActiveEffectsByID(FName EffectID) const
