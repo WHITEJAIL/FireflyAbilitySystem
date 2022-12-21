@@ -262,14 +262,53 @@ void UFireflyAbilitySystemComponent::RemoveAbilityByClass(TSubclassOf<UFireflyAb
 	Ability->MarkAsGarbage();
 }
 
+void UFireflyAbilitySystemComponent::TryActivateAbilityInternal(UFireflyAbility* Ability)
+{
+	if (!IsValid(Ability))
+	{
+		return;
+	}
+
+	if (!Ability->CanActivateAbility())
+	{
+		return;
+	}
+
+	if (Ability->TagsForAbilityAsset.HasAnyExact(GetBlockAbilityTags()))
+	{
+		return;
+	}
+
+	if (GetOwnerRole() == ROLE_Authority)
+	{
+		ActivateAbilityInternal(Ability);
+		Client_ActivateAbility(Ability);
+	}
+	if (GetOwnerRole() == ROLE_AutonomousProxy)
+	{
+		ActivateAbilityInternal(Ability);
+		Server_TryActivateAbility(Ability);
+	}
+}
+
 void UFireflyAbilitySystemComponent::ActivateAbilityInternal(UFireflyAbility* Ability)
 {
+	if (!IsValid(Ability))
+	{
+		return;
+	}
+
 	Ability->ActivateAbility();
 	ActivatingAbilities.Emplace(Ability);
 }
 
 void UFireflyAbilitySystemComponent::Server_TryActivateAbility_Implementation(UFireflyAbility* Ability)
 {
+	if (!IsValid(Ability))
+	{
+		return;
+	}
+
 	if (!Ability->CanActivateAbility() || !Ability->TagsForAbilityAsset.HasAnyExact(GetBlockAbilityTags()))
 	{
 		Ability->Client_CancelAbility();
@@ -279,15 +318,27 @@ void UFireflyAbilitySystemComponent::Server_TryActivateAbility_Implementation(UF
 	ActivateAbilityInternal(Ability);
 }
 
+void UFireflyAbilitySystemComponent::Client_ActivateAbility_Implementation(UFireflyAbility* Ability)
+{
+	if (!IsValid(Ability))
+	{
+		return;
+	}
+
+	ActivateAbilityInternal(Ability);
+}
+
 UFireflyAbility* UFireflyAbilitySystemComponent::TryActivateAbilityByID(FName AbilityID)
 {
-	UFireflyAbility* AbilityToActivate = GetGrantedAbilityByID(AbilityID);
-	if (!IsValid(AbilityToActivate))
+	UFireflyAbility* Ability = GetGrantedAbilityByID(AbilityID);
+	if (!IsValid(Ability))
 	{
 		return nullptr;
 	}
 
-	return TryActivateAbilityByClass(AbilityToActivate->GetClass());
+	TryActivateAbilityInternal(Ability);
+
+	return Ability;
 }
 
 UFireflyAbility* UFireflyAbilitySystemComponent::TryActivateAbilityByClass(
@@ -304,24 +355,7 @@ UFireflyAbility* UFireflyAbilitySystemComponent::TryActivateAbilityByClass(
 		return nullptr;
 	}
 
-	if (!Ability->CanActivateAbility())
-	{
-		return nullptr;
-	}
-
-	if (Ability->TagsForAbilityAsset.HasAnyExact(GetBlockAbilityTags()))
-	{
-		return nullptr;
-	}
-
-	if (GetOwnerRole() == ROLE_Authority)
-	{
-		ActivateAbilityInternal(Ability);
-	}
-	if (GetOwnerRole() == ROLE_AutonomousProxy)
-	{		
-		Server_TryActivateAbility(Ability);
-	}
+	TryActivateAbilityInternal(Ability);
 
 	return Ability;
 }
@@ -843,7 +877,7 @@ void UFireflyAbilitySystemComponent::PostModiferApplied(EFireflyAttributeType At
 }
 
 void UFireflyAbilitySystemComponent::ApplyModifierToAttribute(EFireflyAttributeType AttributeType,
-	EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, int32 StackToApply)
+                                                              EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, int32 StackToApply)
 {
 	if (!HasAuthority() || !IsValid(ModSource))
 	{
@@ -913,8 +947,6 @@ void UFireflyAbilitySystemComponent::ApplyModifierToAttribute(EFireflyAttributeT
 	}
 
 	AttributeToMod->UpdateCurrentValue();
-
-	PostModiferApplied(AttributeType, ModOperator, ModSource, ModValue, StackToApply);
 }
 
 void UFireflyAbilitySystemComponent::RemoveModifierFromAttribute(EFireflyAttributeType AttributeType,
@@ -1043,8 +1075,6 @@ void UFireflyAbilitySystemComponent::ApplyModifierToAttributeInstant(EFireflyAtt
 
 	AttributeToMod->UpdateBaseValue(ModOperator, ModValue);
 	AttributeToMod->UpdateCurrentValue();
-
-	PostModiferApplied(AttributeType, ModOperator, ModSource, ModValue, 1);
 }
 
 void UFireflyAbilitySystemComponent::ApplyModifierToAttributeSelf(EFireflyAttributeType AttributeType,
@@ -1119,8 +1149,6 @@ void UFireflyAbilitySystemComponent::ApplyModifierToAttributeSelf(EFireflyAttrib
 	}
 
 	AttributeToMod->UpdateCurrentValue();
-
-	PostModiferApplied(AttributeType, ModOperator, ModSource, ModValue, StackToApply);
 }
 
 TArray<UFireflyEffect*> UFireflyAbilitySystemComponent::GetActiveEffectsByID(FName EffectID) const
@@ -1801,13 +1829,99 @@ void UFireflyAbilitySystemComponent::RemoveTagsFromManager(FGameplayTagContainer
 	}
 }
 
+void UFireflyAbilitySystemComponent::TryTriggerAbilityByMessage(UFireflyAbility* Ability,
+	const FFireflyMessageEventData EventData)
+{
+	if (!IsValid(Ability))
+	{
+		return;
+	}
+
+	if (!Ability->CanActivateAbility())
+	{
+		return;
+	}
+
+	if (Ability->TagsForAbilityAsset.HasAnyExact(GetBlockAbilityTags()))
+	{
+		return;
+	}
+
+	if (GetOwnerRole() == ROLE_Authority)
+	{
+		TriggerAbilityByMessage(Ability, EventData);
+		Client_TriggerAbilityByMessage(Ability, EventData);
+	}
+	if (GetOwnerRole() == ROLE_AutonomousProxy)
+	{
+		TriggerAbilityByMessage(Ability, EventData);
+		Server_TryTriggerAbilityByMessage(Ability, EventData);
+	}
+}
+
+void UFireflyAbilitySystemComponent::TriggerAbilityByMessage(UFireflyAbility* Ability,
+	const FFireflyMessageEventData EventData)
+{
+	if (!IsValid(Ability))
+	{
+		return;
+	}
+
+	Ability->ActivateAbility();
+	Ability->ActivateAbilityByMessage(EventData);
+	ActivatingAbilities.Emplace(Ability);
+}
+
+void UFireflyAbilitySystemComponent::Server_TryTriggerAbilityByMessage_Implementation(UFireflyAbility* Ability,
+	const FFireflyMessageEventData EventData)
+{
+	if (!IsValid(Ability))
+	{
+		return;
+	}
+
+	if (!Ability->CanActivateAbility() || !Ability->TagsForAbilityAsset.HasAnyExact(GetBlockAbilityTags()))
+	{
+		Ability->Client_CancelAbility();
+		return;
+	}
+
+	TriggerAbilityByMessage(Ability, EventData);
+}
+
+void UFireflyAbilitySystemComponent::Client_TriggerAbilityByMessage_Implementation(UFireflyAbility* Ability,
+	const FFireflyMessageEventData EventData)
+{
+	if (!IsValid(Ability))
+	{
+		return;
+	}
+
+	TriggerAbilityByMessage(Ability, EventData);
+}
+
 void UFireflyAbilitySystemComponent::HandleMessageEvent(FGameplayTag EventTag,
-	const FFireflyMessageEventData* EventData)
+	FFireflyMessageEventData EventData)
 {
 	if (!EventTag.IsValid())
 	{
 		return;
 	}
 
-	OnReceiveMessageEvent.Broadcast(EventTag, *EventData);
+	if (!EventData.EventTag.IsValid())
+	{
+		EventData.EventTag = EventTag;
+	}
+
+	OnReceiveMessageEvent.Broadcast(EventTag, EventData);
+
+	for (auto Ability : GrantedAbilities)
+	{
+		if (!Ability->TagsTriggersActivation.HasTagExact(EventTag))
+		{
+			continue;
+		}
+
+		TryTriggerAbilityByMessage(Ability, EventData);
+	}
 }

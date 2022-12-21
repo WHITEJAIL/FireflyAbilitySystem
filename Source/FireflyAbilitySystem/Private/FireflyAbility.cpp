@@ -427,6 +427,11 @@ bool UFireflyAbility::CanActivateAbility() const
 		&& bHasRequiredActivatingAbility;
 }
 
+void UFireflyAbility::ActivateAbilityByMessage(const FFireflyMessageEventData EventData)
+{
+	ReceiveActivateAbilityByMessage(EventData);
+}
+
 void UFireflyAbility::OnAbilityInputStarted()
 {
 	if (!IsValid(GetOwnerManager()->TryActivateAbilityByClass(GetClass())))

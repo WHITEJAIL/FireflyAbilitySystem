@@ -330,8 +330,7 @@ void UFireflyEffect::ExecuteEffect()
 				}
 				if (IsValid(Modifier.CalculatorInstance))
 				{
-					ModValueToUse = Modifier.CalculatorInstance->CalculateModifierValue(this, 
-						Modifier.AttributeType, Modifier.ModValue);
+					ModValueToUse = Modifier.CalculatorInstance->CalculateModifierValue(this);
 				}
 			}
 
@@ -359,8 +358,7 @@ void UFireflyEffect::ExecuteEffect()
 				}
 				if (IsValid(Modifier.CalculatorInstance))
 				{
-					ModValueToUse = Modifier.CalculatorInstance->CalculateModifierValue(this,
-						Modifier.AttributeType, Modifier.ModValue);
+					ModValueToUse = Modifier.CalculatorInstance->CalculateModifierValue(this);
 				}
 			}
 

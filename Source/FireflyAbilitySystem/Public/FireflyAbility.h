@@ -78,7 +78,7 @@ protected:
 	virtual void ActivateAbility();
 
 	/** 蓝图端的技能激活时的逻辑 */
-	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability", Meta = (DisplayName = "Actiavate Ability"))
+	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability", Meta = (DisplayName = "Activate Ability"))
 	void ReceiveActivateAbility();
 
 	/** 结束技能，内部执行 */
@@ -224,8 +224,16 @@ protected:
 	virtual bool CanActivateAbility() const;
 
 	/** 蓝图端的是否可激活技能 */
-	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true", DisplayName = "Can Activate Ability"))
+	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability", Meta = (DisplayName = "Can Activate Ability"))
 	bool ReceiveCanActivateAbility() const;
+
+	/** 技能被消息事件激活 */
+	UFUNCTION()
+	virtual void ActivateAbilityByMessage(const FFireflyMessageEventData EventData);
+
+	/** 蓝图端的技能被消息事件激活 */
+	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability", Meta = (DisplayName = "Activate Ability By Message"))
+	void ReceiveActivateAbilityByMessage(const FFireflyMessageEventData EventData);
 
 	bool bHasBlueprintCanActivate;
 
@@ -265,6 +273,10 @@ protected:
 	/** 该技能激活执行期望技能管理器不含如下Tags */
 	UPROPERTY(EditDefaultsOnly, Category = "ActivationRequirement|TagRequired")
 	FGameplayTagContainer TagsBlockActivationOnOwnerHas;
+
+	/** 可以激活该技能的消息事件 */
+	UPROPERTY(EditDefaultsOnly, Category = "ActivationRequirement|MessageTrigger")
+	FGameplayTagContainer TagsTriggersActivation;
 
 #pragma endregion
 

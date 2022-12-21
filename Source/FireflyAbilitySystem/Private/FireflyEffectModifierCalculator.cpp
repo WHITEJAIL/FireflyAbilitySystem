@@ -3,8 +3,6 @@
 
 #include "FireflyEffectModifierCalculator.h"
 
-#include "FireflyEffect.h"
-
 UFireflyEffectModifierCalculator::UFireflyEffectModifierCalculator(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
@@ -12,21 +10,15 @@ UFireflyEffectModifierCalculator::UFireflyEffectModifierCalculator(const FObject
 
 UWorld* UFireflyEffectModifierCalculator::GetWorld() const
 {
-	if (!IsValid(GetEffect()))
+	if (!IsValid(GetOuter()))
 	{
 		return nullptr;
 	}
 
-	return GetEffect()->GetWorld();
+	return GetOuter()->GetWorld();
 }
 
-UFireflyEffect* UFireflyEffectModifierCalculator::GetEffect() const
-{
-	return Cast<UFireflyEffect>(GetOuter());
-}
-
-float UFireflyEffectModifierCalculator::CalculateModifierValue_Implementation(UFireflyEffect* EffectInstance,
-                                                                              EFireflyAttributeType AttributeType, float OldModValue)
+float UFireflyEffectModifierCalculator::CalculateModifierValue_Implementation(UFireflyEffect* EffectInstance)
 {
 	return 0.f;
 }

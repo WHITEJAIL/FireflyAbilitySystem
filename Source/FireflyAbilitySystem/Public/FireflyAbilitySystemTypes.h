@@ -485,15 +485,15 @@ struct FFireflyMessageEventData
 public:
 	/** 触发该事件的标签 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FGameplayTag EventTag;
+	FGameplayTag EventTag = FGameplayTag::EmptyTag;
 
 	/** 该事件的发起者 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	const AActor* Instigator;
+	AActor* Instigator = nullptr;
 
 	/** 该事件的接收者 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	const AActor* Target;
+	AActor* Target = nullptr;
 
 	/** 该事件携带的对象实例 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

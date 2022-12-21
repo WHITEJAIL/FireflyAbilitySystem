@@ -88,14 +88,17 @@ float UFireflyAbilitySystemLibrary::GetAttributeBaseValue(AActor* Actor, EFirefl
 }
 
 void UFireflyAbilitySystemLibrary::SendNotifyEventToActor(AActor* TargetActor, FGameplayTag EventTag,
-                                                          FFireflyMessageEventData EventData)
+	FFireflyMessageEventData EventData)
 {
 	if (!IsValid(TargetActor) || !EventTag.IsValid())
 	{
 		return;
 	}
 
-	EventData.EventTag = EventTag;
+	if (!EventData.EventTag.IsValid())
+	{
+		EventData.EventTag = EventTag;
+	}
 
 	UFireflyAbilitySystemComponent* FireflyCore = GetFireflyAbilitySystem(TargetActor);
 	if (!IsValid(FireflyCore))
@@ -103,5 +106,5 @@ void UFireflyAbilitySystemLibrary::SendNotifyEventToActor(AActor* TargetActor, F
 		return;
 	}
 
-	FireflyCore->HandleMessageEvent(EventTag, &EventData);
+	FireflyCore->HandleMessageEvent(EventTag, EventData);
 }

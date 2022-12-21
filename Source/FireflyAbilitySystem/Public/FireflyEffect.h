@@ -177,15 +177,6 @@ protected:
 
 #pragma region Modifiers // 属性修改器
 
-public:
-	/** 获取效果的所有属性修改器 */
-	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Effect")
-	TArray<FFireflyEffectModifierData> GetEffectModifiers() const { return Modifiers; }
-
-
-	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Effect")
-	TArray<FFireflySpecificProperty> GetEffectSpecProperties() const { return SpecificProperties; }
-
 protected:
 	/** 该效果携带的属性修改器 */
 	UPROPERTY(EditDefaultsOnly, Category = Modifier)

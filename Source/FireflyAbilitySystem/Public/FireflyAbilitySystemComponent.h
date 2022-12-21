@@ -164,11 +164,19 @@ protected:
 protected:
 	/** 尝试激活技能，内部执行 */
 	UFUNCTION()
+	void TryActivateAbilityInternal(UFireflyAbility* Ability);
+
+	/** 激活技能，内部执行 */
+	UFUNCTION()
 	void ActivateAbilityInternal(UFireflyAbility* Ability);
 
-	/** 服务端激活技能 */
+	/** 服务端尝试激活技能 */
 	UFUNCTION(Server, Reliable)
 	void Server_TryActivateAbility(UFireflyAbility* Ability);
+
+	/** 服务端通知本地客户端激活技能  */
+	UFUNCTION(Client, Reliable)
+	void Client_ActivateAbility(UFireflyAbility* Ability);
 
 public:
 	/** 尝试通过ID激活并执行技能逻辑，该函数会尝试在本地客户端激活技能，在服务端进行二次验证 */
@@ -358,29 +366,29 @@ public:
 #pragma region Attribute_Modifier // 属性修改器
 
 protected:
-	/** 效果被启用后处理的逻辑 */
+	UFUNCTION()
 	virtual void PostModiferApplied(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, int32 StackToApply);
 
 public:
 	/** 应用一个修改器到某个属性的当前值中，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
-	virtual void ApplyModifierToAttribute(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, int32 StackToApply);
+	void ApplyModifierToAttribute(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, int32 StackToApply);
 
 	/** 移除某个作用于某个属性的当前值的修改器，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
-	virtual void RemoveModifierFromAttribute(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue);
+	void RemoveModifierFromAttribute(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue);
 
 	/** 检验某个属性修改器是否可以被应用，该函数仅考虑属性的值被修改器修改后是否仍处于属性的价值范围内，所以要被检验的属性必须是被夹值的 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute")
-	virtual bool CanApplyModifierInstant(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, float ModValue) const;
+	bool CanApplyModifierInstant(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, float ModValue) const;
 
 	/** 应用一个修改器永久修改某个属性的基础值，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
-	virtual void ApplyModifierToAttributeInstant(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue);
+	void ApplyModifierToAttributeInstant(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue);
 
 	/** 应用一个修改器到某个属性的当前值中，该修改器必须来自于属性本身，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
-	virtual void ApplyModifierToAttributeSelf(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, int32 StackToApply);
+	void ApplyModifierToAttributeSelf(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, int32 StackToApply);
 
 #pragma endregion
 
@@ -618,9 +626,27 @@ public:
 
 #pragma region MessageEvent // 消息事件
 
+protected:
+	/** 尝试通过消息事件触发技能激活 */
+	UFUNCTION()
+	virtual void TryTriggerAbilityByMessage(UFireflyAbility* Ability, const FFireflyMessageEventData EventData);
+
+	/** 通过消息事件触发技能激活 */
+	UFUNCTION()
+	virtual void TriggerAbilityByMessage(UFireflyAbility* Ability, const FFireflyMessageEventData EventData);
+
+	/** 服务端尝试通过消息事件触发技能激活 */
+	UFUNCTION(Server, Reliable)
+	virtual void Server_TryTriggerAbilityByMessage(UFireflyAbility* Ability, const FFireflyMessageEventData EventData);
+
+	/** 服务端通知本地客户端通过消息事件触发技能激活 */
+	UFUNCTION(Client, Reliable)
+	virtual void Client_TriggerAbilityByMessage(UFireflyAbility* Ability, const FFireflyMessageEventData EventData);
+
 public:
 	/** 处理通知事件 */
-	virtual void HandleMessageEvent(FGameplayTag EventTag, const FFireflyMessageEventData* EventData);
+	UFUNCTION()
+	virtual void HandleMessageEvent(FGameplayTag EventTag, FFireflyMessageEventData EventData);
 
 public:
 	UPROPERTY(BlueprintAssignable)
