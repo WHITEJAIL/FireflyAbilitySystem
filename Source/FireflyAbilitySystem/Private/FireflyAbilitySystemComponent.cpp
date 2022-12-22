@@ -84,6 +84,7 @@ bool UFireflyAbilitySystemComponent::HasAuthority() const
 {
 	AActor* Owner = GetOwner();
 	check(Owner);
+
 	return Owner->HasAuthority();
 }
 

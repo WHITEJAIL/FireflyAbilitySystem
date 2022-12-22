@@ -94,7 +94,7 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
@@ -109,12 +109,10 @@ public:
 
 protected:
 	/** 管理器的拥有者是否拥有权威权限 */
-	UFUNCTION(BlueprintPure, Category = "FierflyAbilitySystem", Meta = (BlueprintProtected = true))
-	FORCEINLINE bool HasAuthority() const;
+	virtual bool HasAuthority() const;
 
 	/** 组件拥有者是否拥有本地控制权限 */
-	UFUNCTION(BlueprintPure, Category = "FierflyAbilitySystem", Meta = (BlueprintProtected = true))
-	FORCEINLINE bool IsLocallyControlled() const;
+	virtual bool IsLocallyControlled() const;
 
 #pragma endregion
 

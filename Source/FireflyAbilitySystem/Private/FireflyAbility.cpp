@@ -85,6 +85,41 @@ UFireflyAbilitySystemComponent* UFireflyAbility::GetOwnerManager() const
 	return Cast<UFireflyAbilitySystemComponent>(GetOuter());
 }
 
+bool UFireflyAbility::HasAuthority() const
+{
+	AActor* Owner = GetOwnerActor();
+	check(Owner);
+
+	return Owner->HasAuthority();
+}
+
+bool UFireflyAbility::IsLocallyControlled() const
+{
+	AActor* Owner = GetOwnerActor();
+	check(Owner);
+	const ENetMode NetMode = Owner->GetNetMode();
+
+	if (NetMode == NM_Standalone)
+	{
+		// Not networked.
+		return true;
+	}
+
+	if (NetMode == NM_Client && GetOwnerRole() == ROLE_AutonomousProxy)
+	{
+		// Networked client in control.
+		return true;
+	}
+
+	if (Owner->GetRemoteRole() != ROLE_AutonomousProxy && GetOwnerRole() == ROLE_Authority)
+	{
+		// Local authority in control.
+		return true;
+	}
+
+	return false;
+}
+
 void UFireflyAbility::OnAbilityGranted_Implementation()
 {
 	if (bActivateOnGranted)

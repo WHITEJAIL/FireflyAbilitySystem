@@ -35,15 +35,23 @@ public:
 protected:
 	/** 获取技能所属的管理器的拥有者 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
-	FORCEINLINE AActor* GetOwnerActor() const;
+	AActor* GetOwnerActor() const;
 
 	/** 获取技能所属的拥有者的网络权限 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
-	FORCEINLINE ENetRole GetOwnerRole() const;
+	ENetRole GetOwnerRole() const;
 
 	/** 获取技能所属的管理器组件 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
-	FORCEINLINE UFireflyAbilitySystemComponent* GetOwnerManager() const;
+	UFireflyAbilitySystemComponent* GetOwnerManager() const;
+
+	/** 管理器的拥有者是否拥有权威权限 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
+	bool HasAuthority() const;
+
+	/** 组件拥有者是否拥有本地控制权限 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
+	bool IsLocallyControlled() const;
 
 protected:
 	friend UFireflyAbilitySystemComponent;
