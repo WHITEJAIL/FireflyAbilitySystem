@@ -179,11 +179,11 @@ protected:
 public:
 	/** 尝试通过ID激活并执行技能逻辑，该函数会尝试在本地客户端激活技能，在服务端进行二次验证 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
-	virtual UFireflyAbility* TryActivateAbilityByID(FName AbilityID);
+	virtual bool TryActivateAbilityByID(FName AbilityID);
 
 	/** 尝试通过类型激活并执行技能逻辑，该函数会尝试在本地客户端激活技能，在服务端进行二次验证 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
-	virtual UFireflyAbility* TryActivateAbilityByClass(TSubclassOf<UFireflyAbility> AbilityToActivate);
+	virtual bool TryActivateAbilityByClass(TSubclassOf<UFireflyAbility> AbilityToActivate);
 
 	/** 获取所有正在激活的技能 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability")

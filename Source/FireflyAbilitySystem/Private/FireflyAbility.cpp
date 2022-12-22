@@ -469,7 +469,7 @@ void UFireflyAbility::ActivateAbilityByMessage(const FFireflyMessageEventData Ev
 
 void UFireflyAbility::OnAbilityInputStarted()
 {
-	if (!IsValid(GetOwnerManager()->TryActivateAbilityByClass(GetClass())))
+	if (!GetOwnerManager()->TryActivateAbilityByClass(GetClass()))
 	{
 		return;
 	}
@@ -534,7 +534,7 @@ void UFireflyAbility::OnAbilityInputTriggered()
 {
 	if (bActivateOnTriggered)
 	{
-		if (!IsValid(GetOwnerManager()->TryActivateAbilityByClass(GetClass())))
+		if (!GetOwnerManager()->TryActivateAbilityByClass(GetClass()))
 		{
 			return;
 		}
