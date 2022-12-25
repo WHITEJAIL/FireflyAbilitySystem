@@ -116,6 +116,11 @@ bool UFireflyAbilitySystemComponent::IsLocallyControlled() const
 
 UFireflyAbility* UFireflyAbilitySystemComponent::GetGrantedAbilityByID(FName AbilityID) const
 {
+	if (AbilityID == NAME_None)
+	{
+		return nullptr;
+	}
+
 	UFireflyAbility* OutAbility = nullptr;
 	for (auto Ability : GrantedAbilities)
 	{
@@ -161,7 +166,7 @@ UFireflyAbility* UFireflyAbilitySystemComponent::GetGrantedAbilityByClass(
 
 bool UFireflyAbilitySystemComponent::GrantAbilityByID(FName AbilityID)
 {
-	if (!HasAuthority())
+	if (!HasAuthority() || AbilityID == NAME_None)
 	{
 		return false;
 	}
@@ -209,7 +214,7 @@ bool UFireflyAbilitySystemComponent::GrantAbilityByClass(TSubclassOf<UFireflyAbi
 
 void UFireflyAbilitySystemComponent::RemoveAbilityByID(FName AbilityID, bool bRemoveOnEnded)
 {
-	if (!HasAuthority())
+	if (!HasAuthority() || AbilityID == NAME_None)
 	{
 		return;
 	}
@@ -322,6 +327,11 @@ void UFireflyAbilitySystemComponent::Client_ActivateAbility_Implementation(UFire
 
 bool UFireflyAbilitySystemComponent::TryActivateAbilityByID(FName AbilityID)
 {
+	if (AbilityID == NAME_None)
+	{
+		return false;
+	}
+
 	UFireflyAbility* Ability = GetGrantedAbilityByID(AbilityID);
 	if (!IsValid(Ability))
 	{
@@ -877,7 +887,7 @@ void UFireflyAbilitySystemComponent::InitializeAttributeByName(FName AttributeNa
 	AttributeToInit->InitializeAttributeValue(NewInitValue);
 }
 
-void UFireflyAbilitySystemComponent::PostModiferApplied(EFireflyAttributeType AttributeType,
+void UFireflyAbilitySystemComponent::PreModiferApplied(EFireflyAttributeType AttributeType,
 	EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, int32 StackToApply)
 {
 }
@@ -952,7 +962,9 @@ void UFireflyAbilitySystemComponent::ApplyModifierToAttribute(EFireflyAttributeT
 		}
 	}
 
-	AttributeToMod->UpdateCurrentValue();
+	PreModiferApplied(AttributeType, ModOperator, ModSource, ModValue, StackToApply);
+
+	AttributeToMod->UpdateCurrentValue();	
 }
 
 void UFireflyAbilitySystemComponent::RemoveModifierFromAttribute(EFireflyAttributeType AttributeType,
@@ -1079,6 +1091,8 @@ void UFireflyAbilitySystemComponent::ApplyModifierToAttributeInstant(EFireflyAtt
 		return;
 	}
 
+	PreModiferApplied(AttributeType, ModOperator, ModSource, ModValue, 1);
+
 	AttributeToMod->UpdateBaseValue(ModOperator, ModValue);
 	AttributeToMod->UpdateCurrentValue();
 }
@@ -1154,11 +1168,18 @@ void UFireflyAbilitySystemComponent::ApplyModifierToAttributeSelf(EFireflyAttrib
 		}
 	}
 
-	AttributeToMod->UpdateCurrentValue();
+	PreModiferApplied(AttributeType, ModOperator, ModSource, ModValue, StackToApply);
+
+	AttributeToMod->UpdateCurrentValue();	
 }
 
 TArray<UFireflyEffect*> UFireflyAbilitySystemComponent::GetActiveEffectsByID(FName EffectID) const
 {
+	if (EffectID == NAME_None)
+	{
+		return TArray<UFireflyEffect*>{};
+	}
+
 	TArray<UFireflyEffect*>  Effects;
 	for (UFireflyEffect* Effect : ActiveEffects)
 	{
@@ -1301,6 +1322,11 @@ void UFireflyAbilitySystemComponent::ApplyEffectToTarget(AActor* Target, UFirefl
 
 void UFireflyAbilitySystemComponent::ApplyEffectToOwnerByID(AActor* Instigator, FName EffectID, int32 StackToApply)
 {
+	if (EffectID == NAME_None)
+	{
+		return;
+	}
+
 	TSubclassOf<UFireflyEffect> EffectClass = UFireflyAbilitySystemLibrary::GetEffectClassFromCache(EffectID);
 	if (!IsValid(EffectClass) || StackToApply <= 0 || !HasAuthority())
 	{
@@ -1318,7 +1344,7 @@ void UFireflyAbilitySystemComponent::ApplyEffectToOwnerByID(AActor* Instigator, 
 
 void UFireflyAbilitySystemComponent::ApplyEffectToTargetByID(AActor* Target, FName EffectID, int32 StackToApply)
 {
-	if (!IsValid(Target) || StackToApply <= 0 || !HasAuthority())
+	if (!IsValid(Target) || StackToApply <= 0 || !HasAuthority() || EffectID == NAME_None)
 	{
 		return;
 	}
@@ -1408,7 +1434,7 @@ void UFireflyAbilitySystemComponent::ApplyEffectDynamicConstructorToTarget(AActo
 
 void UFireflyAbilitySystemComponent::RemoveActiveEffectByID(FName EffectID, int32 StackToRemove)
 {
-	if (!HasAuthority())
+	if (!HasAuthority() || EffectID == NAME_None)
 	{
 		return;
 	}
@@ -1564,6 +1590,11 @@ void UFireflyAbilitySystemComponent::UpdateBlockAndRemoveEffectTags(FGameplayTag
 bool UFireflyAbilitySystemComponent::GetSingleActiveEffectTimeDurationByID(FName EffectID, float& TimeRemaining,
 	float& TotalDuration) const
 {
+	if (EffectID == NAME_None)
+	{
+		return false;
+	}
+
 	const TArray<UFireflyEffect*> Effects = GetActiveEffectsByID(EffectID);
 	if (!Effects.IsValidIndex(0))
 	{
@@ -1596,7 +1627,7 @@ bool UFireflyAbilitySystemComponent::GetSingleActiveEffectTimeDurationByClass(TS
 	return true;
 }
 
-void UFireflyAbilitySystemComponent::SetSingleActiveEffectTimeRemaining(TSubclassOf<UFireflyEffect> EffectType,
+void UFireflyAbilitySystemComponent::SetActiveEffectsTimeRemaining(TSubclassOf<UFireflyEffect> EffectType,
 	float NewTimeRemaining)
 {
 	if (!IsValid(EffectType) || !HasAuthority())
@@ -1605,18 +1636,22 @@ void UFireflyAbilitySystemComponent::SetSingleActiveEffectTimeRemaining(TSubclas
 	}
 
 	const TArray<UFireflyEffect*> Effects = GetActiveEffectsByClass(EffectType);
-	if (!Effects.IsValidIndex(0))
-	{
-		return;
-	}
 
-	Effects[0]->SetTimeRemainingOfDuration(NewTimeRemaining);
+	for (auto Effect : Effects)
+	{
+		Effect->SetTimeRemainingOfDuration(NewTimeRemaining);
+	}	
 
 	OnEffectTimeRemainingChanged.Broadcast(Effects[0]->EffectID, EffectType, NewTimeRemaining, Effects[0]->Duration);
 }
 
 bool UFireflyAbilitySystemComponent::GetSingleActiveEffectStackingCountByID(FName EffectID, int32& StackingCount) const
 {
+	if (EffectID == NAME_None)
+	{
+		return false;
+	}
+
 	const TArray<UFireflyEffect*> Effects = GetActiveEffectsByID(EffectID);
 	if (!Effects.IsValidIndex(0))
 	{
@@ -1649,6 +1684,11 @@ bool UFireflyAbilitySystemComponent::GetSingleActiveEffectStackingCountByClass(T
 
 UFireflyEffect* UFireflyAbilitySystemComponent::MakeDynamicEffectByID(FName EffectID)
 {
+	if (EffectID == NAME_None)
+	{
+		return nullptr;
+	}
+
 	TSubclassOf<UFireflyEffect> EffectClass = UFireflyAbilitySystemLibrary::GetEffectClassFromCache(EffectID);
 	if (!IsValid(EffectClass))
 	{
@@ -1705,11 +1745,26 @@ UFireflyEffect* UFireflyAbilitySystemComponent::SetDynamicEffectPeriodicInterval
 	return EffectInstance;
 }
 
-UFireflyEffect* UFireflyAbilitySystemComponent::AssignDynamicEffectModifiers(UFireflyEffect* EffectInstance,
+UFireflyEffect* UFireflyAbilitySystemComponent::SetDynamicEffectModifierValue(UFireflyEffect* EffectInstance,
+	EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, float ModValue)
+{
+	for (auto& EffectModifier : EffectInstance->Modifiers)
+	{
+		if (EffectModifier.AttributeType == AttributeType && EffectModifier.ModOperator == ModOperator)
+		{
+			EffectModifier.ModValue = ModValue;
+			break;
+		}
+	}
+
+	return EffectInstance;
+}
+
+UFireflyEffect* UFireflyAbilitySystemComponent::AssignDynamicEffectModifier(UFireflyEffect* EffectInstance,
 	FFireflyEffectModifierData Modifier)
 {
 	bool bHasModifierType = false;
-	for (auto EffectModifier : EffectInstance->Modifiers)
+	for (auto& EffectModifier : EffectInstance->Modifiers)
 	{
 		if (EffectModifier.TypeEqual(Modifier))
 		{
@@ -1727,7 +1782,7 @@ UFireflyEffect* UFireflyAbilitySystemComponent::AssignDynamicEffectModifiers(UFi
 	return EffectInstance;
 }
 
-UFireflyEffect* UFireflyAbilitySystemComponent::AssignDynamicEffectSpecificProperties(UFireflyEffect* EffectInstance,
+UFireflyEffect* UFireflyAbilitySystemComponent::AssignDynamicEffectSpecificProperty(UFireflyEffect* EffectInstance,
 	FFireflySpecificProperty NewSpecificProperty)
 {
 	EffectInstance->SpecificProperties.Emplace(NewSpecificProperty);

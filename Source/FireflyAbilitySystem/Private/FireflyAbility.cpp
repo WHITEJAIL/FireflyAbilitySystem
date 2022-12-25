@@ -374,6 +374,11 @@ void UFireflyAbility::CommitAbility()
 	CommitAbilityCooldown();
 }
 
+float UFireflyAbility::CalculateCooldownTime_Implementation()
+{
+	return CooldownTime;
+}
+
 void UFireflyAbility::SetCooldownTime(float NewCooldownTime)
 {
 	CooldownTime = NewCooldownTime;
@@ -382,6 +387,11 @@ void UFireflyAbility::SetCooldownTime(float NewCooldownTime)
 void UFireflyAbility::SetCooldownTags(FGameplayTagContainer NewCooldownTags)
 {
 	CooldownTags = NewCooldownTags;
+}
+
+TArray<FFireflyEffectModifierData> UFireflyAbility::CalculateCostSettings_Implementation()
+{
+	return CostSettings;
 }
 
 void UFireflyAbility::SetCostSettings(TArray<FFireflyEffectModifierData> NewCostSettings)
@@ -676,4 +686,256 @@ void UFireflyAbility::Multi_StopMontagePlaying_Implementation(UAnimMontage* Mont
 	}
 
 	OwnerAnimInstance->Montage_Stop(0.1f, MontageToStop);
+}
+
+UFireflyEffect* UFireflyAbility::MakeDynamicEffectByID(FName EffectID) const
+{
+	UFireflyAbilitySystemComponent* FireflyAbilitySystem = GetOwnerManager();
+	if (!IsValid(FireflyAbilitySystem))
+	{
+		return nullptr;
+	}
+
+	return FireflyAbilitySystem->MakeDynamicEffectByID(EffectID);
+}
+
+UFireflyEffect* UFireflyAbility::MakeDynamicEffectByClass(TSubclassOf<UFireflyEffect> EffectType, FName EffectID) const
+{
+	UFireflyAbilitySystemComponent* FireflyAbilitySystem = GetOwnerManager();
+	if (!IsValid(FireflyAbilitySystem))
+	{
+		return nullptr;
+	}
+
+	return FireflyAbilitySystem->MakeDynamicEffectByClass(EffectType, EffectID);
+}
+
+UFireflyEffect* UFireflyAbility::AssignDynamicEffectAssetTags(UFireflyEffect* EffectInstance,
+	FGameplayTagContainer NewEffectAssetTags)
+{
+	UFireflyAbilitySystemComponent* FireflyAbilitySystem = GetOwnerManager();
+	if (!IsValid(FireflyAbilitySystem))
+	{
+		return nullptr;
+	}
+
+	return FireflyAbilitySystem->AssignDynamicEffectAssetTags(EffectInstance, NewEffectAssetTags);
+}
+
+UFireflyEffect* UFireflyAbility::AssignDynamicEffectGrantTags(UFireflyEffect* EffectInstance,
+	FGameplayTagContainer NewEffectGrantTags)
+{
+	UFireflyAbilitySystemComponent* FireflyAbilitySystem = GetOwnerManager();
+	if (!IsValid(FireflyAbilitySystem))
+	{
+		return nullptr;
+	}
+
+	return FireflyAbilitySystem->AssignDynamicEffectGrantTags(EffectInstance, NewEffectGrantTags);
+}
+
+UFireflyEffect* UFireflyAbility::SetDynamicEffectDuration(UFireflyEffect* EffectInstance, float Duration)
+{
+	UFireflyAbilitySystemComponent* FireflyAbilitySystem = GetOwnerManager();
+	if (!IsValid(FireflyAbilitySystem))
+	{
+		return nullptr;
+	}
+
+	return FireflyAbilitySystem->SetDynamicEffectDuration(EffectInstance, Duration);
+}
+
+UFireflyEffect* UFireflyAbility::SetDynamicEffectPeriodicInterval(UFireflyEffect* EffectInstance,
+	float PeriodicInterval)
+{
+	UFireflyAbilitySystemComponent* FireflyAbilitySystem = GetOwnerManager();
+	if (!IsValid(FireflyAbilitySystem))
+	{
+		return nullptr;
+	}
+
+	return FireflyAbilitySystem->SetDynamicEffectPeriodicInterval(EffectInstance, PeriodicInterval);
+}
+
+UFireflyEffect* UFireflyAbility::SetDynamicEffectModifierValue(UFireflyEffect* EffectInstance,
+	EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, float ModValue)
+{
+	UFireflyAbilitySystemComponent* FireflyAbilitySystem = GetOwnerManager();
+	if (!IsValid(FireflyAbilitySystem))
+	{
+		return nullptr;
+	}
+
+	return FireflyAbilitySystem->SetDynamicEffectModifierValue(EffectInstance, AttributeType, ModOperator, ModValue);
+}
+
+UFireflyEffect* UFireflyAbility::AssignDynamicEffectModifier(UFireflyEffect* EffectInstance,
+	FFireflyEffectModifierData NewModifier)
+{
+	UFireflyAbilitySystemComponent* FireflyAbilitySystem = GetOwnerManager();
+	if (!IsValid(FireflyAbilitySystem))
+	{
+		return nullptr;
+	}
+
+	return FireflyAbilitySystem->AssignDynamicEffectModifier(EffectInstance, NewModifier);
+}
+
+UFireflyEffect* UFireflyAbility::AssignDynamicEffectSpecificProperty(UFireflyEffect* EffectInstance,
+	FFireflySpecificProperty NewSpecificProperty)
+{
+	UFireflyAbilitySystemComponent* FireflyAbilitySystem = GetOwnerManager();
+	if (!IsValid(FireflyAbilitySystem))
+	{
+		return nullptr;
+	}
+
+	return FireflyAbilitySystem->AssignDynamicEffectSpecificProperty(EffectInstance, NewSpecificProperty);
+}
+
+void UFireflyAbility::ApplyEffectToOwner(UFireflyEffect* EffectInstance, int32 StackToApply)
+{
+	UFireflyAbilitySystemComponent* FireflyAbilitySystem = GetOwnerManager();
+	if (!IsValid(FireflyAbilitySystem))
+	{
+		return;
+	}
+
+	FireflyAbilitySystem->ApplyEffectToOwner(GetOwnerActor(), EffectInstance, StackToApply);
+}
+
+void UFireflyAbility::ApplyEffectToTarget(AActor* Target, UFireflyEffect* EffectInstance, int32 StackToApply)
+{
+	UFireflyAbilitySystemComponent* FireflyAbilitySystem = GetOwnerManager();
+	if (!IsValid(FireflyAbilitySystem))
+	{
+		return;
+	}
+
+	FireflyAbilitySystem->ApplyEffectToTarget(Target, EffectInstance, StackToApply);
+}
+
+void UFireflyAbility::ApplyEffectToOwnerByID(FName EffectID, int32 StackToApply)
+{
+	UFireflyAbilitySystemComponent* FireflyAbilitySystem = GetOwnerManager();
+	if (!IsValid(FireflyAbilitySystem))
+	{
+		return;
+	}
+
+	FireflyAbilitySystem->ApplyEffectToOwnerByID(GetOwnerActor(), EffectID, StackToApply);
+}
+
+void UFireflyAbility::ApplyEffectToTargetByID(AActor* Target, FName EffectID, int32 StackToApply)
+{
+	UFireflyAbilitySystemComponent* FireflyAbilitySystem = GetOwnerManager();
+	if (!IsValid(FireflyAbilitySystem))
+	{
+		return;
+	}
+
+	FireflyAbilitySystem->ApplyEffectToTargetByID(Target, EffectID, StackToApply);
+}
+
+void UFireflyAbility::ApplyEffectToOwnerByClass(TSubclassOf<UFireflyEffect> EffectType, FName EffectID,
+	int32 StackToApply)
+{
+	UFireflyAbilitySystemComponent* FireflyAbilitySystem = GetOwnerManager();
+	if (!IsValid(FireflyAbilitySystem))
+	{
+		return;
+	}
+
+	FireflyAbilitySystem->ApplyEffectToOwnerByClass(GetOwnerActor(), EffectType, EffectID, StackToApply);
+}
+
+void UFireflyAbility::ApplyEffectToTargetByClass(AActor* Target, TSubclassOf<UFireflyEffect> EffectType, FName EffectID,
+	int32 StackToApply)
+{
+	UFireflyAbilitySystemComponent* FireflyAbilitySystem = GetOwnerManager();
+	if (!IsValid(FireflyAbilitySystem))
+	{
+		return;
+	}
+
+	FireflyAbilitySystem->ApplyEffectToTargetByClass(Target, EffectType, EffectID, StackToApply);
+}
+
+void UFireflyAbility::ApplyEffectDynamicConstructorToOwner(FFireflyEffectDynamicConstructor EffectSetup,
+	int32 StackToApply)
+{
+	UFireflyAbilitySystemComponent* FireflyAbilitySystem = GetOwnerManager();
+	if (!IsValid(FireflyAbilitySystem))
+	{
+		return;
+	}
+
+	FireflyAbilitySystem->ApplyEffectDynamicConstructorToOwner(GetOwnerActor(), EffectSetup, StackToApply);
+}
+
+void UFireflyAbility::ApplyEffectDynamicConstructorToTarget(AActor* Target,
+	FFireflyEffectDynamicConstructor EffectSetup, int32 StackToApply)
+{
+	UFireflyAbilitySystemComponent* FireflyAbilitySystem = GetOwnerManager();
+	if (!IsValid(FireflyAbilitySystem))
+	{
+		return;
+	}
+
+	FireflyAbilitySystem->ApplyEffectDynamicConstructorToTarget(Target, EffectSetup, StackToApply);
+}
+
+void UFireflyAbility::RemoveActiveEffectByID(FName EffectID, int32 StackToRemove)
+{
+	UFireflyAbilitySystemComponent* FireflyAbilitySystem = GetOwnerManager();
+	if (!IsValid(FireflyAbilitySystem))
+	{
+		return;
+	}
+
+	FireflyAbilitySystem->RemoveActiveEffectByID(EffectID, StackToRemove);
+}
+
+void UFireflyAbility::RemoveActiveEffectByClass(TSubclassOf<UFireflyEffect> EffectType, int32 StackToRemove)
+{
+	UFireflyAbilitySystemComponent* FireflyAbilitySystem = GetOwnerManager();
+	if (!IsValid(FireflyAbilitySystem))
+	{
+		return;
+	}
+
+	FireflyAbilitySystem->RemoveActiveEffectByClass(EffectType, StackToRemove);
+}
+
+void UFireflyAbility::RemoveActiveEffectsWithTags(FGameplayTagContainer RemoveTags)
+{
+	UFireflyAbilitySystemComponent* FireflyAbilitySystem = GetOwnerManager();
+	if (!IsValid(FireflyAbilitySystem))
+	{
+		return;
+	}
+
+	FireflyAbilitySystem->RemoveActiveEffectsWithTags(RemoveTags);
+}
+
+float UFireflyAbility::GetOwnerAttributeValue(EFireflyAttributeType AttributeType) const
+{
+	UFireflyAbilitySystemComponent* FireflyAbilitySystem = GetOwnerManager();
+	if (!IsValid(FireflyAbilitySystem))
+	{
+		return 0.f;
+	}
+
+	return FireflyAbilitySystem->GetAttributeValue(AttributeType);
+}
+
+float UFireflyAbility::GetOwnerAttributeBaseValue(EFireflyAttributeType AttributeType) const
+{
+	UFireflyAbilitySystemComponent* FireflyAbilitySystem = GetOwnerManager();
+	if (!IsValid(FireflyAbilitySystem))
+	{
+		return 0.f;
+	}
+
+	return FireflyAbilitySystem->GetAttributeBaseValue(AttributeType);
 }

@@ -237,7 +237,7 @@ void UFireflyEffect::ApplyEffect(AActor* InInstigator, AActor* InTarget, int32 S
 	/** 如果持续时间策略为Instant，直接按照申请的堆叠次数执行逻辑，并结束效果的应用 */
 	if (DurationPolicy == EFireflyEffectDurationPolicy::Instant)
 	{
-		Instigators.Contains(InInstigator);
+		Instigators.Emplace(InInstigator);
 		Target = InTarget;
 
 		for (int i = 0; i < StackToApply; ++i)
@@ -321,17 +321,23 @@ void UFireflyEffect::ExecuteEffect()
 		for (auto Modifier : Modifiers)
 		{
 			float ModValueToUse = Modifier.ModValue;
-			if (IsValid(Modifier.CalculatorClass))
-			{
-				/** 尝试使用计算器 */
+
+			/** 尝试使用计算器 */
+			if (Modifier.ModValueMethod == EFireflyEffectModifierValueMethod::CustomCalculator)
+			{				
 				if (!IsValid(Modifier.CalculatorInstance))
 				{
 					Modifier.CalculatorInstance = NewObject<UFireflyEffectModifierCalculator>(this, Modifier.CalculatorClass);
 				}
 				if (IsValid(Modifier.CalculatorInstance))
 				{
-					ModValueToUse = Modifier.CalculatorInstance->CalculateModifierValue(this);
+					ModValueToUse = Modifier.CalculatorInstance->CalculateModifierValue(this, Modifier.ModValue);
 				}
+			}
+			/** 尝试使用某个属性值 */
+			else if (Modifier.ModValueMethod == EFireflyEffectModifierValueMethod::UsingAttribute)
+			{
+				ModValueToUse = GetOwnerManager()->GetAttributeValue(Modifier.AttributeTypeUsing);
 			}
 
 			Manager->ApplyModifierToAttributeInstant(Modifier.AttributeType,
@@ -349,17 +355,23 @@ void UFireflyEffect::ExecuteEffect()
 		for (auto Modifier : Modifiers)
 		{
 			float ModValueToUse = Modifier.ModValue;
-			if (IsValid(Modifier.CalculatorClass))
+			
+			/** 尝试使用计算器 */
+			if (Modifier.ModValueMethod == EFireflyEffectModifierValueMethod::CustomCalculator)
 			{
-				/** 尝试使用计算器 */
 				if (!IsValid(Modifier.CalculatorInstance))
 				{
 					Modifier.CalculatorInstance = NewObject<UFireflyEffectModifierCalculator>(this, Modifier.CalculatorClass);
 				}
 				if (IsValid(Modifier.CalculatorInstance))
 				{
-					ModValueToUse = Modifier.CalculatorInstance->CalculateModifierValue(this);
+					ModValueToUse = Modifier.CalculatorInstance->CalculateModifierValue(this, Modifier.ModValue);
 				}
+			}
+			/** 尝试使用某个属性值 */
+			else if (Modifier.ModValueMethod == EFireflyEffectModifierValueMethod::UsingAttribute)
+			{
+				ModValueToUse = GetOwnerManager()->GetAttributeValue(Modifier.AttributeTypeUsing);
 			}
 
 			Manager->ApplyModifierToAttribute(Modifier.AttributeType, Modifier.ModOperator,

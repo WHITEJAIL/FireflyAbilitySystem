@@ -7,12 +7,12 @@
 #include "Engine/DataTable.h"
 #include "FireflyAbilitySystemTypes.generated.h"
 
+class UFireflyEffect;
 class UFireflyAbility;
 class UFireflyAttribute;
-class UFireflyEffect;
 class UFireflyEffectModifierCalculator;
 
-#pragma region Attribute // 属性
+#pragma region Attribute 属性
 
 /** 个人技能系统的属性枚举，在项目设置中定义DisplayName */
 UENUM(BlueprintType)
@@ -205,7 +205,7 @@ public:
 #pragma endregion
 
 
-#pragma region Effect // 效果
+#pragma region Effect 效果
 
 /** 效果的持续性策略 */
 UENUM()
@@ -263,6 +263,20 @@ enum class EFireflyEffectInstigatorApplicationPolicy : uint8
 	InstigatorsApplyTheirOwn
 };
 
+/** 效果的属性修改器使用的取值方法 */
+UENUM()
+enum class EFireflyEffectModifierValueMethod : uint8
+{
+	/** 直接使用一个float值作为修改器的取值方法 */
+	DirectFloat,
+	/** 使用Instigator的某个属性的值 */
+	UsingAttribute,
+	/** 使用自定义的计算器作为修改器的取值方法 */
+	CustomCalculator,
+	/** 在外部动态设置 */
+	DynamicSetting,
+};
+
 /** 效果携带的属性修改器 */
 USTRUCT(BlueprintType)
 struct FFireflyEffectModifierData
@@ -278,12 +292,20 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
 	EFireflyAttributeModOperator ModOperator = EFireflyAttributeModOperator::None;
 
-	/** 修改器的操作值 */
+	/** 修改器使用的取值方法 */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
+	EFireflyEffectModifierValueMethod ModValueMethod = EFireflyEffectModifierValueMethod::DirectFloat;
+
+	/** 修改器的操作值，如果ModValueMethod为DynamicSetting，该值允许在外部通过函数动态设置 */
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Meta = (EditCondition = "ModValueMethod == EFireflyEffectModifierValueMethod::DirectFloat"))
 	float ModValue = 0.f;
 
+	/** 修改器的操作值使用的属性类型 */
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Meta = (EditCondition = "ModValueMethod == EFireflyEffectModifierValueMethod::UsingAttribute"))
+	TEnumAsByte<EFireflyAttributeType> AttributeTypeUsing = AttributeType_Default;
+
 	/** 修改器计算操作值使用的计算器 */
-	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Meta = (EditCondition = "ModValueMethod == EFireflyEffectModifierValueMethod::CustomCalculator"))
 	TSubclassOf<UFireflyEffectModifierCalculator> CalculatorClass;
 
 	/** 修改器起作用时生成的计算器实例 */
@@ -338,6 +360,10 @@ struct FFireflyEffectDynamicConstructor
 	GENERATED_BODY()
 
 public:
+	/** 效果的类型 */
+	UPROPERTY(BlueprintReadWrite, Category = Basic)
+	FName EffectID = NAME_None;
+
 	/** 效果的类型 */
 	UPROPERTY(BlueprintReadWrite, Category = Basic)
 	TSubclassOf<UFireflyEffect> EffectType = nullptr;
@@ -440,12 +466,12 @@ public:
 #pragma endregion
 
 
-#pragma region Ability // 技能
+#pragma region Ability 技能
 
 #pragma endregion
 
 
-#pragma region DataDriven // 数据驱动
+#pragma region DataDriven 数据驱动
 
 /** 技能的数据表，项目如果期望用数据驱动技能系统运行，要让技能的数据表结构继承 */
 USTRUCT(BlueprintType)
@@ -474,7 +500,7 @@ public:
 #pragma endregion
 
 
-#pragma region MessageEvent // 消息事件
+#pragma region MessageEvent 消息事件
 
 /** 通知事件携带的数据 */
 USTRUCT(BlueprintType)

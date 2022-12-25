@@ -20,7 +20,7 @@ public:
 public:
 	/** 执行该计算器 */
 	UFUNCTION(BlueprintNativeEvent, Category = "FireflyAbilitySystem")
-	float CalculateModifierValue(UFireflyEffect* EffectInstance);
+	float CalculateModifierValue(UFireflyEffect* EffectInstance, float OriginModValue);
 
 protected:
 	/** 是否每次计算都获取Instigator和Target的最新数值 */

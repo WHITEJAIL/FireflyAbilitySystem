@@ -16,7 +16,7 @@ class FIREFLYABILITYSYSTEM_API UFireflyAbility : public UObject
 {
 	GENERATED_UCLASS_BODY()
 
-#pragma region Override // 基类函数重载
+#pragma region Override 基类函数重载
 
 public:
 	virtual UWorld* GetWorld() const override;
@@ -30,7 +30,7 @@ public:
 #pragma endregion
 
 
-#pragma region Basic // 基础函数
+#pragma region Basic 基础函数
 	
 protected:
 	/** 获取技能所属的管理器的拥有者 */
@@ -63,7 +63,7 @@ protected:
 #pragma endregion
 
 
-#pragma region Granting // 技能赋予
+#pragma region Granting 技能赋予
 
 protected:
 	/**当技能被赋予时执行的函数，可以理解为技能的运行时构造函数*/
@@ -78,7 +78,7 @@ protected:
 #pragma endregion
 
 
-#pragma region Execution // 技能执行
+#pragma region Execution 技能执行
 
 protected:
 	/** 激活技能 */
@@ -137,7 +137,7 @@ protected:
 #pragma endregion
 
 
-#pragma region CostAndCooldown // 消耗和冷却
+#pragma region CostAndCooldown 消耗和冷却
 
 protected:
 	/** 检测技能的消耗是否可执行 */
@@ -176,6 +176,10 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
 	void CommitAbility();
 
+	/** 计算技能的冷却时间，该函数的返回值会最终应用到技能冷却的应用上 */
+	UFUNCTION(BlueprintNativeEvent, Category = "FireflyAbilitySystem|Ability")
+	float CalculateCooldownTime();
+
 	/** 设置技能的冷却时间 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
 	void SetCooldownTime(float NewCooldownTime);
@@ -191,6 +195,10 @@ protected:
 	/** 获取技能的冷却标签 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
 	FORCEINLINE FGameplayTagContainer GetCooldownTags() const { return CooldownTags; }
+
+	/** 计算技能的消耗设置，该函数的返回值会最终应用到技能消耗的应用上 */
+	UFUNCTION(BlueprintNativeEvent, Category = "FireflyAbilitySystem|Ability")
+	TArray<FFireflyEffectModifierData> CalculateCostSettings();
 
 	/** 设置技能的消耗设置 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
@@ -224,7 +232,7 @@ protected:
 #pragma endregion
 
 
-#pragma region Requirement // 技能激活条件
+#pragma region Requirement 技能激活条件
 
 protected:
 	/** 是否可激活技能 */
@@ -289,7 +297,7 @@ protected:
 #pragma endregion
 
 
-#pragma region InputBinding // 输入绑定
+#pragma region InputBinding 输入绑定
 
 protected:
 	/** 输入事件：开始 */
@@ -380,7 +388,7 @@ protected:
 #pragma endregion
 
 
-#pragma region MontagePlay // 蒙太奇播放
+#pragma region MontagePlay 蒙太奇播放
 
 protected:
 	/** 获取拥有者的动画实例 */
@@ -429,6 +437,112 @@ protected:
 
 	UPROPERTY()
 	UAnimMontage* MontageToStopOnAbilityEnded;
+
+#pragma endregion
+
+
+#pragma region EffectDynamic 动态效果
+
+protected:
+	/** 根据ID动态构建一个效果实例 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect", Meta = (BlueprintProtected = true))
+	UFireflyEffect* MakeDynamicEffectByID(FName EffectID) const;
+
+	/** 根据类型动态构建一个效果实例 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect", Meta = (BlueprintProtected = true))
+	UFireflyEffect* MakeDynamicEffectByClass(TSubclassOf<UFireflyEffect> EffectType, FName EffectID = NAME_None) const;
+
+	/** 为动态创建的效果实例添加资产Tags */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect", Meta = (BlueprintProtected = true))
+	UFireflyEffect* AssignDynamicEffectAssetTags(UFireflyEffect* EffectInstance, FGameplayTagContainer NewEffectAssetTags);
+
+	/** 为动态创建的效果实例添加赋予给Owner的Tags */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect", Meta = (BlueprintProtected = true))
+	UFireflyEffect* AssignDynamicEffectGrantTags(UFireflyEffect* EffectInstance, FGameplayTagContainer NewEffectGrantTags);
+
+	/** 为动态创建的效果实例设置持续时间 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect", Meta = (BlueprintProtected = true))
+	UFireflyEffect* SetDynamicEffectDuration(UFireflyEffect* EffectInstance, float Duration);
+
+	/** 为动态创建的效果实例设置周期性执行的间隔 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect", Meta = (BlueprintProtected = true))
+	UFireflyEffect* SetDynamicEffectPeriodicInterval(UFireflyEffect* EffectInstance, float PeriodicInterval);
+
+	/** 为动态创建的效果实例设置某个修改器的作用值 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect", Meta = (BlueprintProtected = true))
+	UFireflyEffect* SetDynamicEffectModifierValue(UFireflyEffect* EffectInstance, EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, float ModValue);
+
+	/** 为动态创建的效果实例设置属性修改器 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect", Meta = (BlueprintProtected = true))
+	UFireflyEffect* AssignDynamicEffectModifier(UFireflyEffect* EffectInstance, FFireflyEffectModifierData NewModifier);
+
+	/** 为动态创建的效果实例设置属性修改器 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect", Meta = (BlueprintProtected = true))
+	UFireflyEffect* AssignDynamicEffectSpecificProperty(UFireflyEffect* EffectInstance, FFireflySpecificProperty NewSpecificProperty);
+
+#pragma endregion
+
+
+#pragma region EffectApplication 效果应用
+
+protected:
+	/** 为自身应用一个效果实例或应用效果的固定堆叠数，必须在拥有权限端执行，否则无效 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect", Meta = (BlueprintProtected = true))
+	void ApplyEffectToOwner(UFireflyEffect* EffectInstance, int32 StackToApply = 1);
+
+	/** 为目标应用一个效果实例或应用效果的固定堆叠数，必须在拥有权限端执行，否则无效 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect", Meta = (BlueprintProtected = true))
+	void ApplyEffectToTarget(AActor* Target, UFireflyEffect* EffectInstance, int32 StackToApply = 1);
+
+	/** 为自身应用效果或应用效果的固定堆叠数，必须在拥有权限端执行，否则无效 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect", Meta = (BlueprintProtected = true))
+	void ApplyEffectToOwnerByID(FName EffectID, int32 StackToApply = 1);
+
+	/** 为目标应用效果或应用效果的固定堆叠数，必须在拥有权限端执行，否则无效 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect", Meta = (BlueprintProtected = true))
+	void ApplyEffectToTargetByID(AActor* Target, FName EffectID, int32 StackToApply = 1);
+
+	/** 为自身应用效果或应用效果的固定堆叠数，必须在拥有权限端执行，否则无效 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect", Meta = (BlueprintProtected = true))
+	void ApplyEffectToOwnerByClass(TSubclassOf<UFireflyEffect> EffectType, FName EffectID = NAME_None, int32 StackToApply = 1);
+
+	/** 为目标应用效果或应用效果的固定堆叠数，必须在拥有权限端执行，否则无效 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect", Meta = (BlueprintProtected = true))
+	void ApplyEffectToTargetByClass(AActor* Target, TSubclassOf<UFireflyEffect> EffectType, FName EffectID = NAME_None, int32 StackToApply = 1);
+
+	/** 为目标应用一个根据动态构造器实现的效果，必须在拥有权限端执行，否则无效 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect", Meta = (BlueprintProtected = true))
+	void ApplyEffectDynamicConstructorToOwner(FFireflyEffectDynamicConstructor EffectSetup, int32 StackToApply = 1);
+
+	/** 为目标应用一个根据动态构造器实现的效果，必须在拥有权限端执行，否则无效 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect", Meta = (BlueprintProtected = true))
+	void ApplyEffectDynamicConstructorToTarget(AActor* Target, FFireflyEffectDynamicConstructor EffectSetup, int32 StackToApply = 1);
+
+	/** 一处自身特定的所有效果的固定堆叠数, StackToRemove = -1时，移除所有效果的所有堆叠，必须在拥有权限端执行，否则无效 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect", Meta = (BlueprintProtected = true))
+	void RemoveActiveEffectByID(FName EffectID, int32 StackToRemove = -1);
+
+	/** 移除自身特定的所有效果的固定堆叠数, StackToRemove = -1时，移除所有效果的所有堆叠，必须在拥有权限端执行，否则无效 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect", Meta = (BlueprintProtected = true))
+	void RemoveActiveEffectByClass(TSubclassOf<UFireflyEffect> EffectType, int32 StackToRemove = -1);
+
+	/** 移除所有带有特定资产Tag的效果的应用状态，必须在拥有权限端执行，否则无效 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect", Meta = (BlueprintProtected = true))
+	void RemoveActiveEffectsWithTags(FGameplayTagContainer RemoveTags);
+
+#pragma endregion
+
+
+#pragma region Attribute 属性
+
+protected:
+	/** 获取拥有者的特定属性的值 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute", Meta = (BlueprintProtected = true))
+	float GetOwnerAttributeValue(EFireflyAttributeType AttributeType) const;
+
+	/** 获取拥有者的特定属性的基础值 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute", Meta = (BlueprintProtected = true))
+	float GetOwnerAttributeBaseValue(EFireflyAttributeType AttributeType) const;
 
 #pragma endregion
 };

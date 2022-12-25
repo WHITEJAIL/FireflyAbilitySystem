@@ -45,7 +45,7 @@ class FIREFLYABILITYSYSTEM_API UFireflyAttribute : public UObject
 {
 	GENERATED_UCLASS_BODY()
 
-#pragma region Override // 基类重载
+#pragma region Override 基类重载
 
 public:
 	virtual UWorld* GetWorld() const override;
@@ -59,7 +59,7 @@ public:
 #pragma endregion
 
 
-#pragma region Basic // 基础
+#pragma region Basic 基础
 
 protected:
 	/** 初始化属性实例，当属性被构建并添加到技能管理器时触发 */
@@ -139,7 +139,7 @@ protected:
 #pragma endregion
 
 
-#pragma region Modifier // 修改器
+#pragma region Modifier 修改器
 
 protected:
 	/** 更新属性的当前值 */

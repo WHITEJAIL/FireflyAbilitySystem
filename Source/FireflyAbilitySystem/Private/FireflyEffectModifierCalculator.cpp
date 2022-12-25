@@ -18,7 +18,7 @@ UWorld* UFireflyEffectModifierCalculator::GetWorld() const
 	return GetOuter()->GetWorld();
 }
 
-float UFireflyEffectModifierCalculator::CalculateModifierValue_Implementation(UFireflyEffect* EffectInstance)
+float UFireflyEffectModifierCalculator::CalculateModifierValue_Implementation(UFireflyEffect* EffectInstance, float OriginModValue)
 {
 	return 0.f;
 }
