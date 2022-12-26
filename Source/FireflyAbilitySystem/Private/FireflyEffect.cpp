@@ -9,6 +9,7 @@
 UFireflyEffect::UFireflyEffect(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+	InstigatorApplicationPolicy = EFireflyEffectInstigatorApplicationPolicy::InstigatorsApplyTheirOwnOnly;
 }
 
 UWorld* UFireflyEffect::GetWorld() const
@@ -248,13 +249,12 @@ void UFireflyEffect::ApplyEffect(AActor* InInstigator, AActor* InTarget, int32 S
 		MarkAsGarbage();
 
 		return;
-	}	
+	}
 
-	/** 如果发起者应用策略为InstigatorsShareOne，尝试将新的发起者并入效果发起者数组中 */
-	if (InstigatorApplicationPolicy == EFireflyEffectInstigatorApplicationPolicy::InstigatorsShareOne
-		&& !Instigators.Contains(InInstigator))
+	/** 若实例当前没有发起者，则将发起者加入实例 */
+	if (Instigators.Num() == 0)
 	{
-		Instigators.AddUnique(InInstigator);
+		Instigators.Emplace(InInstigator);
 	}
 
 	/** 如果该效果不可堆叠 */

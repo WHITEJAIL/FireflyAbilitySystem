@@ -16,8 +16,6 @@ UFireflyAbilitySystemComponent::UFireflyAbilitySystemComponent(const FObjectInit
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
 	SetIsReplicatedByDefault(true);
-
-	// ...
 }
 
 
@@ -25,9 +23,6 @@ UFireflyAbilitySystemComponent::UFireflyAbilitySystemComponent(const FObjectInit
 void UFireflyAbilitySystemComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// ...
-	
 }
 
 
@@ -35,8 +30,6 @@ void UFireflyAbilitySystemComponent::BeginPlay()
 void UFireflyAbilitySystemComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// ...
 }
 
 bool UFireflyAbilitySystemComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch,
@@ -892,21 +885,12 @@ void UFireflyAbilitySystemComponent::PreModiferApplied(EFireflyAttributeType Att
 {
 }
 
-void UFireflyAbilitySystemComponent::ApplyModifierToAttribute(EFireflyAttributeType AttributeType,
-                                                              EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, int32 StackToApply)
+void UFireflyAbilitySystemComponent::PostModiferApplied(EFireflyAttributeType AttributeType,
+	EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, int32 StackToApply)
 {
-	if (!HasAuthority() || !IsValid(ModSource))
-	{
-		return;
-	}
+}
 
-	UFireflyAttribute* AttributeToMod = GetAttributeByType(AttributeType);
-	if (!IsValid(AttributeToMod))
-	{
-		return;
-	}
-
-#define FIREFLY_ATTRIBUTE_MODIFIER_APPLY(ModOperatorName) \
+#define FIREFLY_ATTRIBUTE_MODIFIER_APPLY(ModOperatorName, ModSource) \
 	{ \
 		if (!AttributeToMod->##ModOperatorName##Mods.Contains(FFireflyAttributeModifier(ModSource, ModValue))) \
 		{ \
@@ -924,6 +908,20 @@ void UFireflyAbilitySystemComponent::ApplyModifierToAttribute(EFireflyAttributeT
 		} \
 	}
 
+void UFireflyAbilitySystemComponent::ApplyModifierToAttribute(EFireflyAttributeType AttributeType,
+	EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, int32 StackToApply)
+{
+	if (!HasAuthority() || !IsValid(ModSource))
+	{
+		return;
+	}
+
+	UFireflyAttribute* AttributeToMod = GetAttributeByType(AttributeType);
+	if (!IsValid(AttributeToMod))
+	{
+		return;
+	}
+
 	switch (ModOperator)
 	{
 	case EFireflyAttributeModOperator::None:
@@ -932,39 +930,41 @@ void UFireflyAbilitySystemComponent::ApplyModifierToAttribute(EFireflyAttributeT
 		}
 	case EFireflyAttributeModOperator::Plus:
 		{
-			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(Plus);
+			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(Plus, ModSource);
 			break;
 		}
 	case EFireflyAttributeModOperator::Minus:
 		{
-			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(Minus);
+			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(Minus, ModSource);
 			break;
 		}
 	case EFireflyAttributeModOperator::Multiply:
 		{
-			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(Multiply);
+			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(Multiply, ModSource);
 			break;
 		}
 	case EFireflyAttributeModOperator::Divide:
 		{
-			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(Divide);
+			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(Divide, ModSource);
 			break;
 		}
 	case EFireflyAttributeModOperator::InnerOverride:
 		{
-			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(InnerOverride);
+			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(InnerOverride, ModSource);
 			break;
 		}
 	case EFireflyAttributeModOperator::OuterOverride:
 		{
-			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(OuterOverride);
+			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(OuterOverride, ModSource);
 			break;
 		}
 	}
 
 	PreModiferApplied(AttributeType, ModOperator, ModSource, ModValue, StackToApply);
 
-	AttributeToMod->UpdateCurrentValue();	
+	AttributeToMod->UpdateCurrentValue();
+
+	PostModiferApplied(AttributeType, ModOperator, ModSource, ModValue, StackToApply);
 }
 
 void UFireflyAbilitySystemComponent::RemoveModifierFromAttribute(EFireflyAttributeType AttributeType,
@@ -1053,7 +1053,7 @@ bool UFireflyAbilitySystemComponent::CanApplyModifierInstant(EFireflyAttributeTy
 		}
 	case EFireflyAttributeModOperator::Minus:
 		{
-			bResult = AttributeToMod->IsValueInAttributeRange(AttributeToMod->BaseValue - ModValue);
+			bResult = AttributeToMod->IsValueInAttributeRange(AttributeToMod->GetBaseValueToUse() - ModValue);
 			break;
 		}
 	case EFireflyAttributeModOperator::Divide:
@@ -1063,13 +1063,13 @@ bool UFireflyAbilitySystemComponent::CanApplyModifierInstant(EFireflyAttributeTy
 				break;
 			}
 
-			bResult = AttributeToMod->IsValueInAttributeRange(AttributeToMod->BaseValue / ModValue);
+			bResult = AttributeToMod->IsValueInAttributeRange(AttributeToMod->GetBaseValueToUse() / ModValue);
 			break;
 		}
 	case EFireflyAttributeModOperator::InnerOverride:
 	case EFireflyAttributeModOperator::OuterOverride:
 		{
-			bResult = AttributeToMod->IsValueInAttributeRange(AttributeToMod->BaseValue);
+			bResult = AttributeToMod->IsValueInAttributeRange(AttributeToMod->GetBaseValueToUse());
 			break;
 		}
 	}
@@ -1095,23 +1095,11 @@ void UFireflyAbilitySystemComponent::ApplyModifierToAttributeInstant(EFireflyAtt
 
 	AttributeToMod->UpdateBaseValue(ModOperator, ModValue);
 	AttributeToMod->UpdateCurrentValue();
+
+	PostModiferApplied(AttributeType, ModOperator, ModSource, ModValue, 1);
 }
 
-void UFireflyAbilitySystemComponent::ApplyModifierToAttributeSelf(EFireflyAttributeType AttributeType,
-	EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, int32 StackToApply)
-{
-	if (!HasAuthority() || !IsValid(ModSource))
-	{
-		return;
-	}
-
-	UFireflyAttribute* AttributeToMod = GetAttributeByType(AttributeType);
-	if (!IsValid(AttributeToMod) || AttributeToMod != ModSource)
-	{
-		return;
-	}
-
-#define FIREFLY_ATTRIBUTE_SELF_MODIFIER_APPLY(ModOperatorName) \
+#define FIREFLY_ATTRIBUTE_SELF_MODIFIER_APPLY(ModOperatorName, ModSource) \
 	{ \
 		bool bContainsModifier = false; \
 		for (FFireflyAttributeModifier& Modifier : AttributeToMod->##ModOperatorName##Mods) \
@@ -1130,6 +1118,20 @@ void UFireflyAbilitySystemComponent::ApplyModifierToAttributeSelf(EFireflyAttrib
 		} \
 	}
 
+void UFireflyAbilitySystemComponent::ApplyModifierToAttributeSelf(EFireflyAttributeType AttributeType,
+	EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, int32 StackToApply)
+{
+	if (!HasAuthority() || !IsValid(ModSource))
+	{
+		return;
+	}
+
+	UFireflyAttribute* AttributeToMod = GetAttributeByType(AttributeType);
+	if (!IsValid(AttributeToMod) || AttributeToMod != ModSource)
+	{
+		return;
+	}
+
 	switch (ModOperator)
 	{
 	case EFireflyAttributeModOperator::None:
@@ -1138,39 +1140,41 @@ void UFireflyAbilitySystemComponent::ApplyModifierToAttributeSelf(EFireflyAttrib
 		}
 	case EFireflyAttributeModOperator::Plus:
 		{
-			FIREFLY_ATTRIBUTE_SELF_MODIFIER_APPLY(Plus);
+			FIREFLY_ATTRIBUTE_SELF_MODIFIER_APPLY(Plus, ModSource);
 			break;
 		}
 	case EFireflyAttributeModOperator::Minus:
 		{
-			FIREFLY_ATTRIBUTE_SELF_MODIFIER_APPLY(Minus);
+			FIREFLY_ATTRIBUTE_SELF_MODIFIER_APPLY(Minus, ModSource);
 			break;
 		}
 	case EFireflyAttributeModOperator::Multiply:
 		{
-			FIREFLY_ATTRIBUTE_SELF_MODIFIER_APPLY(Multiply);
+			FIREFLY_ATTRIBUTE_SELF_MODIFIER_APPLY(Multiply, ModSource);
 			break;
 		}
 	case EFireflyAttributeModOperator::Divide:
 		{
-			FIREFLY_ATTRIBUTE_SELF_MODIFIER_APPLY(Divide);
+			FIREFLY_ATTRIBUTE_SELF_MODIFIER_APPLY(Divide, ModSource);
 			break;
 		}
 	case EFireflyAttributeModOperator::InnerOverride:
 		{
-			FIREFLY_ATTRIBUTE_SELF_MODIFIER_APPLY(InnerOverride);
+			FIREFLY_ATTRIBUTE_SELF_MODIFIER_APPLY(InnerOverride, ModSource);
 			break;
 		}
 	case EFireflyAttributeModOperator::OuterOverride:
 		{
-			FIREFLY_ATTRIBUTE_SELF_MODIFIER_APPLY(OuterOverride);
+			FIREFLY_ATTRIBUTE_SELF_MODIFIER_APPLY(OuterOverride, ModSource);
 			break;
 		}
 	}
 
 	PreModiferApplied(AttributeType, ModOperator, ModSource, ModValue, StackToApply);
 
-	AttributeToMod->UpdateCurrentValue();	
+	AttributeToMod->UpdateCurrentValue();
+
+	PostModiferApplied(AttributeType, ModOperator, ModSource, ModValue, StackToApply);
 }
 
 TArray<UFireflyEffect*> UFireflyAbilitySystemComponent::GetActiveEffectsByID(FName EffectID) const
@@ -1246,25 +1250,20 @@ void UFireflyAbilitySystemComponent::ApplyEffectToOwner(AActor* Instigator, UFir
 		return;
 	}
 
-	if (!IsValid(Instigator))
-	{
-		Instigator = GetOwner();
-	}
-
 	/** 若效果会被阻挡，则应用无效 */
 	if (EffectInstance->TagsForEffectAsset.HasAnyExact(GetBlockEffectTags())
 		|| !EffectInstance->TagsRequireOwnerHasForApplication.HasAll(GetContainedTags())
 		|| EffectInstance->TagsBlockApplicationOnOwnerHas.HasAnyExact(GetContainedTags()))
 	{
-		if (!ActiveEffects.Contains(EffectInstance))
-		{
-			EffectInstance->MarkAsGarbage();
-		}
 		return;
 	}
 
-	const TArray<UFireflyEffect*> ActiveSpecEffects = GetActiveEffectsByClass(EffectInstance->GetClass());
+	if (!IsValid(Instigator))
+	{
+		Instigator = GetOwner();
+	}
 
+	const TArray<UFireflyEffect*> ActiveSpecEffects = GetActiveEffectsByClass(EffectInstance->GetClass());
 	/** 管理器中目前如果不存在被应用的指定效果，则直接应用该效果实例 */
 	if (ActiveSpecEffects.Num() == 0)
 	{
@@ -1273,32 +1272,48 @@ void UFireflyAbilitySystemComponent::ApplyEffectToOwner(AActor* Instigator, UFir
 		return;
 	}
 
-	/** 如果指定效果的默认发起者应用策略为每个发起者应用各自的实例 */
-	if (EffectInstance->InstigatorApplicationPolicy == EFireflyEffectInstigatorApplicationPolicy::InstigatorsApplyTheirOwn)
+	/** 如果指定效果的默认发起者应用策略为InstigatorsApplyTheirOwnOnly，不同的发起者仅生成各自的单个该效果实例 */
+	if (EffectInstance->InstigatorApplicationPolicy == EFireflyEffectInstigatorApplicationPolicy::InstigatorsApplyTheirOwnOnly)
 	{
 		bool bContainsInstigator = false;
 		for (auto Effect : ActiveSpecEffects)
 		{
 			if (Effect->Instigators.Contains(Instigator))
 			{
+				/** 已经存在的效果尝试应用堆叠或刷新操作 */
+				Effect->ApplyEffect(Instigator, GetOwner(), StackToApply);
+
 				bContainsInstigator = true;
+
 				break;
 			}
 		}
 
-		// 如果指定效果在该管理器中目前不存在已经存在的，和InInstigator相同的发起者，则应用该效果实例
-		if (!bContainsInstigator)
+		/** 如果指定效果在该管理器中目前生效的实例的发起者都不包含InInstigator，则应用新的效果实例 */
+		if (!bContainsInstigator && !ActiveSpecEffects.Contains(EffectInstance))
 		{
 			EffectInstance->ApplyEffect(Instigator, GetOwner(), StackToApply);
+		}		
+	}
+	/** 如果指定效果的默认发起者应用策略为InstigatorsShareOne，不同的发起者共享同一个该效果实例 */
+	else if (EffectInstance->InstigatorApplicationPolicy == EFireflyEffectInstigatorApplicationPolicy::InstigatorsShareOne)
+	{
+		for (auto Effect : ActiveSpecEffects)
+		{
+			/** 若本次发起者为新的发起者，将该发起者加入效果实例中 */
+			if (!Effect->Instigators.Contains(Instigator))
+			{
+				Effect->Instigators.AddUnique(Instigator);
+			}
 
-			return;
+			/** 已经存在的效果尝试应用堆叠或刷新操作 */
+			Effect->ApplyEffect(Instigator, GetOwner(), StackToApply);
 		}
 	}
-
-	/** 不考虑特殊情况，将所有当前存在的执行效果重新应用，具体的判定逻辑在效果内部执行 */
-	for (auto Effect : ActiveSpecEffects)
+	/** 如果指定效果的默认发起者应用策略为InstigatorsApplyTheirOwnMulti，不同的发起者可以生成多个不同的该效果实例 */
+	else
 	{
-		Effect->ApplyEffect(Instigator, GetOwner(), StackToApply);
+		EffectInstance->ApplyEffect(Instigator, GetOwner(), StackToApply);
 	}
 }
 

@@ -84,7 +84,7 @@ protected:
 
 	/** 获取属性的基础值或内部覆盖修改器的最新值 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute", Meta = (BlueprintProtected = "true"))
-	FORCEINLINE float GetBaseValueToUse() const;	
+	FORCEINLINE float GetBaseValueToUse() const;
 
 	/** 获取属性所属的管理器的拥有者 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute", Meta = (BlueprintProtected = "true"))
@@ -99,7 +99,7 @@ protected:
 
 protected:
 	/** 属性名 */
-	UPROPERTY(EditDefaultsOnly, Category = "FireflyAbilitySystem|Attribute")
+	UPROPERTY(EditDefaultsOnly, Category = "Basic")
 	TEnumAsByte<EFireflyAttributeType> AttributeType = AttributeType_Default;
 
 	/** 属性的基础值 */
@@ -110,28 +110,28 @@ protected:
 	UPROPERTY()
 	float CurrentValue = 0.f;
 
-	/** 属性不需要夹值，但属性不能小于给定的值 */
-	UPROPERTY(EditDefaultsOnly, Category = "FireflyAbilitySystem|Attribute")
+	/** 如果为true，如果为true，则属性值至少不能小于 LessBaseValue */
+	UPROPERTY(EditDefaultsOnly, Category = "ClampRange")
 	bool bAttributeMustNotLessThanSelection = true;
 
 	/** bAttributeMustMoreNotLessThanSelection为true时，属性不会小于该值 */
-	UPROPERTY(EditDefaultsOnly, Category = "FireflyAbilitySystem|Attribute", Meta = (EditCondition = "bAttributeMustNotLessThanSelection"))
+	UPROPERTY(EditDefaultsOnly, Category = "ClampRange", Meta = (EditCondition = "bAttributeMustNotLessThanSelection"))
 	float LessBaseValue = 0.f;
 
 	/** 属性是否需要夹值 */
-	UPROPERTY(EditDefaultsOnly, Category = "FireflyAbilitySystem|Attribute")
+	UPROPERTY(EditDefaultsOnly, Category = "ClampRange")
 	bool bAttributeHasRange = false;
 
 	/** 属性的范围最小值 */
-	UPROPERTY(EditDefaultsOnly, Category = "FireflyAbilitySystem|Attribute", Meta = (EditCondition = "bAttributeHasRange"))
+	UPROPERTY(EditDefaultsOnly, Category = "ClampRange", Meta = (EditCondition = "bAttributeHasRange"))
 	float RangeMinValue = 0.f;
 
 	/** 属性的范围最大值 */
-	UPROPERTY(EditDefaultsOnly, Category = "FireflyAbilitySystem|Attribute", Meta = (EditCondition = "bAttributeHasRange"))
+	UPROPERTY(EditDefaultsOnly, Category = "ClampRange", Meta = (EditCondition = "bAttributeHasRange"))
 	float RangeMaxValue = 0.f;
 
-	/** 属性的范围最大值属性类型，基于另一个属性的当前值 */
-	UPROPERTY(EditDefaultsOnly, Category = "FireflyAbilitySystem|Attribute", Meta = (EditCondition = "bAttributeHasRange"))
+	/** 属性的范围最大值属性类型，基于另一个属性的当前值，当且仅当所属的技能管理器中由该类型的属性时生效 */
+	UPROPERTY(EditDefaultsOnly, Category = "ClampRange", Meta = (EditCondition = "bAttributeHasRange"))
 	TEnumAsByte<EFireflyAttributeType> RangeMaxValueType = AttributeType_Default;
 
 	friend UFireflyAbilitySystemComponent;

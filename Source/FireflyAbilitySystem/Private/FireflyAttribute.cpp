@@ -164,6 +164,11 @@ void UFireflyAttribute::UpdateBaseValue_Implementation(EFireflyAttributeModOpera
 		return;
 	}
 
+	if (InnerOverrideMods.Num() != 0)
+	{
+		return;
+	}
+
 	const float OldValue = BaseValue;
 
 	switch (ModOperator)

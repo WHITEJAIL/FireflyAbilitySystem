@@ -253,28 +253,26 @@ enum class EFireflyEffectDurationPolicyOnStackingExpired : uint8
 UENUM()
 enum class EFireflyEffectInstigatorApplicationPolicy : uint8
 {
-	/** 同一个效果管理器中，只允许一个发起者应用的该效果实例存在 */
-	OnlyOneInstigator,
+	/** 同一个效果管理器中，不同的发起者仅生成各自的单个该效果实例 */
+	InstigatorsApplyTheirOwnOnly,
+
+	/** 同一个效果管理器中，不同的发起者可以生成多个不同的该效果实例 */
+	InstigatorsApplyTheirOwnMulti,
 
 	/** 同一个效果管理器中，不同的发起者共享同一个该效果实例 */
 	InstigatorsShareOne,
-
-	/** 同一个效果管理器中，不同的发起者生成不同的该效果实例 */
-	InstigatorsApplyTheirOwn
 };
 
 /** 效果的属性修改器使用的取值方法 */
 UENUM()
 enum class EFireflyEffectModifierValueMethod : uint8
 {
-	/** 直接使用一个float值作为修改器的取值方法 */
+	/** 直接使用一个float值，可以被外部动态修改 */
 	DirectFloat,
 	/** 使用Instigator的某个属性的值 */
 	UsingAttribute,
 	/** 使用自定义的计算器作为修改器的取值方法 */
-	CustomCalculator,
-	/** 在外部动态设置 */
-	DynamicSetting,
+	CustomCalculator
 };
 
 /** 效果携带的属性修改器 */
@@ -425,8 +423,8 @@ public:
 	TArray<FFireflySpecificProperty> SpecificProperties = TArray<FFireflySpecificProperty>{};
 
 	/** 该效果携带的特殊属性 */
-	UPROPERTY(BlueprintReadWrite, Category = Application)
-	EFireflyEffectInstigatorApplicationPolicy InstigatorApplicationPolicy = EFireflyEffectInstigatorApplicationPolicy::InstigatorsApplyTheirOwn;
+	UPROPERTY(BlueprintReadWrite, Category = Instancing)
+	EFireflyEffectInstigatorApplicationPolicy InstigatorApplicationPolicy = EFireflyEffectInstigatorApplicationPolicy::InstigatorsApplyTheirOwnOnly;
 
 	/** 效果的标签Tags，仅用于描述修饰效果资产 */
 	UPROPERTY(BlueprintReadWrite, Category = Tags)
