@@ -178,8 +178,8 @@ bool UFireflyAbilitySystemComponent::GrantAbilityByID(FName AbilityID)
 	FName NewAbilityName = FName(AbilityToGrant->GetName() + FString("_") + GetOwner()->GetName());
 	UFireflyAbility* NewAbility = NewObject<UFireflyAbility>(this, AbilityToGrant, NewAbilityName);
 	NewAbility->AbilityID = AbilityID;
-	NewAbility->OnAbilityGranted();
 	GrantedAbilities.Emplace(NewAbility);
+	NewAbility->OnAbilityGranted();
 
 	return true;
 }
@@ -199,8 +199,8 @@ bool UFireflyAbilitySystemComponent::GrantAbilityByClass(TSubclassOf<UFireflyAbi
 	FName NewAbilityName = FName(AbilityToGrant->GetName() + FString("_") + GetOwner()->GetName());
 	UFireflyAbility* NewAbility = NewObject<UFireflyAbility>(this, AbilityToGrant, NewAbilityName);
 	NewAbility->AbilityID = AbilityID;
-	NewAbility->OnAbilityGranted();
 	GrantedAbilities.Emplace(NewAbility);
+	NewAbility->OnAbilityGranted();
 
 	return true;
 }
@@ -502,6 +502,8 @@ void UFireflyAbilitySystemComponent::BindAbilityToInput(TSubclassOf<UFireflyAbil
 	if (!AbilitiesBoundToInput)
 	{
 		AbilitiesBoundToInput = new FFireflyAbilitiesBoundToInput();
+		AbilitiesInputBound.Add(InputToBind, *AbilitiesBoundToInput);
+
 		AbilitiesBoundToInput->HandleStarted = EnhancedInput->BindAction(InputToBind, ETriggerEvent::Started, this,
 			&UFireflyAbilitySystemComponent::OnAbilityInputActionStarted, InputToBind).GetHandle();
 		AbilitiesBoundToInput->HandleOngoing = EnhancedInput->BindAction(InputToBind, ETriggerEvent::Ongoing, this,
