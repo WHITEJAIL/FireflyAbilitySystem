@@ -45,9 +45,9 @@ int32 UFireflyAttribute::GetFunctionCallspace(UFunction* Function, FFrame* Stack
 	return (GetOuter() ? GetOuter()->GetFunctionCallspace(Function, Stack) : FunctionCallspace::Local);
 }
 
-void UFireflyAttribute::InitializeAttributeInstance()
+void UFireflyAttribute::InitAttributeInstance()
 {
-	 ReceiveInitializeAttributeInstance();
+	 ReceiveInitAttributeInstance();
 }
 
 TEnumAsByte<EFireflyAttributeType> UFireflyAttribute::GetAttributeType() const

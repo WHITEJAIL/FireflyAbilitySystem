@@ -64,11 +64,11 @@ public:
 protected:
 	/** 初始化属性实例，当属性被构建并添加到技能管理器时触发 */
 	UFUNCTION()
-	virtual void InitializeAttributeInstance();
+	virtual void InitAttributeInstance();
 
 	/** 蓝图端实现的初始化属性实例，当属性被构建并添加到技能管理器时触发 */
-	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Attribute", Meta = (DisplayName = "InitializeAttributeInstance"))
-	void ReceiveInitializeAttributeInstance();
+	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Attribute", Meta = (DisplayName = "InitAttributeInstance"))
+	void ReceiveInitAttributeInstance();
 
 	/** 获取属性的类型 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute", Meta = (BlueprintProtected = "true"))

@@ -389,9 +389,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
 	virtual void ApplyModifierToAttributeInstant(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue);
 
-	/** 应用一个修改器到某个属性的当前值中，该修改器必须来自于属性本身，必须在拥有权限端执行，否则无效 */
+	/** 应用或重新设置一个修改器到某个属性的当前值中必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
-	virtual void ApplyModifierToAttributeSelf(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, int32 StackToApply);
+	virtual void ApplyOrResetModifierToAttribute(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, int32 StackToApply);
 
 #pragma endregion
 

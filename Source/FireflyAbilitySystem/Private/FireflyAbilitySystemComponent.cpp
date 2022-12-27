@@ -804,7 +804,7 @@ void UFireflyAbilitySystemComponent::ConstructAttributeByConstructor(FFireflyAtt
 	NewAttribute->RangeMinValue = AttributeConstructor.RangeMinValue;
 	NewAttribute->RangeMaxValue = AttributeConstructor.RangeMaxValue;
 	NewAttribute->RangeMaxValueType = AttributeConstructor.RangeMaxValueType;
-	NewAttribute->InitializeAttributeInstance();
+	NewAttribute->InitAttributeInstance();
 
 	AttributeContainer.Emplace(NewAttribute);
 }
@@ -825,7 +825,7 @@ void UFireflyAbilitySystemComponent::ConstructAttributeByClass(TSubclassOf<UFire
 		return;
 	}
 	NewAttribute->AttributeType = AttributeType;
-	NewAttribute->InitializeAttributeInstance();
+	NewAttribute->InitAttributeInstance();
 
 	AttributeContainer.Emplace(NewAttribute);
 }
@@ -845,7 +845,7 @@ void UFireflyAbilitySystemComponent::ConstructAttributeByType(EFireflyAttributeT
 		return;
 	}
 	NewAttribute->AttributeType = AttributeType;
-	NewAttribute->InitializeAttributeInstance();
+	NewAttribute->InitAttributeInstance();
 
 	AttributeContainer.Emplace(NewAttribute);
 }
@@ -892,7 +892,7 @@ void UFireflyAbilitySystemComponent::PostModiferApplied(EFireflyAttributeType At
 {
 }
 
-#define FIREFLY_ATTRIBUTE_MODIFIER_APPLY(ModOperatorName, ModSource) \
+#define FIREFLY_ATTRIBUTE_MODIFIER_APPLY(ModOperatorName) \
 	{ \
 		if (!AttributeToMod->##ModOperatorName##Mods.Contains(FFireflyAttributeModifier(ModSource, ModValue))) \
 		{ \
@@ -932,32 +932,32 @@ void UFireflyAbilitySystemComponent::ApplyModifierToAttribute(EFireflyAttributeT
 		}
 	case EFireflyAttributeModOperator::Plus:
 		{
-			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(Plus, ModSource);
+			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(Plus);
 			break;
 		}
 	case EFireflyAttributeModOperator::Minus:
 		{
-			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(Minus, ModSource);
+			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(Minus);
 			break;
 		}
 	case EFireflyAttributeModOperator::Multiply:
 		{
-			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(Multiply, ModSource);
+			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(Multiply);
 			break;
 		}
 	case EFireflyAttributeModOperator::Divide:
 		{
-			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(Divide, ModSource);
+			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(Divide);
 			break;
 		}
 	case EFireflyAttributeModOperator::InnerOverride:
 		{
-			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(InnerOverride, ModSource);
+			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(InnerOverride);
 			break;
 		}
 	case EFireflyAttributeModOperator::OuterOverride:
 		{
-			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(OuterOverride, ModSource);
+			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(OuterOverride);
 			break;
 		}
 	}
@@ -1101,14 +1101,14 @@ void UFireflyAbilitySystemComponent::ApplyModifierToAttributeInstant(EFireflyAtt
 	PostModiferApplied(AttributeType, ModOperator, ModSource, ModValue, 1);
 }
 
-#define FIREFLY_ATTRIBUTE_SELF_MODIFIER_APPLY(ModOperatorName, ModSource) \
+#define FIREFLY_ATTRIBUTE_MODIFIER_APPLY_OVERRIDE(ModOperatorName) \
 	{ \
 		bool bContainsModifier = false; \
 		for (FFireflyAttributeModifier& Modifier : AttributeToMod->##ModOperatorName##Mods) \
 		{ \
 			if (Modifier.ModSource == ModSource) \
 			{ \
-				bContainsModifier = false; \
+				bContainsModifier = true; \
 				Modifier.ModValue = ModValue; \
 				Modifier.StackCount = StackToApply; \
 				break; \
@@ -1120,7 +1120,7 @@ void UFireflyAbilitySystemComponent::ApplyModifierToAttributeInstant(EFireflyAtt
 		} \
 	}
 
-void UFireflyAbilitySystemComponent::ApplyModifierToAttributeSelf(EFireflyAttributeType AttributeType,
+void UFireflyAbilitySystemComponent::ApplyOrResetModifierToAttribute(EFireflyAttributeType AttributeType,
 	EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, int32 StackToApply)
 {
 	if (!HasAuthority() || !IsValid(ModSource))
@@ -1129,7 +1129,7 @@ void UFireflyAbilitySystemComponent::ApplyModifierToAttributeSelf(EFireflyAttrib
 	}
 
 	UFireflyAttribute* AttributeToMod = GetAttributeByType(AttributeType);
-	if (!IsValid(AttributeToMod) || AttributeToMod != ModSource)
+	if (!IsValid(AttributeToMod))
 	{
 		return;
 	}
@@ -1142,32 +1142,32 @@ void UFireflyAbilitySystemComponent::ApplyModifierToAttributeSelf(EFireflyAttrib
 		}
 	case EFireflyAttributeModOperator::Plus:
 		{
-			FIREFLY_ATTRIBUTE_SELF_MODIFIER_APPLY(Plus, ModSource);
+			FIREFLY_ATTRIBUTE_MODIFIER_APPLY_OVERRIDE(Plus);
 			break;
 		}
 	case EFireflyAttributeModOperator::Minus:
 		{
-			FIREFLY_ATTRIBUTE_SELF_MODIFIER_APPLY(Minus, ModSource);
+			FIREFLY_ATTRIBUTE_MODIFIER_APPLY_OVERRIDE(Minus);
 			break;
 		}
 	case EFireflyAttributeModOperator::Multiply:
 		{
-			FIREFLY_ATTRIBUTE_SELF_MODIFIER_APPLY(Multiply, ModSource);
+			FIREFLY_ATTRIBUTE_MODIFIER_APPLY_OVERRIDE(Multiply);
 			break;
 		}
 	case EFireflyAttributeModOperator::Divide:
 		{
-			FIREFLY_ATTRIBUTE_SELF_MODIFIER_APPLY(Divide, ModSource);
+			FIREFLY_ATTRIBUTE_MODIFIER_APPLY_OVERRIDE(Divide);
 			break;
 		}
 	case EFireflyAttributeModOperator::InnerOverride:
 		{
-			FIREFLY_ATTRIBUTE_SELF_MODIFIER_APPLY(InnerOverride, ModSource);
+			FIREFLY_ATTRIBUTE_MODIFIER_APPLY_OVERRIDE(InnerOverride);
 			break;
 		}
 	case EFireflyAttributeModOperator::OuterOverride:
 		{
-			FIREFLY_ATTRIBUTE_SELF_MODIFIER_APPLY(OuterOverride, ModSource);
+			FIREFLY_ATTRIBUTE_MODIFIER_APPLY_OVERRIDE(OuterOverride);
 			break;
 		}
 	}
