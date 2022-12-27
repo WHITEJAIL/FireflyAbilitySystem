@@ -7,7 +7,7 @@
 #include "FireflyAbility.h"
 #include "FireflyAbilitySystemComponent.h"
 
-UFireflyAbilitySystemComponent* UFireflyAbilitySystemLibrary::GetFireflyAbilitySystem(AActor* Actor)
+UFireflyAbilitySystemComponent* UFireflyAbilitySystemLibrary::GetFireflyAbilitySystem(const AActor* Actor)
 {
 	if (!IsValid(Actor->GetComponentByClass(UFireflyAbilitySystemComponent::StaticClass())))
 	{
@@ -65,7 +65,7 @@ FString UFireflyAbilitySystemLibrary::GetAttributeTypeName(EFireflyAttributeType
 	return EnumPtr->GetDisplayNameTextByValue(AttributeType).ToString();
 }
 
-float UFireflyAbilitySystemLibrary::GetAttributeValue(AActor* Actor, EFireflyAttributeType AttributeType)
+float UFireflyAbilitySystemLibrary::GetAttributeValue(const AActor* Actor, EFireflyAttributeType AttributeType)
 {
 	const UFireflyAbilitySystemComponent* FireflyAbilitySystem = GetFireflyAbilitySystem(Actor);
 	if (!IsValid(FireflyAbilitySystem))
@@ -76,7 +76,7 @@ float UFireflyAbilitySystemLibrary::GetAttributeValue(AActor* Actor, EFireflyAtt
 	return FireflyAbilitySystem->GetAttributeValue(AttributeType);
 }
 
-float UFireflyAbilitySystemLibrary::GetAttributeBaseValue(AActor* Actor, EFireflyAttributeType AttributeType)
+float UFireflyAbilitySystemLibrary::GetAttributeBaseValue(const AActor* Actor, EFireflyAttributeType AttributeType)
 {
 	const UFireflyAbilitySystemComponent* FireflyAbilitySystem = GetFireflyAbilitySystem(Actor);
 	if (!IsValid(FireflyAbilitySystem))
@@ -87,7 +87,7 @@ float UFireflyAbilitySystemLibrary::GetAttributeBaseValue(AActor* Actor, EFirefl
 	return FireflyAbilitySystem->GetAttributeBaseValue(AttributeType);
 }
 
-void UFireflyAbilitySystemLibrary::SendNotifyEventToActor(AActor* TargetActor, FGameplayTag EventTag,
+void UFireflyAbilitySystemLibrary::SendNotifyEventToActor(const AActor* TargetActor, FGameplayTag EventTag,
 	FFireflyMessageEventData EventData)
 {
 	if (!IsValid(TargetActor) || !EventTag.IsValid())

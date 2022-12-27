@@ -16,9 +16,9 @@ class FIREFLYABILITYSYSTEM_API UFireflyAbilitySystemLibrary : public UBlueprintF
 #pragma region Basic 基础
 
 public:
-	/** 获取某个Actor的Firefly技能系统 */
-	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|DataDriven")
-	static class UFireflyAbilitySystemComponent* GetFireflyAbilitySystem(AActor* Actor);
+	/** 获取某个Actor的Firefly技能系统管理器 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem")
+	static class UFireflyAbilitySystemComponent* GetFireflyAbilitySystem(const AActor* Actor);
 
 #pragma endregion
 
@@ -45,11 +45,11 @@ public:
 
 	/** 获取Actor的某个属性的当前值，如果不存在，返回0 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute")
-	static float GetAttributeValue(AActor* Actor, EFireflyAttributeType AttributeType);
+	static float GetAttributeValue(const AActor* Actor, EFireflyAttributeType AttributeType);
 
 	/** 获取Actor的某个属性的基础值，如果不存在，返回0 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute")
-	static float GetAttributeBaseValue(AActor* Actor, EFireflyAttributeType AttributeType);
+	static float GetAttributeBaseValue(const AActor* Actor, EFireflyAttributeType AttributeType);
 
 #pragma endregion
 
@@ -69,7 +69,7 @@ public:
 public:
 	/** 向Actor发送一个技能系统的消息事件 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|NotifyEvent")
-	static void SendNotifyEventToActor(AActor* TargetActor, FGameplayTag EventTag, FFireflyMessageEventData EventData);
+	static void SendNotifyEventToActor(const AActor* TargetActor, FGameplayTag EventTag, FFireflyMessageEventData EventData);
 
 #pragma endregion
 };
