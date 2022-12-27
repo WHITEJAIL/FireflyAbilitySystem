@@ -300,7 +300,7 @@ void UFireflyEffect::ApplyEffectFirstTime(UFireflyAbilitySystemComponent* Manage
 		return;
 	}
 
-	Manager->AddOrRemoveActiveEffect(this, true);
+	Manager->HandleActiveEffectApplication(this, true);
 	Manager->OnActiveEffectApplied.Broadcast(EffectID, GetClass(), Duration);
 	Manager->OnTagContainerUpdated.AddDynamic(this, &UFireflyEffect::OnOwnerTagContainerUpdated);
 	ExecuteEffectTagRequirementToOwner(true);
@@ -425,7 +425,7 @@ void UFireflyEffect::RemoveEffect()
 	}
 
 	/** 清理该效果携带的所有属性修改器 */
-	for (auto Modifier : Modifiers)
+	for (auto& Modifier : Modifiers)
 	{
 		Manager->RemoveModifierFromAttribute(Modifier.AttributeType, Modifier.ModOperator, 
 			this, Modifier.ModValue);
@@ -441,7 +441,7 @@ void UFireflyEffect::RemoveEffect()
 	/** 停止监听管理器的TagContainer更新 */
 	Manager->OnTagContainerUpdated.RemoveDynamic(this, &UFireflyEffect::OnOwnerTagContainerUpdated);
 
-	Manager->AddOrRemoveActiveEffect(this, false);
+	Manager->HandleActiveEffectApplication(this, false);
 
 	ExecuteEffectTagRequirementToOwner(false);
 	ReceiveRemoveEffect();

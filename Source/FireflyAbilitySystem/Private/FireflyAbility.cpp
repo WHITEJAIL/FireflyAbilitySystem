@@ -885,7 +885,7 @@ void UFireflyAbility::ApplyEffectDynamicConstructorToTarget(AActor* Target,
 	FireflyAbilitySystem->ApplyEffectDynamicConstructorToTarget(Target, EffectSetup, StackToApply);
 }
 
-void UFireflyAbility::RemoveActiveEffectByID(FName EffectID, int32 StackToRemove)
+void UFireflyAbility::RemoveActiveEffectsByID(FName EffectID, int32 StackToRemove)
 {
 	UFireflyAbilitySystemComponent* FireflyAbilitySystem = GetOwnerManager();
 	if (!IsValid(FireflyAbilitySystem))
@@ -893,10 +893,10 @@ void UFireflyAbility::RemoveActiveEffectByID(FName EffectID, int32 StackToRemove
 		return;
 	}
 
-	FireflyAbilitySystem->RemoveActiveEffectByID(EffectID, StackToRemove);
+	FireflyAbilitySystem->RemoveActiveEffectsByID(EffectID, StackToRemove);
 }
 
-void UFireflyAbility::RemoveActiveEffectByClass(TSubclassOf<UFireflyEffect> EffectType, int32 StackToRemove)
+void UFireflyAbility::RemoveActiveEffectsByClass(TSubclassOf<UFireflyEffect> EffectType, int32 StackToRemove)
 {
 	UFireflyAbilitySystemComponent* FireflyAbilitySystem = GetOwnerManager();
 	if (!IsValid(FireflyAbilitySystem))
@@ -904,7 +904,7 @@ void UFireflyAbility::RemoveActiveEffectByClass(TSubclassOf<UFireflyEffect> Effe
 		return;
 	}
 
-	FireflyAbilitySystem->RemoveActiveEffectByClass(EffectType, StackToRemove);
+	FireflyAbilitySystem->RemoveActiveEffectsByClass(EffectType, StackToRemove);
 }
 
 void UFireflyAbility::RemoveActiveEffectsWithTags(FGameplayTagContainer RemoveTags)
@@ -916,6 +916,28 @@ void UFireflyAbility::RemoveActiveEffectsWithTags(FGameplayTagContainer RemoveTa
 	}
 
 	FireflyAbilitySystem->RemoveActiveEffectsWithTags(RemoveTags);
+}
+
+void UFireflyAbility::RemoveSingleActiveEffectByID(FName EffectID, int32 StackToRemove)
+{
+	UFireflyAbilitySystemComponent* FireflyAbilitySystem = GetOwnerManager();
+	if (!IsValid(FireflyAbilitySystem))
+	{
+		return;
+	}
+
+	FireflyAbilitySystem->RemoveSingleActiveEffectByID(EffectID, StackToRemove);
+}
+
+void UFireflyAbility::RemoveSingleActiveEffectByClass(TSubclassOf<UFireflyEffect> EffectType, int32 StackToRemove)
+{
+	UFireflyAbilitySystemComponent* FireflyAbilitySystem = GetOwnerManager();
+	if (!IsValid(FireflyAbilitySystem))
+	{
+		return;
+	}
+
+	FireflyAbilitySystem->RemoveSingleActiveEffectByClass(EffectType, StackToRemove);
 }
 
 float UFireflyAbility::GetOwnerAttributeValue(EFireflyAttributeType AttributeType) const

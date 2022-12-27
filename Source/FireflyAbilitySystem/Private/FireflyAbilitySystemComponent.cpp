@@ -1257,6 +1257,10 @@ void UFireflyAbilitySystemComponent::ApplyEffectToOwner(AActor* Instigator, UFir
 		|| !EffectInstance->TagsRequireOwnerHasForApplication.HasAll(GetContainedTags())
 		|| EffectInstance->TagsBlockApplicationOnOwnerHas.HasAnyExact(GetContainedTags()))
 	{
+		if (ActiveEffects.Contains(EffectInstance))
+		{
+			EffectInstance->MarkAsGarbage();
+		}
 		return;
 	}
 
@@ -1317,6 +1321,11 @@ void UFireflyAbilitySystemComponent::ApplyEffectToOwner(AActor* Instigator, UFir
 	{
 		EffectInstance->ApplyEffect(Instigator, GetOwner(), StackToApply);
 	}
+
+	if (ActiveEffects.Contains(EffectInstance))
+	{
+		EffectInstance->MarkAsGarbage();
+	}
 }
 
 void UFireflyAbilitySystemComponent::ApplyEffectToTarget(AActor* Target, UFireflyEffect* EffectInstance,
@@ -1330,6 +1339,7 @@ void UFireflyAbilitySystemComponent::ApplyEffectToTarget(AActor* Target, UFirefl
 	UFireflyAbilitySystemComponent* TargetEffectMgr = nullptr;
 	if (!IsValid(Target->GetComponentByClass(UFireflyAbilitySystemComponent::StaticClass())))
 	{
+		EffectInstance->MarkAsGarbage();
 		return;
 	}
 
@@ -1449,7 +1459,7 @@ void UFireflyAbilitySystemComponent::ApplyEffectDynamicConstructorToTarget(AActo
 	TargetEffectMgr->ApplyEffectDynamicConstructorToOwner(GetOwner(), EffectSetup, StackToApply);
 }
 
-void UFireflyAbilitySystemComponent::RemoveActiveEffectByID(FName EffectID, int32 StackToRemove)
+void UFireflyAbilitySystemComponent::RemoveActiveEffectsByID(FName EffectID, int32 StackToRemove)
 {
 	if (!HasAuthority() || EffectID == NAME_None)
 	{
@@ -1472,19 +1482,20 @@ void UFireflyAbilitySystemComponent::RemoveActiveEffectByID(FName EffectID, int3
 			ActiveEffects.RemoveSingle(Effect);
 			Effect->RemoveEffect();
 		}
+
+		return;
 	}
 
 	for (auto Effect : EffectsToRemove)
 	{
 		if (Effect->ReduceEffectStack(StackToRemove))
 		{
-			ActiveEffects.RemoveSingle(Effect);
 			Effect->RemoveEffect();
 		}
 	}
 }
 
-void UFireflyAbilitySystemComponent::RemoveActiveEffectByClass(TSubclassOf<UFireflyEffect> EffectType,
+void UFireflyAbilitySystemComponent::RemoveActiveEffectsByClass(TSubclassOf<UFireflyEffect> EffectType,
                                                                int32 StackToRemove)
 {
 	if (!IsValid(EffectType) || !HasAuthority())
@@ -1508,13 +1519,14 @@ void UFireflyAbilitySystemComponent::RemoveActiveEffectByClass(TSubclassOf<UFire
 			ActiveEffects.RemoveSingle(Effect);
 			Effect->RemoveEffect();
 		}
+
+		return;
 	}
 
 	for (auto Effect : EffectsToRemove)
 	{
 		if (Effect->ReduceEffectStack(StackToRemove))
 		{
-			ActiveEffects.RemoveSingle(Effect);
 			Effect->RemoveEffect();
 		}
 	}
@@ -1538,19 +1550,79 @@ void UFireflyAbilitySystemComponent::RemoveActiveEffectsWithTags(FGameplayTagCon
 
 	for (auto Effect : EffectsToRemove)
 	{
-		ActiveEffects.RemoveSingle(Effect);
 		Effect->RemoveEffect();
 	}
 }
 
-void UFireflyAbilitySystemComponent::AddOrRemoveActiveEffect(UFireflyEffect* InEffect, bool bIsAdd)
+void UFireflyAbilitySystemComponent::RemoveSingleActiveEffectByID(FName EffectID, int32 StackToRemove)
+{
+	if (!HasAuthority() || EffectID == NAME_None)
+	{
+		return;
+	}
+
+	UFireflyEffect* EffectToRemove = nullptr;
+	for (auto Effect : ActiveEffects)
+	{
+		if (Effect->EffectID == EffectID)
+		{
+			EffectToRemove = Effect;
+			break;
+		}
+	}
+
+	if (StackToRemove == -1)
+	{
+		EffectToRemove->RemoveEffect();
+
+		return;
+	}
+
+	if (EffectToRemove->ReduceEffectStack(StackToRemove))
+	{
+		EffectToRemove->RemoveEffect();
+	}
+}
+
+void UFireflyAbilitySystemComponent::RemoveSingleActiveEffectByClass(TSubclassOf<UFireflyEffect> EffectType,
+	int32 StackToRemove)
+{
+	if (!HasAuthority() || !IsValid(EffectType))
+	{
+		return;
+	}
+
+	UFireflyEffect* EffectToRemove = nullptr;
+	for (auto Effect : ActiveEffects)
+	{
+		if (Effect->GetClass() == EffectType)
+		{
+			EffectToRemove = Effect;
+			break;
+		}
+	}
+
+	if (StackToRemove == -1)
+	{
+		EffectToRemove->RemoveEffect();
+
+		return;
+	}
+
+	if (EffectToRemove->ReduceEffectStack(StackToRemove))
+	{
+		EffectToRemove->RemoveEffect();
+	}
+}
+
+void UFireflyAbilitySystemComponent::HandleActiveEffectApplication(UFireflyEffect* InEffect, bool bIsApplied)
 {
 	if (!HasAuthority())
 	{
 		return;
 	}
 
-	if (bIsAdd)
+	if (bIsApplied)
 	{
 		ActiveEffects.Emplace(InEffect);
 		AppendEffectSpecificProperties(InEffect->SpecificProperties);

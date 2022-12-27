@@ -518,17 +518,25 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect", Meta = (BlueprintProtected = true))
 	void ApplyEffectDynamicConstructorToTarget(AActor* Target, FFireflyEffectDynamicConstructor EffectSetup, int32 StackToApply = 1);
 
-	/** 一处自身特定的所有效果的固定堆叠数, StackToRemove = -1时，移除所有效果的所有堆叠，必须在拥有权限端执行，否则无效 */
+	/** 移除自身特定的所有效果的固定堆叠数, StackToRemove = -1时，移除所有效果的所有堆叠，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect", Meta = (BlueprintProtected = true))
-	void RemoveActiveEffectByID(FName EffectID, int32 StackToRemove = -1);
+	void RemoveActiveEffectsByID(FName EffectID, int32 StackToRemove = -1);
 
 	/** 移除自身特定的所有效果的固定堆叠数, StackToRemove = -1时，移除所有效果的所有堆叠，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect", Meta = (BlueprintProtected = true))
-	void RemoveActiveEffectByClass(TSubclassOf<UFireflyEffect> EffectType, int32 StackToRemove = -1);
+	void RemoveActiveEffectsByClass(TSubclassOf<UFireflyEffect> EffectType, int32 StackToRemove = -1);
 
 	/** 移除所有带有特定资产Tag的效果的应用状态，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect", Meta = (BlueprintProtected = true))
 	void RemoveActiveEffectsWithTags(FGameplayTagContainer RemoveTags);
+
+	/** 移除自身特定的单个效果的固定堆叠数, StackToRemove = -1时，移除所有效果的所有堆叠，必须在拥有权限端执行，否则无效 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect", Meta = (BlueprintProtected = true))
+	void RemoveSingleActiveEffectByID(FName EffectID, int32 StackToRemove = -1);
+
+	/** 移除自身特定的单个效果的固定堆叠数, StackToRemove = -1时，移除所有效果的所有堆叠，必须在拥有权限端执行，否则无效 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Effect", Meta = (BlueprintProtected = true))
+	void RemoveSingleActiveEffectByClass(TSubclassOf<UFireflyEffect> EffectType, int32 StackToRemove = -1);
 
 #pragma endregion
 
