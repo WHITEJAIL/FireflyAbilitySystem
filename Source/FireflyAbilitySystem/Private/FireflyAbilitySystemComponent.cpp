@@ -175,8 +175,7 @@ bool UFireflyAbilitySystemComponent::GrantAbilityByID(FName AbilityID)
 		return false;
 	}
 
-	FName NewAbilityName = FName(AbilityToGrant->GetName() + FString("_") + GetOwner()->GetName());
-	UFireflyAbility* NewAbility = NewObject<UFireflyAbility>(this, AbilityToGrant, NewAbilityName);
+	UFireflyAbility* NewAbility = NewObject<UFireflyAbility>(this, AbilityToGrant);
 	NewAbility->AbilityID = AbilityID;
 	GrantedAbilities.Emplace(NewAbility);
 	NewAbility->OnAbilityGranted();
@@ -196,8 +195,7 @@ bool UFireflyAbilitySystemComponent::GrantAbilityByClass(TSubclassOf<UFireflyAbi
 		return false;
 	}
 
-	FName NewAbilityName = FName(AbilityToGrant->GetName() + FString("_") + GetOwner()->GetName());
-	UFireflyAbility* NewAbility = NewObject<UFireflyAbility>(this, AbilityToGrant, NewAbilityName);
+	UFireflyAbility* NewAbility = NewObject<UFireflyAbility>(this, AbilityToGrant);
 	NewAbility->AbilityID = AbilityID;
 	GrantedAbilities.Emplace(NewAbility);
 	NewAbility->OnAbilityGranted();
@@ -367,6 +365,28 @@ bool UFireflyAbilitySystemComponent::TryActivateAbilityByClass(
 	}
 
 	return Ability->bIsActivating;
+}
+
+void UFireflyAbilitySystemComponent::CancelAbilityByID(FName AbilityID)
+{
+	UFireflyAbility* AbilityToCancel = GetGrantedAbilityByID(AbilityID);
+	if (!IsValid(AbilityToCancel))
+	{
+		return;
+	}
+
+	AbilityToCancel->CancelAbility();
+}
+
+void UFireflyAbilitySystemComponent::CancelAbilityByClass(TSubclassOf<UFireflyAbility> AbilityType)
+{
+	UFireflyAbility* AbilityToCancel = GetGrantedAbilityByClass(AbilityType);
+	if (!IsValid(AbilityToCancel))
+	{
+		return;
+	}
+
+	AbilityToCancel->CancelAbility();
 }
 
 void UFireflyAbilitySystemComponent::CancelAbilitiesWithTags(FGameplayTagContainer CancelTags)
@@ -792,9 +812,7 @@ void UFireflyAbilitySystemComponent::ConstructAttributeByConstructor(FFireflyAtt
 		return;
 	}
 
-	FString NewAttributeName = UFireflyAbilitySystemLibrary::GetAttributeTypeName(AttributeConstructor.AttributeType) + FString("_") + (TEXT("%s"), GetOwner()->GetName());
-
-	UFireflyAttribute* NewAttribute = NewObject<UFireflyAttribute>(this, *NewAttributeName);
+	UFireflyAttribute* NewAttribute = NewObject<UFireflyAttribute>(this);
 	if (!IsValid(NewAttribute))
 	{
 		return;
@@ -816,16 +834,11 @@ void UFireflyAbilitySystemComponent::ConstructAttributeByClass(TSubclassOf<UFire
 		return;
 	}
 
-	EFireflyAttributeType AttributeType = Cast<UFireflyAttribute>(AttributeClass->GetDefaultObject())->AttributeType;
-	FString NewAttributeName = UFireflyAbilitySystemLibrary::GetAttributeTypeName(AttributeType) + FString("_") + (TEXT("%s"), GetOwner()->GetName());
-
-	UFireflyAttribute* NewAttribute = NewObject<UFireflyAttribute>(this, AttributeClass, *NewAttributeName);
+	UFireflyAttribute* NewAttribute = NewObject<UFireflyAttribute>(this, AttributeClass);
 	if (!IsValid(NewAttribute))
 	{
 		return;
-	}
-	NewAttribute->AttributeType = AttributeType;
-	NewAttribute->InitAttributeInstance();
+	}NewAttribute->InitAttributeInstance();
 
 	AttributeContainer.Emplace(NewAttribute);
 }
@@ -837,9 +850,7 @@ void UFireflyAbilitySystemComponent::ConstructAttributeByType(EFireflyAttributeT
 		return;
 	}
 
-	FString NewAttributeName = UFireflyAbilitySystemLibrary::GetAttributeTypeName(AttributeType) + FString("_") + (TEXT("%s"), GetOwner()->GetName());
-
-	UFireflyAttribute* NewAttribute = NewObject<UFireflyAttribute>(this, *NewAttributeName);
+	UFireflyAttribute* NewAttribute = NewObject<UFireflyAttribute>(this);
 	if (!IsValid(NewAttribute))
 	{
 		return;

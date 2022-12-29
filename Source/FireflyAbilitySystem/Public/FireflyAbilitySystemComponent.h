@@ -189,6 +189,14 @@ public:
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability")
 	FORCEINLINE TArray<UFireflyAbility*> GetActivatingAbilities() const { return ActivatingAbilities; }
 
+	/** 通过ID取消某个技能的激活状态，必须在拥有权限端执行，否则无效 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
+	void CancelAbilityByID(FName AbilityID);
+
+	/** 通过类型取消某个技能的激活状态，必须在拥有权限端执行，否则无效 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
+	void CancelAbilityByClass(TSubclassOf<UFireflyAbility> AbilityType);
+
 	/** 取消所有带有特定资产Tag的技能的激活状态，必须在拥有权限端执行，否则无效 */
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Ability")
 	void CancelAbilitiesWithTags(FGameplayTagContainer CancelTags);

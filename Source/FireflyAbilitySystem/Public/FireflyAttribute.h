@@ -95,6 +95,7 @@ protected:
 	FORCEINLINE UFireflyAbilitySystemComponent* GetOwnerManager() const;
 
 	/** 初始化属性 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute", Meta = (BlueprintProtected = "true"))
 	void InitializeAttributeValue(float InitValue);
 
 protected:

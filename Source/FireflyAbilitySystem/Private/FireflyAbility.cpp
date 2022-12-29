@@ -137,7 +137,7 @@ void UFireflyAbility::ActivateAbility()
 
 	UFireflyAbilitySystemComponent* Manager = GetOwnerManager();
 
-	if (bCancelRequiredAbilities)
+	if (bCancelRequiredAbilitiesOnActivation)
 	{
 		for (auto Ability : GetOwnerManager()->GetActivatingAbilities())
 		{
@@ -235,6 +235,15 @@ void UFireflyAbility::CancelAbility()
 	if (GetOwnerRole() == ROLE_AutonomousProxy)
 	{
 		Server_CancelAbility();
+	}
+}
+
+void UFireflyAbility::CancelRequiredAbilities()
+{
+	UFireflyAbilitySystemComponent* FireflyAbilitySystem = GetOwnerManager();
+	for (auto Ability : AbilityClassesRequired)
+	{
+		FireflyAbilitySystem->CancelAbilityByClass(Ability);
 	}
 }
 

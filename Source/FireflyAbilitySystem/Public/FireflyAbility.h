@@ -123,7 +123,11 @@ protected:
 
 	/** 蓝图端的技能结束时执行的逻辑，分为自动结束和取消结束两种状态 */
 	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Ability", Meta = (DisplayName = "End Ability"))
-	void ReceiveEndAbility(bool bWasCanceled);	
+	void ReceiveEndAbility(bool bWasCanceled);
+
+	/** 取消所有激活需要的前置技能 */
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
+	void CancelRequiredAbilities();
 
 protected:
 	/** 该技能是否处于激活状态 */
@@ -264,7 +268,7 @@ protected:
 
 	/** 该技能的激活是否会取消其前置依赖技能的执行 */
 	UPROPERTY(EditDefaultsOnly, Category = "ActivationRequirement|AbilityRequired")
-	bool bCancelRequiredAbilities;
+	bool bCancelRequiredAbilitiesOnActivation;
 
 	/** 为该做特殊技能资产标记的Tags */
 	UPROPERTY(EditDefaultsOnly, Category = "ActivationRequirement|TagRequired")
