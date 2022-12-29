@@ -16,5 +16,43 @@ void FFireflyAbilitySystemModule::ShutdownModule()
 }
 
 #undef LOCTEXT_NAMESPACE
+
+DEFINE_LOG_CATEGORY(LogFireflyAbilitySystem);
+DEFINE_LOG_CATEGORY(LogFireflyAttribute);
+DEFINE_LOG_CATEGORY(LogFireflyAbility);
+DEFINE_LOG_CATEGORY(LogFireflyEffect);
+
+FString GetContextNetRoleStringFireflyAS(UObject* ContextObject)
+{
+	ENetRole Role = ROLE_None;
+
+	if (AActor* Actor = Cast<AActor>(ContextObject))
+	{
+		Role = Actor->GetLocalRole();
+	}
+	else if (UActorComponent* Component = Cast<UActorComponent>(ContextObject))
+	{
+		Role = Component->GetOwnerRole();
+	}
+
+	if (Role != ROLE_None)
+	{
+		return (Role == ROLE_Authority) ? TEXT("Authority") :
+			((Role == ROLE_AutonomousProxy) ? TEXT("Autonomous") : TEXT("Simulated"));
+	}
+	else
+	{
+#if WITH_EDITOR
+		if (GIsEditor)
+		{
+			extern ENGINE_API FString GPlayInEditorContextString;
+			return GPlayInEditorContextString;
+		}
+#endif
+	}
+
+	return TEXT("[]");
+}
+
 	
 IMPLEMENT_MODULE(FFireflyAbilitySystemModule, FireflyAbilitySystem)

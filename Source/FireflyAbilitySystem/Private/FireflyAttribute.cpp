@@ -50,24 +50,24 @@ void UFireflyAttribute::InitAttributeInstance()
 	 ReceiveInitAttributeInstance();
 }
 
-TEnumAsByte<EFireflyAttributeType> UFireflyAttribute::GetAttributeType() const
+void UFireflyAttribute::InitializeAttributeValue(float InitValue)
 {
-	return AttributeType;
-}
+	float OldValue = 0.f;
 
-TEnumAsByte<EFireflyAttributeType> UFireflyAttribute::GetRangeMaxValueType() const
-{
-	return RangeMaxValueType;
-}
+	OldValue = BaseValue;
+	BaseValue = InitValue;
+	if (BaseValue != OldValue)
+	{
+		GetOwnerManager()->OnAttributeBaseValueChanged.Broadcast(AttributeType, BaseValue, OldValue);
+	}
 
-float UFireflyAttribute::GetCurrentValue() const
-{
-	return CurrentValue;
-}
-
-float UFireflyAttribute::GetBaseValueToUse() const
-{
-	return InnerOverrideMods.IsValidIndex(0) ? InnerOverrideMods[0].ModValue : BaseValue;
+	OldValue = CurrentValue;
+	UpdateCurrentValue();
+	if (CurrentValue == OldValue)
+	{
+		return;
+	}
+	GetOwnerManager()->OnAttributeValueChanged.Broadcast(AttributeType, CurrentValue, OldValue);
 }
 
 AActor* UFireflyAttribute::GetOwnerActor() const
@@ -90,24 +90,24 @@ UFireflyAbilitySystemComponent* UFireflyAttribute::GetOwnerManager() const
 	return Cast<UFireflyAbilitySystemComponent>(GetOuter());
 }
 
-void UFireflyAttribute::InitializeAttributeValue(float InitValue)
+TEnumAsByte<EFireflyAttributeType> UFireflyAttribute::GetRangeMaxValueType() const
 {
-	float OldValue = 0.f;
+	return RangeMaxValueType;
+}
 
-	OldValue = BaseValue;
-	BaseValue = InitValue;
-	if (BaseValue != OldValue)
-	{
-		GetOwnerManager()->OnAttributeBaseValueChanged.Broadcast(AttributeType, BaseValue, OldValue);
-	}
+TEnumAsByte<EFireflyAttributeType> UFireflyAttribute::GetAttributeType() const
+{
+	return AttributeType;
+}
 
-	OldValue = CurrentValue;
-	UpdateCurrentValue();
-	if (CurrentValue == OldValue)
-	{
-		return;
-	}
-	GetOwnerManager()->OnAttributeValueChanged.Broadcast(AttributeType, CurrentValue, OldValue);
+float UFireflyAttribute::GetCurrentValue() const
+{
+	return CurrentValue;
+}
+
+float UFireflyAttribute::GetBaseValueToUse() const
+{
+	return InnerOverrideMods.IsValidIndex(0) ? InnerOverrideMods[0].ModValue : BaseValue;
 }
 
 void UFireflyAttribute::UpdateCurrentValue_Implementation()

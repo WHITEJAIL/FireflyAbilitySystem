@@ -121,15 +121,15 @@ protected:
 
 protected:
 	/** 根据ID获取一个该管理器中的相关技能实例 */
-	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability")
+	UFUNCTION()
 	FORCEINLINE UFireflyAbility* GetGrantedAbilityByID(FName AbilityID) const;
 
 	/** 根据Tag获取所有该管理器中的相关技能实例 */
-	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability")
+	UFUNCTION()
 	FORCEINLINE TArray<UFireflyAbility*> GetGrantedAbilityByTag(FGameplayTag AbilityTag) const;
 
 	/** 根据类型获取一个该管理器中的相关技能实例 */
-	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability")
+	UFUNCTION()
 	FORCEINLINE UFireflyAbility* GetGrantedAbilityByClass(TSubclassOf<UFireflyAbility> AbilityType) const;
 
 public:

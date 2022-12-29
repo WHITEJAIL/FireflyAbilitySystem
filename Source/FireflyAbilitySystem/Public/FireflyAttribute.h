@@ -70,21 +70,9 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "FireflyAbilitySystem|Attribute", Meta = (DisplayName = "InitAttributeInstance"))
 	void ReceiveInitAttributeInstance();
 
-	/** 获取属性的类型 */
-	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute", Meta = (BlueprintProtected = "true"))
-	FORCEINLINE TEnumAsByte<EFireflyAttributeType> GetAttributeType() const;
-
-	/** 获取属性的范围最大值属性类型，基于另一个属性的当前值 */
-	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute", Meta = (BlueprintProtected = "true"))
-	FORCEINLINE TEnumAsByte<EFireflyAttributeType> GetRangeMaxValueType() const;
-
-	/** 获取属性的当前值 */
-	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute", Meta = (BlueprintProtected = "true"))
-	FORCEINLINE float GetCurrentValue() const;
-
-	/** 获取属性的基础值或内部覆盖修改器的最新值 */
-	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute", Meta = (BlueprintProtected = "true"))
-	FORCEINLINE float GetBaseValueToUse() const;
+	/** 初始化属性 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute", Meta = (BlueprintProtected = "true"))
+	void InitializeAttributeValue(float InitValue);
 
 	/** 获取属性所属的管理器的拥有者 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute", Meta = (BlueprintProtected = "true"))
@@ -94,9 +82,22 @@ protected:
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute", Meta = (BlueprintProtected = "true"))
 	FORCEINLINE UFireflyAbilitySystemComponent* GetOwnerManager() const;
 
-	/** 初始化属性 */
-	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute", Meta = (BlueprintProtected = "true"))
-	void InitializeAttributeValue(float InitValue);
+	/** 获取属性的范围最大值属性类型，基于另一个属性的当前值 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute", Meta = (BlueprintProtected = "true"))
+	FORCEINLINE TEnumAsByte<EFireflyAttributeType> GetRangeMaxValueType() const;
+
+public:
+	/** 获取属性的类型 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute", Meta = (BlueprintProtected = "true"))
+	FORCEINLINE TEnumAsByte<EFireflyAttributeType> GetAttributeType() const;
+
+	/** 获取属性的当前值 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute", Meta = (BlueprintProtected = "true"))
+	FORCEINLINE float GetCurrentValue() const;
+
+	/** 获取属性的基础值或内部覆盖修改器的最新值 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute", Meta = (BlueprintProtected = "true"))
+	FORCEINLINE float GetBaseValueToUse() const;
 
 protected:
 	/** 属性名 */

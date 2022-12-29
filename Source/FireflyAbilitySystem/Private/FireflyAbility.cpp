@@ -4,6 +4,7 @@
 #include "FireflyAbility.h"
 
 #include "FireflyAbilitySystemComponent.h"
+#include "FireflyAbilitySystemModule.h"
 #include "FireflyEffect.h"
 
 UFireflyAbility::UFireflyAbility(const FObjectInitializer& ObjectInitializer)
@@ -79,6 +80,7 @@ UFireflyAbilitySystemComponent* UFireflyAbility::GetOwnerManager() const
 {
 	if (!IsValid(GetOuter()))
 	{
+		UE_LOG(LogFireflyAbility, Warning, TEXT("UFireflyAbility::GetOwnerManager() Ability %s has not been granted to any manager!"), *GetName());
 		return nullptr;
 	}
 
@@ -118,6 +120,11 @@ bool UFireflyAbility::IsLocallyControlled() const
 	}
 
 	return false;
+}
+
+FName UFireflyAbility::GetAbilityID() const
+{
+	return AbilityID;
 }
 
 void UFireflyAbility::OnAbilityGranted_Implementation()

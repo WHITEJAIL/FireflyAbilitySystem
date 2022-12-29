@@ -53,6 +53,10 @@ protected:
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
 	bool IsLocallyControlled() const;
 
+	/** 组件拥有者是否拥有本地控制权限 */
+	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Ability", Meta = (BlueprintProtected = "true"))
+	FName GetAbilityID() const;
+
 protected:
 	friend UFireflyAbilitySystemComponent;
 

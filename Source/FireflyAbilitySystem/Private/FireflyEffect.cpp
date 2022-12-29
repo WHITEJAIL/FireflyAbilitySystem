@@ -4,6 +4,7 @@
 #include "FireflyEffect.h"
 
 #include "FireflyAbilitySystemComponent.h"
+#include "FireflyAbilitySystemLibrary.h"
 #include "FireflyEffectModifierCalculator.h"
 
 UFireflyEffect::UFireflyEffect(const FObjectInitializer& ObjectInitializer)
@@ -309,8 +310,13 @@ void UFireflyEffect::ApplyEffectFirstTime(UFireflyAbilitySystemComponent* Manage
 
 void UFireflyEffect::ExecuteEffect()
 {
-	UFireflyAbilitySystemComponent* Manager = GetOwnerManager();
-	if (!IsValid(Manager))
+	if (!IsValid(Target))
+	{
+		return;
+	}
+
+	UFireflyAbilitySystemComponent* TargetAbilitySystem = UFireflyAbilitySystemLibrary::GetFireflyAbilitySystem(Target);
+	if (!IsValid(TargetAbilitySystem))
 	{
 		return;
 	}
@@ -340,7 +346,7 @@ void UFireflyEffect::ExecuteEffect()
 				ModValueToUse = GetOwnerManager()->GetAttributeValue(Modifier.AttributeTypeUsing);
 			}
 
-			Manager->ApplyModifierToAttributeInstant(Modifier.AttributeType,
+			TargetAbilitySystem->ApplyModifierToAttributeInstant(Modifier.AttributeType,
 				Modifier.ModOperator, this, ModValueToUse);
 		}
 	}
@@ -374,7 +380,7 @@ void UFireflyEffect::ExecuteEffect()
 				ModValueToUse = GetOwnerManager()->GetAttributeValue(Modifier.AttributeTypeUsing);
 			}
 
-			Manager->ApplyModifierToAttribute(Modifier.AttributeType, Modifier.ModOperator,
+			TargetAbilitySystem->ApplyModifierToAttribute(Modifier.AttributeType, Modifier.ModOperator,
 				this, ModValueToUse, StackCount);
 		}
 	}	
