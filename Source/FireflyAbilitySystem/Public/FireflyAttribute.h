@@ -27,6 +27,9 @@ public:
 	UPROPERTY()
 	int32 StackCount = 0;
 
+	UPROPERTY()
+	bool bIsActive = true;
+
 	FFireflyAttributeModifier() {}
 
 	FFireflyAttributeModifier(UObject* InSource, float InValue) : ModSource(InSource), ModValue(InValue) {}

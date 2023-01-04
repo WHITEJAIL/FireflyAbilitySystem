@@ -919,6 +919,7 @@ void UFireflyAbilitySystemComponent::PostModiferApplied(EFireflyAttributeType At
 				break; \
 			} \
 		} \
+		break; \
 	}
 
 void UFireflyAbilitySystemComponent::ApplyModifierToAttribute(EFireflyAttributeType AttributeType,
@@ -944,32 +945,26 @@ void UFireflyAbilitySystemComponent::ApplyModifierToAttribute(EFireflyAttributeT
 	case EFireflyAttributeModOperator::Plus:
 		{
 			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(Plus);
-			break;
 		}
 	case EFireflyAttributeModOperator::Minus:
 		{
 			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(Minus);
-			break;
 		}
 	case EFireflyAttributeModOperator::Multiply:
 		{
 			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(Multiply);
-			break;
 		}
 	case EFireflyAttributeModOperator::Divide:
 		{
 			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(Divide);
-			break;
 		}
 	case EFireflyAttributeModOperator::InnerOverride:
 		{
 			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(InnerOverride);
-			break;
 		}
 	case EFireflyAttributeModOperator::OuterOverride:
 		{
 			FIREFLY_ATTRIBUTE_MODIFIER_APPLY(OuterOverride);
-			break;
 		}
 	}
 
@@ -979,6 +974,15 @@ void UFireflyAbilitySystemComponent::ApplyModifierToAttribute(EFireflyAttributeT
 
 	PostModiferApplied(AttributeType, ModOperator, ModSource, ModValue, StackToApply);
 }
+
+#define FIREFLY_ATTRIBUTE_MODIFIER_REMOVE(ModOperatorName) \
+	{ \
+		if (AttributeToMod->##ModOperatorName##Mods.Contains(ModifierToRemove)) \
+		{ \
+			AttributeToMod->##ModOperatorName##Mods.RemoveSingle(ModifierToRemove); \
+		} \
+		break; \
+	}
 
 void UFireflyAbilitySystemComponent::RemoveModifierFromAttribute(EFireflyAttributeType AttributeType,
 	EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue)
@@ -996,12 +1000,6 @@ void UFireflyAbilitySystemComponent::RemoveModifierFromAttribute(EFireflyAttribu
 
 	FFireflyAttributeModifier ModifierToRemove = FFireflyAttributeModifier(ModSource, ModValue);
 
-#define FIREFLY_ATTRIBUTE_MODIFIER_REMOVE(ModOperatorName) \
-	if (AttributeToMod->##ModOperatorName##Mods.Contains(ModifierToRemove)) \
-	{ \
-		AttributeToMod->##ModOperatorName##Mods.RemoveSingle(ModifierToRemove); \
-	}
-
 	switch (ModOperator)
 	{
 	case EFireflyAttributeModOperator::None:
@@ -1011,40 +1009,94 @@ void UFireflyAbilitySystemComponent::RemoveModifierFromAttribute(EFireflyAttribu
 	case EFireflyAttributeModOperator::Plus:
 		{
 			FIREFLY_ATTRIBUTE_MODIFIER_REMOVE(Plus);
-			break;
 		}
 	case EFireflyAttributeModOperator::Minus:
 		{
 			FIREFLY_ATTRIBUTE_MODIFIER_REMOVE(Minus);
-			break;
 		}
 	case EFireflyAttributeModOperator::Multiply:
 		{
 			FIREFLY_ATTRIBUTE_MODIFIER_REMOVE(Multiply);
-			break;
 		}
 	case EFireflyAttributeModOperator::Divide:
 		{
 			FIREFLY_ATTRIBUTE_MODIFIER_REMOVE(Divide);
-			break;
 		}
 	case EFireflyAttributeModOperator::InnerOverride:
 		{
 			FIREFLY_ATTRIBUTE_MODIFIER_REMOVE(InnerOverride);
-			break;
 	}
 	case EFireflyAttributeModOperator::OuterOverride:
 		{
 			FIREFLY_ATTRIBUTE_MODIFIER_REMOVE(OuterOverride);
-			break;
 		}
 	}
 
 	AttributeToMod->UpdateCurrentValue();
 }
 
+#define FIREFLY_ATTRIBUTE_MODIFIER_ACTIVE_STATE_SHIFTER(ModOperatorName) \
+	{ \
+		for (auto& Modifier : AttributeToMod->##ModOperatorName##Mods) \
+		{ \
+			if (Modifier.ModSource == ModSource && Modifier.ModValue == ModValue) \
+			{ \
+				Modifier.bIsActive = bNewActiveState; \
+				break; \
+			} \
+		} \
+		break; \
+	}
+
+void UFireflyAbilitySystemComponent::ShiftModifierActiveState(EFireflyAttributeType AttributeType,
+	EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, bool bNewActiveState)
+{
+	if (!HasAuthority() || !IsValid(ModSource))
+	{
+		return;
+	}
+
+	UFireflyAttribute* AttributeToMod = GetAttributeByType(AttributeType);
+	if (!IsValid(AttributeToMod))
+	{
+		return;
+	}
+
+	switch (ModOperator)
+	{
+	case EFireflyAttributeModOperator::None:
+	{
+		break;
+	}
+	case EFireflyAttributeModOperator::Plus:
+	{
+		FIREFLY_ATTRIBUTE_MODIFIER_ACTIVE_STATE_SHIFTER(Plus);
+	}
+	case EFireflyAttributeModOperator::Minus:
+	{
+		FIREFLY_ATTRIBUTE_MODIFIER_ACTIVE_STATE_SHIFTER(Minus);
+	}
+	case EFireflyAttributeModOperator::Multiply:
+	{
+		FIREFLY_ATTRIBUTE_MODIFIER_ACTIVE_STATE_SHIFTER(Multiply);
+	}
+	case EFireflyAttributeModOperator::Divide:
+	{
+		FIREFLY_ATTRIBUTE_MODIFIER_ACTIVE_STATE_SHIFTER(Divide);
+	}
+	case EFireflyAttributeModOperator::InnerOverride:
+	{
+		FIREFLY_ATTRIBUTE_MODIFIER_ACTIVE_STATE_SHIFTER(InnerOverride);
+	}
+	case EFireflyAttributeModOperator::OuterOverride:
+	{
+		FIREFLY_ATTRIBUTE_MODIFIER_ACTIVE_STATE_SHIFTER(OuterOverride);
+	}
+	}
+}
+
 bool UFireflyAbilitySystemComponent::CanApplyModifierInstant(EFireflyAttributeType AttributeType,
-	EFireflyAttributeModOperator ModOperator, float ModValue) const
+                                                             EFireflyAttributeModOperator ModOperator, float ModValue) const
 {
 	UFireflyAttribute* AttributeToMod = GetAttributeByType(AttributeType);
 	if (!IsValid(AttributeToMod))
@@ -1129,6 +1181,7 @@ void UFireflyAbilitySystemComponent::ApplyModifierToAttributeInstant(EFireflyAtt
 		{ \
 			AttributeToMod->##ModOperatorName##Mods.AddUnique(FFireflyAttributeModifier(ModSource, ModValue, StackToApply)); \
 		} \
+		break; \
 	}
 
 void UFireflyAbilitySystemComponent::ApplyOrResetModifierToAttribute(EFireflyAttributeType AttributeType,
@@ -1154,32 +1207,26 @@ void UFireflyAbilitySystemComponent::ApplyOrResetModifierToAttribute(EFireflyAtt
 	case EFireflyAttributeModOperator::Plus:
 		{
 			FIREFLY_ATTRIBUTE_MODIFIER_APPLY_OVERRIDE(Plus);
-			break;
 		}
 	case EFireflyAttributeModOperator::Minus:
 		{
 			FIREFLY_ATTRIBUTE_MODIFIER_APPLY_OVERRIDE(Minus);
-			break;
 		}
 	case EFireflyAttributeModOperator::Multiply:
 		{
 			FIREFLY_ATTRIBUTE_MODIFIER_APPLY_OVERRIDE(Multiply);
-			break;
 		}
 	case EFireflyAttributeModOperator::Divide:
 		{
 			FIREFLY_ATTRIBUTE_MODIFIER_APPLY_OVERRIDE(Divide);
-			break;
 		}
 	case EFireflyAttributeModOperator::InnerOverride:
 		{
 			FIREFLY_ATTRIBUTE_MODIFIER_APPLY_OVERRIDE(InnerOverride);
-			break;
 		}
 	case EFireflyAttributeModOperator::OuterOverride:
 		{
 			FIREFLY_ATTRIBUTE_MODIFIER_APPLY_OVERRIDE(OuterOverride);
-			break;
 		}
 	}
 

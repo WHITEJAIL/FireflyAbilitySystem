@@ -389,6 +389,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
 	virtual void RemoveModifierFromAttribute(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue);
 
+	/** 更改某个修改器的活跃状态 */
+	UFUNCTION(BlueprintCallable, Category = "FireflyAbilitySystem|Attribute")
+	virtual void ShiftModifierActiveState(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, UObject* ModSource, float ModValue, bool bNewActiveState);
+
 	/** 检验某个属性修改器是否可以被应用，该函数仅考虑属性的值被修改器修改后是否仍处于属性的价值范围内，所以要被检验的属性必须是被夹值的 */
 	UFUNCTION(BlueprintPure, Category = "FireflyAbilitySystem|Attribute")
 	virtual bool CanApplyModifierInstant(EFireflyAttributeType AttributeType, EFireflyAttributeModOperator ModOperator, float ModValue) const;

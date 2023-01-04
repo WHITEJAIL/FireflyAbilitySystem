@@ -107,7 +107,19 @@ float UFireflyAttribute::GetCurrentValue() const
 
 float UFireflyAttribute::GetBaseValueToUse() const
 {
-	return InnerOverrideMods.IsValidIndex(0) ? InnerOverrideMods[0].ModValue : BaseValue;
+	bool bInnerOverriderValid = false;
+	float BaseValueToUse = 0.f;
+	for (int i = 0; i < InnerOverrideMods.Num(); ++i)
+	{
+		if (InnerOverrideMods[i].bIsActive)
+		{
+			bInnerOverriderValid = true;
+			BaseValueToUse = InnerOverrideMods[i].ModValue * InnerOverrideMods[i].StackCount;
+
+			break;
+		}
+	}
+	return bInnerOverriderValid ? BaseValueToUse : BaseValue;
 }
 
 void UFireflyAttribute::UpdateCurrentValue_Implementation()
@@ -242,6 +254,10 @@ float UFireflyAttribute::GetTotalPlusModifier() const
 	float TotalPlusMod = 0.f;
 	for (const auto PlusMod : PlusMods)
 	{
+		if (!PlusMod.bIsActive)
+		{
+			continue;
+		}
 		TotalPlusMod += PlusMod.ModValue * PlusMod.StackCount;
 	}
 
@@ -253,6 +269,10 @@ float UFireflyAttribute::GetTotalMinusModifier() const
 	float TotalMinusMod = 0.f;
 	for (const auto MinusMod : MinusMods)
 	{
+		if (!MinusMod.bIsActive)
+		{
+			continue;
+		}
 		TotalMinusMod += MinusMod.ModValue * MinusMod.StackCount;
 	}
 
@@ -264,6 +284,10 @@ float UFireflyAttribute::GetTotalMultiplyModifier() const
 	float TotalMultiplyMod = 0.f;
 	for (const auto MultiplyMod : MultiplyMods)
 	{
+		if (!MultiplyMod.bIsActive)
+		{
+			continue;
+		}
 		TotalMultiplyMod += MultiplyMod.ModValue * MultiplyMod.StackCount;
 	}
 
@@ -275,6 +299,10 @@ float UFireflyAttribute::GetTotalDivideModifier() const
 	float TotalDivideMod = 0.f;
 	for (const auto DivideMod : DivideMods)
 	{
+		if (!DivideMod.bIsActive)
+		{
+			continue;
+		}
 		TotalDivideMod += DivideMod.ModValue * DivideMod.StackCount;
 	}
 	TotalDivideMod = TotalDivideMod == 0.f ? 1.f : TotalDivideMod;
@@ -284,11 +312,16 @@ float UFireflyAttribute::GetTotalDivideModifier() const
 
 bool UFireflyAttribute::GetNewestOuterOverrideModifier(float& NewestValue) const
 {
-	if (OuterOverrideMods.IsValidIndex(0))
+	bool bInnerOverriderValid = false;
+	for (int i = 0; i < OuterOverrideMods.Num(); ++i)
 	{
-		NewestValue = OuterOverrideMods[0].ModValue;
-		return true;
-	}
+		if (OuterOverrideMods[i].bIsActive)
+		{
+			bInnerOverriderValid = true;
+			NewestValue = OuterOverrideMods[i].ModValue * OuterOverrideMods[i].StackCount;
 
-	return false;
+			break;
+		}
+	}
+	return bInnerOverriderValid;
 }
