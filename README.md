@@ -69,6 +69,9 @@ public:
 	UPROPERTY()
 	int32 StackCount = 0;
 
+	UPROPERTY()
+	bool bIsActive = true;
+
 	FFireflyAttributeModifier() {}
 
 	FFireflyAttributeModifier(UObject* InSource, float InValue) : ModSource(InSource), ModValue(InValue) {}
@@ -301,3 +304,35 @@ public:
 技能系统除了属性基类意外，还提供了两种属性类型范式，两种属性类在插件Content文件夹中：
 + FAtt_DerivedAttribute：参考Dota2，战斗单位每增加1点力量值，其最大生命值也额外获得20点，即力量为基础属性，最大生命值为派生属性。在该属性类的蓝图类中，需要设置 **BaseAttributeType(基础属性类型)** 和 **DerivedAttributeCoefficient(派生属性更新参数)**，依旧拿Dota2举例，该属性本身应该是“最大生命值”，其基础属性类型应该是“力量”，派生属性更新参数值应该为“20”
 + FAtt_DynamicRangeMax：如生命值、魔法值这类会经常被消耗，且受动态的范围限制的属性，推荐让这类属性的当前值和最大值分别作为两个属性存在，并让这类属性的当前值继承自该蓝图类
+
+# 效果模块：Effect
+
+## 基础概念
+
+### 效果的持续性
+
+|持续性策略|说明|
+|----|----|
+|Instant|<ul><li>该类型的效果会在被应用后立刻执行一次，然后结束并销毁自己</li><li>该类型的效果适合执行伤害判断、生命值回复等逻辑</li></ul>|
+|Infinite|<ul><li>该类型的效果会在被应用后开始执行，并永久存在，直到被手动移除，才会结束执行并销毁自己</li><li>该类型的效果适合执行场景触发类Buff，比如进入某领域移动速度降低</li></ul>|
+|HasDuration|<ul><li>该类型的效果会在被应用后开始执行并计时，当计时器到达设置的持续时间，则结束执行并销毁自己</li><li>该类型的效果适合执行短暂有效的Buff，比如持续3秒的禁止释放技能Buff</li><li>持续时间可以在效果类中设置，或者在应用效果前利用函数设置</li></ul>|
+
+### 效果的周期性跳动执行
+
++ 周期性跳动执行，即给定一个时间间隔x，每隔x秒，执行一次效果的逻辑。如某个Buff效果，持续5秒，每秒为英雄回复50点生命值
++ 只有持续性策略为 **Infinite** 和 **HasDuration** 的效果可以设置周期性跳动执行
++ 当且仅当 **bIsEffectExecutionPeriodic** 为true时，效果才会在被应用后开启周期性跳动执行，但如果 **PeriodicInterval** 小于等于0，则周期性跳动执行依旧无效
+
+### 效果的堆叠管理
+
++ StackingPolicy：效果要选择的堆叠管理策略
+
+|堆叠管理策略|说明|
+|----|----|
+|None|该效果不会堆叠|
+|StackNoLimit|该效果会堆叠，并且堆叠无上限|
+|StackHasLimit|该效果会堆叠，但当该效果堆叠数达到执行上限，会执行其他逻辑|
+
++ StackingLimitation：效果的堆叠数上限，仅在堆叠策略为 **StackHasLimit** 时起作用
+
+效果模块需要增加代码，可以动态设置效果的堆叠管理，以及检验StackingLimitation是否为0
