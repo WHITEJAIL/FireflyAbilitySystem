@@ -22,4 +22,4 @@ void FFireflyAbilitySystemEditorModule::ShutdownModule()
 
 #undef LOCTEXT_NAMESPACE
 	
-IMPLEMENT_MODULE(FFireflyAbilitySystemEditorModule, FireflyAbilitySystem)
+IMPLEMENT_MODULE(FFireflyAbilitySystemEditorModule, FireflyAbilitySystemEditor)
